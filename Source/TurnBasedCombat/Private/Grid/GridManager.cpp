@@ -11,7 +11,8 @@
 
 UGridManager::UGridManager()
 {
-	TurnManager = NewObject<UTurnManager>(this);
+	// TurnManager = NewObject<UTurnManager>(this);
+	TurnManager = CreateDefaultSubobject<UTurnManager>(TEXT("TurnManager"));
 }
 
 void UGridManager::RegisterGridTile(AGridTile* GridTile)
@@ -200,7 +201,7 @@ TArray<FGridMovement> UGridManager::CalculateGridMovement(AGridUnit* GridUnit)
     return Output;
 }
 
-void UGridManager::CalculateGridMovementAttackable(TArray<FGridPosition>& OutGridPositions, AGridUnit* GridUnit)
+void UGridManager::CalculateGridAttacks(TArray<FGridPosition>& OutGridPositions, AGridUnit* GridUnit)
 {
 	TMap<int32, TSet<AGridTile*>> RangeTileMap;
 	TSet<int32> WeaponRanges = GridUnit->GetWeaponRanges();
@@ -285,6 +286,7 @@ TArray<FTargetingUnit> UGridManager::CalculateGridTargets(AGridUnit* GridUnit)
 		
 	}
 
+	return TArray<FTargetingUnit>();
 
 
 
@@ -294,48 +296,48 @@ TArray<FTargetingUnit> UGridManager::CalculateGridTargets(AGridUnit* GridUnit)
 	// only test against tiles that have units not on the same team
 	// auto GridTilesWithUnits = GWS->GetGridTilesWithUnitsByTeam(ActiveUnit, false);
 
-	for (auto GridTileWithUnit : GridTilesWithUnits)
-	{
-		FTargetingUnit TargetingUnit;
-		TargetingUnit.GridTile = GridTileWithUnit;
-		
-		auto TempGridPosition = GWS->CalculateGridPosition(GridTileWithUnit);
-		for (auto Range : WeaponRanges)
-		{
-			for (auto GridTileAtRange : GWS->GetGridTilesAtRange(TempGridPosition, Range))
-			{
-				for (auto UnitMovementTile : SelectedUnitGridMovement)
-				{
-					if (UnitMovementTile.GridTile == GridTileAtRange)
-					{
-						if (TargetingUnit.RangeMap.Contains(Range))
-						{
-							TargetingUnit.RangeMap[Range].AddUnique(UnitMovementTile.GridTile);
-						}
-						else
-						{
-							TargetingUnit.RangeMap.Add(Range, TArray<TSoftObjectPtr<AATBGridTile>>());
-							TargetingUnit.RangeMap[Range].AddUnique(UnitMovementTile.GridTile);
-						}
-					}
-				}
-			}
-		}
-
-		// only add if there are tiles in range
-		if (!TargetingUnit.RangeMap.IsEmpty())
-		{
-			UnitsBeingTargeted.Add(TargetingUnit);
-		}
-	}
-
-	// highlight all attackable units
-	for (auto TargetingUnit : UnitsBeingTargeted)
-	{
-		TargetingUnit.GridTile->SetGridTileTagState(TAG_Grid_State_Attackable);
-	}
-
-	return UnitsBeingTargeted;
+	// for (auto GridTileWithUnit : GridTilesWithUnits)
+	// {
+	// 	FTargetingUnit TargetingUnit;
+	// 	TargetingUnit.GridTile = GridTileWithUnit;
+	// 	
+	// 	auto TempGridPosition = GWS->CalculateGridPosition(GridTileWithUnit);
+	// 	for (auto Range : WeaponRanges)
+	// 	{
+	// 		for (auto GridTileAtRange : GWS->GetGridTilesAtRange(TempGridPosition, Range))
+	// 		{
+	// 			for (auto UnitMovementTile : SelectedUnitGridMovement)
+	// 			{
+	// 				if (UnitMovementTile.GridTile == GridTileAtRange)
+	// 				{
+	// 					if (TargetingUnit.RangeMap.Contains(Range))
+	// 					{
+	// 						TargetingUnit.RangeMap[Range].AddUnique(UnitMovementTile.GridTile);
+	// 					}
+	// 					else
+	// 					{
+	// 						TargetingUnit.RangeMap.Add(Range, TArray<TSoftObjectPtr<AATBGridTile>>());
+	// 						TargetingUnit.RangeMap[Range].AddUnique(UnitMovementTile.GridTile);
+	// 					}
+	// 				}
+	// 			}
+	// 		}
+	// 	}
+	//
+	// 	// only add if there are tiles in range
+	// 	if (!TargetingUnit.RangeMap.IsEmpty())
+	// 	{
+	// 		UnitsBeingTargeted.Add(TargetingUnit);
+	// 	}
+	// }
+	//
+	// // highlight all attackable units
+	// for (auto TargetingUnit : UnitsBeingTargeted)
+	// {
+	// 	TargetingUnit.GridTile->SetGridTileTagState(TAG_Grid_State_Attackable);
+	// }
+	//
+	// return UnitsBeingTargeted;
 }
 
 TArray<FGridPosition> UGridManager::GetEnemyPositions(const AGridUnit* GridUnit) const

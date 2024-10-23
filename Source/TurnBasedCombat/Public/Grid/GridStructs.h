@@ -8,6 +8,7 @@
 #include "GridStructs.generated.h"
 
 
+class AGridUnit;
 class UWeapon;
 class AGridTile;
 
@@ -101,7 +102,7 @@ struct TURNBASEDCOMBAT_API FGridMovement
 	}
 };
 
-USTRUCT()
+USTRUCT(Blueprintable, BlueprintType)
 struct FTargetingUnit
 {
 	GENERATED_BODY()
@@ -111,11 +112,11 @@ struct FTargetingUnit
 
 	UPROPERTY()
 	AGridUnit* GridUnit = nullptr;
-
+	
 	UPROPERTY()
 	TArray<UWeapon*> Weapons;
 	
-	TMap<int32, TArray<TSoftObjectPtr<AGridUnit>>> RangeMap;	
+	TMap<int32, TArray<AGridUnit*>> RangeMap;
 };
 
 // Define a custom GetTypeHash function for hashing

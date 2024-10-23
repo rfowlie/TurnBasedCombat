@@ -16,7 +16,7 @@ class UItemBase;
 DECLARE_DELEGATE(FAnimCallback);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FAnimationDelegate, AGridUnit*, GridUnit);
 
-UCLASS()
+UCLASS(Blueprintable, BlueprintType)
 class TURNBASEDCOMBAT_API AGridUnit : public AActor
 {
 	GENERATED_BODY()
@@ -50,6 +50,13 @@ public:
 	FAnimationDelegate AnimationPost;
 	UPROPERTY(BlueprintAssignable, BlueprintCallable)
 	FAnimationDelegate AnimationDuring;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	UAnimMontage* MovementStart;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	UAnimMontage* MovementEnd;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	UAnimMontage* Attack;
 	
 	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
 	void AnimationMovement();

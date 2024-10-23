@@ -6,7 +6,7 @@
 
 AGridTile::AGridTile()
 {
-	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bCanEverTick = false;
 }
 
 // Called every frame
@@ -18,6 +18,11 @@ void AGridTile::Tick(float DeltaTime)
 bool AGridTile::SetState_Implementation(const FGameplayTag State)
 {
 	return false;
+}
+
+FVector AGridTile::GetPlacementLocation_Implementation()
+{
+	return GetActorLocation() + PlacementLocation;
 }
 
 FTileStatsSnapshot AGridTile::GetSnapshot() const

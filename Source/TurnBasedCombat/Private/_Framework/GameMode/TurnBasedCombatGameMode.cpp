@@ -12,8 +12,10 @@ ATurnBasedCombatGameMode::ATurnBasedCombatGameMode()
 {
 	PlayerControllerClass = ATurnBasedCombatPlayerController::StaticClass();
 	
-	EventSystem = NewObject<UEventSystem>(this);
-	GridManager = NewObject<UGridManager>(this);
+	// EventSystem = NewObject<UEventSystem>(this);
+	EventSystem = CreateDefaultSubobject<UEventSystem>(TEXT("EventSystem"));
+	// GridManager = NewObject<UGridManager>(this);
+	GridManager = CreateDefaultSubobject<UGridManager>(TEXT("GridManager"));
 }
 
 void ATurnBasedCombatGameMode::BeginPlay()

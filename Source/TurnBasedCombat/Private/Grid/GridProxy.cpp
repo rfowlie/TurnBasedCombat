@@ -40,7 +40,6 @@ void UGridProxy::UndoAll()
 
 void UGridProxy::SetMoveableTiles(bool Activate)
 {
-	TArray<FGridMovement> GridMovements;
 	CalculateGridMovementDelegate.Execute(GridMovements, GridUnit);
 	for (auto GridMovement : GridMovements)
 	{

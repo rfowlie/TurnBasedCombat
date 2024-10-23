@@ -221,5 +221,5 @@ void UStateAttack::UndoSelectedTarget()
 void UStateAttack::UndoSelectedAttackTile()
 {
 	if (GridProxyMoveTo) { GridProxyMoveTo->SetMoveToTile(false); }
-	GridProxyMoveTo == nullptr;
+	GridProxyMoveTo = nullptr;
 }

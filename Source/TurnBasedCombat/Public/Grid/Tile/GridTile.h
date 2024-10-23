@@ -10,7 +10,7 @@
 #include "GridTile.generated.h"
 
 
-UCLASS()
+UCLASS(Blueprintable, BlueprintType)
 class TURNBASEDCOMBAT_API AGridTile : public AActor
 {
 	GENERATED_BODY()
@@ -26,6 +26,9 @@ public:
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	bool SetState(const FGameplayTag State);
 
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	FVector GetPlacementLocation();
+	
 	/////////////////////////////////////////////////////////////
 	// TEMP VARIABLES FOR EASE OF LOGIC
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
@@ -35,6 +38,9 @@ public:
 	/////////////////////////////////////////////////////////////
 
 protected:
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	FVector PlacementLocation = FVector::ZeroVector;
+	
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 	virtual void NotifyActorBeginCursorOver() override;

@@ -59,7 +59,7 @@ private:
 	TMap<AGridUnit*, FGridPosition> GridUnitLocationMap;
 
 	TArray<FGridMovement> CalculateGridMovement(AGridUnit* GridUnit);
-	void CalculateGridMovementAttackable(TArray<FGridPosition>& OutGridPositions, AGridUnit* GridUnit);
+	void CalculateGridAttacks(TArray<FGridPosition>& OutGridPositions, AGridUnit* GridUnit);
 	TArray<FTargetingUnit> CalculateGridTargets(AGridUnit* GridUnit);
 	TArray<FGridPosition> GetEnemyPositions(const AGridUnit* GridUnit) const;
 	

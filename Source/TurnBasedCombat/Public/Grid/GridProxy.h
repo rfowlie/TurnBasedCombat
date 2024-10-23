@@ -8,13 +8,13 @@
 #include "GridProxy.generated.h"
 
 
-struct FGridPosition;
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Encounter_Mode_Move);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Grid_State_Mover);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Grid_State_Moveable);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Grid_State_MoveTo);
 
 
+struct FGridPosition;
 struct FGridMovement;
 class UTurnManager;
 class AGridUnit;

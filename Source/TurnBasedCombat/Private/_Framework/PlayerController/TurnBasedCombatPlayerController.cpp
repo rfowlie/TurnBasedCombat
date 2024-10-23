@@ -16,9 +16,11 @@ ATurnBasedCombatPlayerController::ATurnBasedCombatPlayerController()
 	bEnableTouchEvents = false;
 	
 	// Create States
-	UStateWait* StateWait = NewObject<UStateWait>(this);
+	// UStateWait* StateWait = NewObject<UStateWait>(this);
+	UStateWait* StateWait = CreateDefaultSubobject<UStateWait>(TEXT("StateWait"));
 	ControllerStates.Add(StateWait);
-	UStateMove* StateMove = NewObject<UStateMove>(this);
+	// UStateMove* StateMove = NewObject<UStateMove>(this);
+	UStateMove* StateMove = CreateDefaultSubobject<UStateMove>(TEXT("StateMove"));
 	ControllerStates.Add(StateMove);
 
 	ControllerStateIndex = 0;
