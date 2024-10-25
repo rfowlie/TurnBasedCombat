@@ -21,11 +21,17 @@ void UTurnManager::RegisterGridUnit(AGridUnit* GridUnit)
 
 void UTurnManager::UnregisterGridUnit(AGridUnit* GridUnit)
 {
+	if (IsValid(GridUnit) && GridUnitsMap.Contains(GridUnit))
+	{
+		GridUnitsMap.Remove(GridUnit);
+	}
 }
 
-bool UTurnManager::CanTakeTurn()
+bool UTurnManager::CanTakeTurn(AGridUnit* GridUnit)
 {
-	return false;
+	// TODO: how are we managing this???
+	// should we have a turn manager, and should it use gameplay tags or keep track of shit...
+	return true;
 }
 
 void UTurnManager::SetNextFaction()

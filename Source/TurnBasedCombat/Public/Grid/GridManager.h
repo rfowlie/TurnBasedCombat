@@ -6,6 +6,8 @@
 #include "UObject/Object.h"
 #include "GridProxy.h"
 #include "GridStructs.h"
+#include "Abilities/GameplayAbility.h"
+#include "Unit/GridUnit.h"
 #include "GridManager.generated.h"
 
 
@@ -13,9 +15,13 @@
  * 
  */
 
+class UGameplayAbility;
 class UTurnManager;
+
 // DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FDisplayTile, UTerrainDataAsset*, DataAsset, FTileStatsSnapshot, Snapshot, const FName, TerrainType);
+// TODO: do not pass GridProxy, create new class or interface to pass out
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnGridHovered, UGridProxy*, GridProxy);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FGridManagerDelegate);
 
 UCLASS()
 class TURNBASEDCOMBAT_API UGridManager : public UObject
@@ -31,8 +37,27 @@ public:
 	UPROPERTY(BlueprintAssignable)
 	FOnGridHovered OnGridTileHovered;
 
+	// TODO: rename this, make it make sense
 	UGridProxy* GetCurrentHoveredGridTile();
 	UGridProxy* GetNextGridUnit(UGridProxy* InGridProxy, bool Next = true);
+	// bool CreateMoveEvent(UGridProxy* Instigator, UGridProxy* Location, const TMulticastDelegate<void(UGameplayAbility*)>::FDelegate& Callback);
+	void CreateMoveEvent(UGridProxy* Instigator, UGridProxy* Location);
+	UFUNCTION()
+	void PostMoveEvent(AGridUnit* GridUnit);
+	bool CreateAttackEvent(UGridProxy* Instigator, UGridProxy* Target, UGridProxy* Location);
+
+	UFUNCTION()
+	void OnEndEvent();
+
+	// DECLARE_EVENT(UGridManager, FGridManagerEvent)
+	// FGridManagerEvent OnGridEventStart;
+	// FGridManagerEvent OnGridEventEnd;
+	
+	FGridManagerDelegate OnGridEventStart;
+	FGridManagerDelegate OnGridEventEnd;
+
+	// TODO: determine best way to do this
+	bool IsMatch(const UGridProxy* GridProxy_A, const UGridProxy* GridProxy_B);
 
 protected:
 	UFUNCTION()

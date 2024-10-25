@@ -3,11 +3,16 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "AbilitySystemInterface.h"
+#include "GameplayAbilitySpec.h"
+#include "Abilities/GameplayAbility.h"
 #include "GameFramework/Actor.h"
 #include "TurnBasedCombat/Public/Stats/StatsDataAsset.h"
 #include "GridUnit.generated.h"
 
 
+class UGameplayAbility;
+class UAttributeSet;
 class UWeaponDataAsset;
 class UWeapon;
 class UItemBase;
@@ -15,28 +20,61 @@ class UItemBase;
 
 DECLARE_DELEGATE(FAnimCallback);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FAnimationDelegate, AGridUnit*, GridUnit);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FGridUnitAbilityDelegate);
+DECLARE_DYNAMIC_DELEGATE(FUseAbilityDelegate);
+DECLARE_DELEGATE_OneParam(FGameplayAbilityEndCallback, UGameplayAbility*);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FGridUnitEventDelegate, AGridUnit*, GridUnit);
+
 
 UCLASS(Blueprintable, BlueprintType)
-class TURNBASEDCOMBAT_API AGridUnit : public AActor
+class TURNBASEDCOMBAT_API AGridUnit : public AActor, public IAbilitySystemInterface
 {
 	GENERATED_BODY()
 
+protected:
+	virtual void BeginPlay() override;
+	
 public:
 	AGridUnit();
-	
 	virtual void Tick(float DeltaTime) override;
+
+	// Ability System - start
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	UAbilitySystemComponent* AbilitySystemComponent;
+
+	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override { return AbilitySystemComponent; }
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	UAttributeSet* AttributeSet;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TSubclassOf<UGameplayAbility> GameplayAbilityClass_Move;	
+	UPROPERTY(BlueprintReadOnly)
+	FGameplayAbilitySpecHandle GameplayAbilitySpecHandle_Move;
+
+	UPROPERTY(BlueprintReadOnly)
+	FVector MoveAbilityLocation = FVector::ZeroVector;
+	
+	// DECLARE_EVENT(AGridUnit, FGridUnitAbilityEvent)
+	// FGridUnitAbilityEvent OnAbilityMoveEnd;
+	// FGridUnitAbilityEvent OnAbilityAttackEnd;
+	FGridUnitEventDelegate OnEventMoveEnd;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TSubclassOf<UGameplayAbility> GameplayAbilityClass_Attack;	
+	UPROPERTY(BlueprintReadOnly)
+	FGameplayAbilitySpecHandle GameplayAbilitySpecHandle_Attack;
+	// Ability System - end
+	
+	UPROPERTY(EditInstanceOnly)
+	UStatsDataAsset* StatsDataAsset;	
+
+	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
+	void SetState(FGameplayTag State);
 	
 	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
 	bool SetHovered(bool IsHovered);
-
-	UPROPERTY(EditInstanceOnly)
-	UStatsDataAsset* StatsDataAsset;
 	
-protected:
-	virtual void BeginPlay() override;
-
-
-public:
 	UPROPERTY(EditInstanceOnly, BlueprintReadWrite, meta=(ClampMin=1, ClampMax=99, UIMin=1, UIMax=99))
 	int32 Level = 1;	
 	
@@ -58,23 +96,21 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	UAnimMontage* Attack;
 	
-	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
-	void AnimationMovement();
-	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
-	void AnimationAttack();
+	// UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	bool MovementEvent(const FVector& Location);
 
-private:
+protected:	
 	UPROPERTY()
 	TArray<UWeapon*> EquippedWeapons;
 	
 	UPROPERTY()
 	TArray<UItemBase*> EquippedItems;
-
-protected:
+	
 	// Just for setup, will then need to instance to keep track of changes
 	UPROPERTY(EditInstanceOnly, BlueprintReadOnly)
 	TArray<UWeaponDataAsset*> WeaponDataAssets;
 
+	//////////////////////////////////////////////////////
 public:
 	UFUNCTION(BlueprintCallable)
 	FName GetFaction() const;
@@ -100,4 +136,11 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	int32 Team;
+
+	//////////////////////////////////////////////////////
+	///
+
+private:
+	UFUNCTION()
+	void OnAbilityEnded(const FAbilityEndedData& Data);
 };

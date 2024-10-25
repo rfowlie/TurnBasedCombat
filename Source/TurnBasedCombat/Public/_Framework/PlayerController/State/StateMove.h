@@ -4,9 +4,11 @@
 
 #include "CoreMinimal.h"
 #include "AbstractPlayerControllerState.h"
+#include "Grid/Unit/GridUnit.h"
 #include "StateMove.generated.h"
 
 
+class UGameplayAbility;
 struct FGridMovement;
 class UGridProxy;
 class UGridManager;
@@ -26,6 +28,11 @@ public:
 	UStateMove();
 	
 	void Initialize(UGridManager* InGridManager);
+	
+	FGameplayAbilityEndCallback ResetCallback;
+	UFUNCTION()
+	void Reset(UGameplayAbility* GameplayAbility);
+	
 
 protected:
 	enum class EMovePhase
@@ -60,5 +67,11 @@ protected:
 	
 	virtual void OnSelect();
 	virtual void OnDeselect();
-	virtual void OnCycleUnit();	
+	virtual void OnCycleUnit();
+
+public:
+	UFUNCTION()
+	void Enable();
+	UFUNCTION()
+	void Disable();
 };

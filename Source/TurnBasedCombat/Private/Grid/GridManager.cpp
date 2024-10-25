@@ -3,6 +3,7 @@
 
 #include "TurnBasedCombat/Public/Grid/GridManager.h"
 
+#include "AbilitySystemComponent.h"
 #include "Grid/GridUtility.h"
 #include "Grid/TurnManager.h"
 #include "TurnBasedCombat/Public/Grid/Tile/GridTile.h"
@@ -50,13 +51,111 @@ void UGridManager::RegisterGridUnit(AGridUnit* GridUnit)
 
 UGridProxy* UGridManager::GetCurrentHoveredGridTile()
 {
-	return NewObject<UGridProxy>(this);
+	// put together a grid proxy
+	FCalculateGridMovement CalculateGridMovementDelegate;
+	TArray<FGridMovement> GridMovements;
+	if (CurrentHoveredUnit !=  nullptr)
+	{
+		GridMovements = CalculateGridMovement(CurrentHoveredUnit);
+	}
+	
+	return UGridProxy::CreateGridProxy(
+		this,
+		TurnManager,
+		CurrentHoveredTile,
+		CurrentHoveredUnit,
+		CalculateGridMovementDelegate,
+		GridMovements);
+	
+	// NOTE: cannot create grid proxy with new object as we made the constructor private
+	// return NewObject<UGridProxy>(this);
 }
 
 UGridProxy* UGridManager::GetNextGridUnit(UGridProxy* InGridProxy, bool Next)
 {
 	// TODO: if given a proxy with a unit, return next or previous proxy with unit, otherwise return random
 	return nullptr;
+}
+
+void UGridManager::CreateMoveEvent(UGridProxy* Instigator, UGridProxy* Location)
+{
+	if (!IsValid(Instigator) || !IsValid(Location))
+	{
+		return;
+	}
+
+	// check if this unit can move and location does not contain a unit
+	if (!TurnManager->CanTakeTurn(Instigator->GridUnit) || Location->GridUnit != nullptr)
+	{
+		return;
+	}
+	
+	// broadcast event starting
+	if (OnGridEventStart.IsBound())
+	{
+		OnGridEventStart.Broadcast();
+	}
+
+	AGridUnit* GridUnit = Instigator->GridUnit;
+	
+	FGridPosition GridPosition = UGridUtility::CalculateGridPosition(GridUnit);
+	LocationGridUnitMap.Remove(GridPosition);
+	GridUnitLocationMap.Remove(GridUnit);
+
+	GridUnit->OnEventMoveEnd.AddUniqueDynamic(this, &ThisClass::PostMoveEvent);
+	// GridUnit->OnAbilityMoveEnd.AddLambda([this, GridUnit]()
+	// {		
+	// 	// update the unit that has moved
+	// 	FGridPosition GridPosition = UGridUtility::CalculateGridPosition(GridUnit);		
+	// 	LocationGridUnitMap.Add(GridPosition, GridUnit);
+	// 	GridUnitLocationMap.Add(GridUnit, GridPosition);
+	// 	
+	// 	if (OnGridEventEnd.IsBound())
+	// 	{
+	// 		OnGridEventEnd.Broadcast();
+	// 	}
+	// });
+	
+	Instigator->GridUnit->MovementEvent(Location->GridTile->GetPlacementLocation());
+}
+
+void UGridManager::PostMoveEvent(AGridUnit* GridUnit)
+{
+	if (!IsValid(GridUnit)) { return; }
+	
+	// update the unit that has moved
+	FGridPosition GridPosition = UGridUtility::CalculateGridPosition(GridUnit);		
+	LocationGridUnitMap.Add(GridPosition, GridUnit);
+	GridUnitLocationMap.Add(GridUnit, GridPosition);
+		
+	if (OnGridEventEnd.IsBound())
+	{
+		OnGridEventEnd.Broadcast();
+	}
+}
+
+// bool UGridManager::CreateMoveEvent(
+// 	UGridProxy* Instigator, UGridProxy* Location, const TMulticastDelegate<void(UGameplayAbility*)>::FDelegate& Callback)
+// {
+// 	
+// }
+
+bool UGridManager::CreateAttackEvent(UGridProxy* Instigator, UGridProxy* Target, UGridProxy* Location)
+{
+	return false;
+}
+
+void UGridManager::OnEndEvent()
+{
+	if (OnGridEventEnd.IsBound())
+	{
+		OnGridEventEnd.Broadcast();
+	}	
+}
+
+bool UGridManager::IsMatch(const UGridProxy* GridProxy_A, const UGridProxy* GridProxy_B)
+{
+	return GridProxy_A->GridTile == GridProxy_B->GridTile && GridProxy_A->GridUnit == GridProxy_B->GridUnit;
 }
 
 void UGridManager::OnBeginCursorOverGridTile(AActor* Actor)
@@ -77,30 +176,25 @@ void UGridManager::OnBeginCursorOverGridTile(AActor* Actor)
 		CurrentHoveredTile->SetHovered(true);
 		if (OnGridTileHovered.IsBound())
 		{
+			// TODO: what are we broadcasting???
 			// OnGridTileHovered.Broadcast();
 			// OnGridTileHovered.Broadcast(GridTileHovered->TerrainDataAsset, GridTileHovered->GetSnapshot(), GridTileHovered->Terrain_Internal);
 		}
 
 		// unit
-		if (IsValid(CurrentHoveredUnit))
+		if (CurrentHoveredUnit != nullptr)
 		{
 			CurrentHoveredUnit->SetHovered(false);
 			CurrentHoveredUnit = nullptr;
 		}
 
 		// TODO: simplify this with better tile/unit setup or grid proxy
-		// const auto GridPosition = CalculateGridPosition(GridTileHovered);
-		// for (auto GridUnit : AllGridUnits)
-		// {
-		// 	if (GridPosition == CalculateGridPosition(GridUnit))
-		// 	{
-		// 		GridUnitHovered = GridUnit;
-		// 		GridUnitHovered->SetHovered(true);
-		// 		break;
-		// 	}
-		// }
-		//
-		// OnGridUnitHovered.Broadcast(GridUnitHovered, FUnitStatsSnapshot());
+		const FGridPosition GridPosition = UGridUtility::CalculateGridPosition(CurrentHoveredTile);
+		if (LocationGridUnitMap.Contains(GridPosition))
+		{
+			CurrentHoveredUnit = LocationGridUnitMap[GridPosition];
+			CurrentHoveredUnit->SetHovered(true);
+		}
 	}
 }
 
@@ -148,7 +242,7 @@ TArray<FGridMovement> UGridManager::CalculateGridMovement(AGridUnit* GridUnit)
     			// check if available movement goes below 0, do not create info
     			// TODO: decide best best way to store terrain data and access it
     			const int32 CalculatedMovement =
-    				Current.AvailableMovement - GridTile->TerrainDataAsset->TerrainStats.MovementCost;
+    				Current.AvailableMovement - GridTile->GetMovementCost();
 
     			if (CalculatedMovement < 0)
     			{

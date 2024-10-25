@@ -27,7 +27,7 @@ public:
 	void RegisterGridUnit(AGridUnit* GridUnit);
 	void UnregisterGridUnit(AGridUnit* GridUnit);
 	
-	bool CanTakeTurn();
+	bool CanTakeTurn(AGridUnit* GridUnit);
 
 private:
 	TMap<AGridUnit*, bool> GridUnitsMap;

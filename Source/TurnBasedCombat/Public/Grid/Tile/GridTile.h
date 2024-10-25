@@ -27,7 +27,10 @@ public:
 	bool SetState(const FGameplayTag State);
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
-	FVector GetPlacementLocation();
+	FVector GetPlacementLocation() const;
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	int32 GetMovementCost() const;
 	
 	/////////////////////////////////////////////////////////////
 	// TEMP VARIABLES FOR EASE OF LOGIC
@@ -38,12 +41,10 @@ public:
 	/////////////////////////////////////////////////////////////
 
 protected:
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	FVector PlacementLocation = FVector::ZeroVector;
-	
-	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 	virtual void NotifyActorBeginCursorOver() override;
 	virtual void NotifyActorEndCursorOver() override;
 	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	FVector PlacementLocation = FVector::ZeroVector;
 };

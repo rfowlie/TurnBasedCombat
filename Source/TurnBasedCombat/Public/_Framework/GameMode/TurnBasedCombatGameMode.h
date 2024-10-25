@@ -26,9 +26,9 @@ public:
 
 	virtual void BeginPlay() override;
 
-	const UEventSystem* GetEventSystem() const;
+	UEventSystem* GetEventSystem();
 	
-	// const UGridManager* GetGridManager() const;
+	UGridManager* GetGridManager();
 	
 private:
 	virtual void HandleStartingNewPlayer_Implementation(APlayerController* NewPlayer) override;

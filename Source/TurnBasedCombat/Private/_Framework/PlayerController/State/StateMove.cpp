@@ -7,21 +7,24 @@
 #include "EnhancedInputComponent.h"
 #include "InputAction.h"
 #include "InputMappingContext.h"
+#include "Abilities/GameplayAbility.h"
 #include "TurnBasedCombat/Public/EventSystem/Events/EventUnitMove.h"
 #include "TurnBasedCombat/Public/Grid/GridManager.h"
 
 
 UStateMove::UStateMove()
 {
+	ResetCallback.BindUObject(this, &ThisClass::Reset);
 }
 
 void UStateMove::Initialize(UGridManager* InGridManager)
 {
-	// only allow setting once?
-	if (GridManager == nullptr && InGridManager)
-	{
-		GridManager = InGridManager;
-	}
+	GridManager = InGridManager;
+	// GridManager->OnGridEventStart.AddUObject(this, &ThisClass::Disable);
+	// GridManager->OnGridEventStart.AddLambda([this](){ Disable(); });
+	GridManager->OnGridEventStart.AddDynamic(this, &ThisClass::Disable);
+	// GridManager->OnGridEventEnd.AddUObject(this, &ThisClass::Enable);
+	GridManager->OnGridEventEnd.AddDynamic(this, &ThisClass::Enable);
 }
 
 UInputMappingContext* UStateMove::SetupInputMappingContext(APlayerController* PlayerController)
@@ -30,6 +33,11 @@ UInputMappingContext* UStateMove::SetupInputMappingContext(APlayerController* Pl
 	check(EIC)
 	
 	UInputMappingContext* NewInputMappingContext = NewObject<UInputMappingContext>(this);
+
+	IA_Select = NewObject<UInputAction>(this);
+	IA_Select->ValueType = EInputActionValueType::Boolean;
+	FEnhancedActionKeyMapping& Mapping_Select = NewInputMappingContext->MapKey(IA_Select, EKeys::LeftMouseButton);
+	EIC->BindAction(IA_Select, ETriggerEvent::Started, this, &UStateMove::OnSelect);
 	
 	IA_Deselect = NewObject<UInputAction>(this);
 	IA_Deselect->ValueType = EInputActionValueType::Boolean;
@@ -51,7 +59,6 @@ void UStateMove::OnEnter()
 	Super::OnEnter();	
 	UE_LOG(LogTemp, Warning, TEXT("EnterInternal - MOVE"));
 	Phase = EMovePhase::Idle;
-	
 }
 
 void UStateMove::OnExit()
@@ -62,6 +69,14 @@ void UStateMove::OnExit()
 
 void UStateMove::OnSelect()
 {
+	// UE_LOG(LogTemp, Warning, TEXT("Mode: Move - On Select"))
+
+	if (Phase == EMovePhase::None)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Move - None"))
+		return;
+	}
+	
 	UGridProxy* GridProxy = GridManager->GetCurrentHoveredGridTile();
 	if (!GridProxy)
 	{
@@ -71,9 +86,11 @@ void UStateMove::OnSelect()
 
 	switch(Phase)
 	{
-	case EMovePhase::None:		
+	case EMovePhase::None:
+		UE_LOG(LogTemp, Warning, TEXT("Move - None"))
 		break;
 	case EMovePhase::Idle:
+		UE_LOG(LogTemp, Warning, TEXT("Move - Idle"))
 		// check if previous selection, and undo changes
 		if (GridProxyCurrent)
 		{
@@ -81,7 +98,13 @@ void UStateMove::OnSelect()
 		}
 		// set new selection
 		GridProxyCurrent = GridProxy;
-		GridProxyCurrent->SetMoveableTiles(true);
+
+		// check if unit
+		if (GridProxyCurrent->HasUnit())
+		{
+			GridProxyCurrent->SetMoveableTiles(true);
+			// GridProxyCurrent->SetState(TAG_Grid_State_Moveable);
+		}		
 		// if player unit selected move to next phase
 		if (GridProxyCurrent->IsPlayer())
 		{
@@ -89,49 +112,52 @@ void UStateMove::OnSelect()
 		}
 		break;
 	case EMovePhase::SelectedMoveUnit:
+		UE_LOG(LogTemp, Warning, TEXT("Move - SelectedMoveUnit"))
 		// check if new player unit selected
 		if (GridProxyCurrent != GridProxy && GridProxy->IsPlayer())
 		{
 			GridProxyCurrent->UndoAll();
 			GridProxyCurrent = GridProxy;
 			GridProxyCurrent->SetMoveableTiles(true);
+			// GridProxyCurrent->SetState(TAG_Grid_State_Moveable);
 		}
 		// check if moveable tile selected
-		else if (GridProxyCurrent->CanMoveToo(GridProxy))
+		else if (GridProxyCurrent != GridProxy && GridProxyCurrent->CanMoveToo(GridProxy))
 		{
 			if (GridProxyMoveTo) { GridProxyMoveTo->UndoAll(); }
 			GridProxyMoveTo = GridProxy;
 			GridProxyMoveTo->SetMoveToTile(true);
+			// GridProxyCurrent->SetState(TAG_Grid_State_MoveTo);
 			Phase = EMovePhase::SelectedMoveTile;
 		}
 		break;
 	case EMovePhase::SelectedMoveUnitNotTeam:
 		break;
 	case EMovePhase::SelectedMoveTile:
-		// check if new player unit selected
-		if (GridProxyCurrent != GridProxy && GridProxy->IsPlayer())
+		// check if tile selected again to confirm movement
+		UE_LOG(LogTemp, Warning, TEXT("Move - SelectedMoveTile"))
+		if (GridManager->IsMatch(GridProxyMoveTo ,GridProxy))
 		{
-			GridProxyCurrent->UndoAll();
-			GridProxyCurrent = GridProxy;
-			GridProxyCurrent->SetMoveableTiles(true);
-			Phase = EMovePhase::SelectedMoveUnit;
+			GridManager->CreateMoveEvent(GridProxyCurrent, GridProxyMoveTo);
 		}
 		// check if moveable tile selected
 		else if (GridProxyCurrent->CanMoveToo(GridProxy))
 		{
-			if (GridProxyMoveTo) { GridProxyMoveTo->UndoAll(); }
+			if (GridProxyMoveTo) { GridProxyMoveTo->SetMoveToTile(false); }
 			GridProxyMoveTo = GridProxy;
 			GridProxyMoveTo->SetMoveToTile(true);
+			// GridProxyCurrent->SetState(TAG_Grid_State_MoveTo);
 			Phase = EMovePhase::SelectedMoveTile;
 		}
-		// check if tile selected again to confirm movement
-		else if (GridProxyMoveTo == GridProxy)
+		// check if new player unit selected
+		else if (GridProxyCurrent != GridProxy && GridProxy->IsPlayer())
 		{
-			TArray<UAbstractEvent*> Events;
-			UEventUnitMove* Event = NewObject<UEventUnitMove>(this);
-			Events.AddUnique(Event);
-			OnEventCreate.Execute(Events);
-		}
+			GridProxyCurrent->UndoAll();
+			GridProxyCurrent = GridProxy;
+			GridProxyCurrent->SetMoveableTiles(true);
+			// GridProxyCurrent->SetState(TAG_Grid_State_Moveable);
+			Phase = EMovePhase::SelectedMoveUnit;
+		}		
 		break;
 	}
 }
@@ -143,6 +169,7 @@ void UStateMove::OnDeselect()
 	case EMovePhase::Idle:
 		break;
 	case EMovePhase::SelectedMoveUnit:
+		UE_LOG(LogTemp, Warning, TEXT("Move - SelectedMoveUnit - Deselect"))
 		if (GridProxyCurrent)
 		{
 			GridProxyCurrent->SetMoveableTiles(false);
@@ -152,6 +179,7 @@ void UStateMove::OnDeselect()
 	case EMovePhase::SelectedMoveUnitNotTeam:
 		break;
 	case EMovePhase::SelectedMoveTile:
+		UE_LOG(LogTemp, Warning, TEXT("Move - SelectedMoveTile - Deselect"))
 		if (GridProxyCurrent)
 		{
 			GridProxyCurrent->SetMoveToTile(false);
@@ -173,4 +201,31 @@ void UStateMove::OnCycleUnit()
 	GridProxyCurrent = GridManager->GetNextGridUnit(GridProxyCurrent);
 	GridProxyCurrent->SetMoveableTiles(true);
 	Phase = EMovePhase::SelectedMoveUnit;
+}
+
+void UStateMove::Enable()
+{
+	UE_LOG(LogTemp, Warning, TEXT("UStateMove - Enable"));
+	if (GridProxyCurrent)
+	{
+		GridProxyCurrent->SetMoveableTiles(false);
+		GridProxyCurrent = nullptr;
+	}
+	// if (GridProxyMoveTo)
+	// {
+	// 	GridProxyMoveTo->SetMoveToTile(false);
+	// }
+		
+	Phase = EMovePhase::Idle;
+}
+
+void UStateMove::Disable()
+{
+	UE_LOG(LogTemp, Warning, TEXT("UStateMove - Disable"));
+	Phase = EMovePhase::None;
+}
+
+void UStateMove::Reset(UGameplayAbility* GameplayAbility)
+{
+	Enable();
 }

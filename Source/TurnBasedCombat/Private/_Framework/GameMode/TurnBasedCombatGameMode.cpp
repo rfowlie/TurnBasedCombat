@@ -25,15 +25,15 @@ void ATurnBasedCombatGameMode::BeginPlay()
 	
 }
 
-const UEventSystem* ATurnBasedCombatGameMode::GetEventSystem() const
+UEventSystem* ATurnBasedCombatGameMode::GetEventSystem()
 {
 	return EventSystem;
 }
 
-// const UGridManager* ATurnBasedCombatGameMode::GetGridManager() const
-// {
-// 	return GridManager;
-// }
+UGridManager* ATurnBasedCombatGameMode::GetGridManager()
+{
+	return GridManager;
+}
 
 void ATurnBasedCombatGameMode::HandleStartingNewPlayer_Implementation(APlayerController* NewPlayer)
 {
