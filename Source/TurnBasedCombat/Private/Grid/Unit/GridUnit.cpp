@@ -4,7 +4,6 @@
 #include "TurnBasedCombat/Public/Grid/Unit/GridUnit.h"
 
 #include "AbilitySystemComponent.h"
-#include "Grid/GridManager.h"
 #include "Grid/Unit/GridUnitAttributeSet.h"
 #include "TurnBasedCombat/Public/Item/Weapon.h"
 #include "_Framework/GameMode/TurnBasedCombatGameMode.h"
@@ -30,7 +29,7 @@ void AGridUnit::BeginPlay()
 	// register with grid manager
 	if (ATurnBasedCombatGameMode* GameMode = Cast<ATurnBasedCombatGameMode>(GetWorld()->GetAuthGameMode()))
 	{
-		GameMode->GetGridManager()->RegisterGridUnit(this);
+		GameMode->RegisterGridUnit(this);
 	}
 
 	FGameplayAbilitySpec Spec = FGameplayAbilitySpec(GameplayAbilityClass_Move, 1, INDEX_NONE, this);
@@ -65,12 +64,11 @@ void AGridUnit::BeginPlay()
 	{
 		if (Data.AbilitySpecHandle == GameplayAbilitySpecHandle_Move)
 		{
-			// if (OnAbilityMoveEnd.IsBound()) { OnAbilityMoveEnd.Broadcast(); }
 			if (OnEventMoveEnd.IsBound()) { OnEventMoveEnd.Broadcast(this); }
 		}
 		if (Data.AbilitySpecHandle == GameplayAbilitySpecHandle_Attack)
 		{
-			// if (OnAbilityAttackEnd.IsBound()) { OnAbilityAttackEnd.Broadcast(); }		
+			if (OnEventAttackEnd.IsBound()) { OnEventAttackEnd.Broadcast(this); }
 		}
 	});
 }
@@ -144,9 +142,26 @@ bool AGridUnit::MovementEvent(const FVector& Location)
 	return AbilitySystemComponent->TryActivateAbility(GameplayAbilitySpecHandle_Move);
 }
 
+bool AGridUnit::AttackEvent(const FVector& Location, AGridUnit* Target)
+{
+	// TODO
+	if (!AbilitySystemComponent) { return false; }
+	
+	FGameplayAbilitySpec* GameplayAbilitySpec = AbilitySystemComponent->FindAbilitySpecFromHandle(GameplayAbilitySpecHandle_Attack);
+	if (GameplayAbilitySpec->Ability == nullptr) { return false; }
+
+	// set location as parameter on ability???
+	MoveAbilityLocation = Location;
+	
+	// activate ability
+	return AbilitySystemComponent->TryActivateAbility(GameplayAbilitySpecHandle_Attack);
+}
+
 FName AGridUnit::GetFaction() const
 {
-	return FName("Empty");
+	// TODO: for now...
+	const FString F = "Faction_" + FString::FromInt(Faction);
+	return FName(F);
 }
 
 TArray<UWeapon*> AGridUnit::GetEquippedWeapons() const

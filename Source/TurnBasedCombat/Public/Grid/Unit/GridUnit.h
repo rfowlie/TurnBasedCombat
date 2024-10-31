@@ -59,6 +59,7 @@ public:
 	// FGridUnitAbilityEvent OnAbilityMoveEnd;
 	// FGridUnitAbilityEvent OnAbilityAttackEnd;
 	FGridUnitEventDelegate OnEventMoveEnd;
+	FGridUnitEventDelegate OnEventAttackEnd;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TSubclassOf<UGameplayAbility> GameplayAbilityClass_Attack;	
@@ -98,6 +99,7 @@ public:
 	
 	// UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	bool MovementEvent(const FVector& Location);
+	bool AttackEvent(const FVector& Location, AGridUnit* Target);
 
 protected:	
 	UPROPERTY()
@@ -135,7 +137,7 @@ public:
 	// UNIT STATS end
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	int32 Team;
+	int32 Faction;
 
 	//////////////////////////////////////////////////////
 	///

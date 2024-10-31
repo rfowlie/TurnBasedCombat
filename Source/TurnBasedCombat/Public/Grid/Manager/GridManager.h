@@ -4,24 +4,25 @@
 
 #include "CoreMinimal.h"
 #include "UObject/Object.h"
-#include "GridProxy.h"
-#include "GridStructs.h"
-#include "Abilities/GameplayAbility.h"
-#include "Unit/GridUnit.h"
+#include "Grid/GridProxy.h"
+#include "Grid/GridStructs.h"
+#include "Grid/Unit/GridUnit.h"
 #include "GridManager.generated.h"
 
 
-/**
- * 
- */
-
 class UGameplayAbility;
 class UTurnManager;
+class AGridTile;
+
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Event_Grid_Move);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Event_Grid_Attack);
 
 // DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FDisplayTile, UTerrainDataAsset*, DataAsset, FTileStatsSnapshot, Snapshot, const FName, TerrainType);
 // TODO: do not pass GridProxy, create new class or interface to pass out
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnGridHovered, UGridProxy*, GridProxy);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FGridManagerDelegate);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FGridTileHovered, const AGridTile*, GridTile);
+DECLARE_MULTICAST_DELEGATE(FGridManagerDelegate);
+
 
 UCLASS()
 class TURNBASEDCOMBAT_API UGridManager : public UObject
@@ -30,28 +31,32 @@ class TURNBASEDCOMBAT_API UGridManager : public UObject
 
 public:
 	UGridManager();
+
+	void Initialize(UTurnManager* InurnManager);
 	
 	void RegisterGridTile(AGridTile* GridTile);
 	void RegisterGridUnit(AGridUnit* GridUnit);
 
 	UPROPERTY(BlueprintAssignable)
-	FOnGridHovered OnGridTileHovered;
+	FOnGridHovered OnGridHovered;
+	UPROPERTY(BlueprintAssignable)
+	FGridTileHovered OnGridTileHovered;
 
 	// TODO: rename this, make it make sense
 	UGridProxy* GetCurrentHoveredGridTile();
 	UGridProxy* GetNextGridUnit(UGridProxy* InGridProxy, bool Next = true);
-	// bool CreateMoveEvent(UGridProxy* Instigator, UGridProxy* Location, const TMulticastDelegate<void(UGameplayAbility*)>::FDelegate& Callback);
+	
 	void CreateMoveEvent(UGridProxy* Instigator, UGridProxy* Location);
 	UFUNCTION()
-	void PostMoveEvent(AGridUnit* GridUnit);
-	bool CreateAttackEvent(UGridProxy* Instigator, UGridProxy* Target, UGridProxy* Location);
+	void PostEvent_Move(AGridUnit* GridUnit);
+	
+	void CreateAttackEvent(
+		UGridProxy* Instigator, UGridProxy* Location, UGridProxy* Target);
+	UFUNCTION()
+	void PostEvent_Attack(AGridUnit* GridUnit);
 
 	UFUNCTION()
 	void OnEndEvent();
-
-	// DECLARE_EVENT(UGridManager, FGridManagerEvent)
-	// FGridManagerEvent OnGridEventStart;
-	// FGridManagerEvent OnGridEventEnd;
 	
 	FGridManagerDelegate OnGridEventStart;
 	FGridManagerDelegate OnGridEventEnd;

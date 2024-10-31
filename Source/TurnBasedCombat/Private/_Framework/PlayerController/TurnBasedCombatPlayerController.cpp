@@ -8,7 +8,7 @@
 #include "InputAction.h"
 #include "InputActionValue.h"
 #include "InputMappingContext.h"
-#include "Grid/GridManager.h"
+#include "Grid/Manager/GridManager.h"
 #include "TurnBasedCombat/Public/_Framework/PlayerController/State/StateMove.h"
 #include "TurnBasedCombat/Public/_Framework/PlayerController/State/StateWait.h"
 
@@ -51,8 +51,8 @@ void ATurnBasedCombatPlayerController::Initialize(UGridManager* InGridManager)
 	// 	AddInputMapping();
 	// });
 	
-	GridManager->OnGridEventStart.AddDynamic(this, &ThisClass::RemoveInputMapping);
-	GridManager->OnGridEventEnd.AddDynamic(this, &ThisClass::AddInputMapping);
+	GridManager->OnGridEventStart.AddUObject(this, &ThisClass::RemoveInputMapping);
+	GridManager->OnGridEventEnd.AddUObject(this, &ThisClass::AddInputMapping);
 	
 	// Create States
 	UStateWait* StateWait = NewObject<UStateWait>(this);

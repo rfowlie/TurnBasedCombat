@@ -3,7 +3,7 @@
 
 #include "TurnBasedCombat/Public/Grid/Tile/GridTile.h"
 
-#include "Grid/GridManager.h"
+#include "Grid/Manager/GridManager.h"
 #include "_Framework/GameMode/TurnBasedCombatGameMode.h"
 
 
@@ -53,7 +53,7 @@ void AGridTile::BeginPlay()
 
 	if (ATurnBasedCombatGameMode* GameMode = Cast<ATurnBasedCombatGameMode>(GetWorld()->GetAuthGameMode()))
 	{
-		GameMode->GetGridManager()->RegisterGridTile(this);
+		GameMode->RegisterGridTile(this);
 	}
 }
 

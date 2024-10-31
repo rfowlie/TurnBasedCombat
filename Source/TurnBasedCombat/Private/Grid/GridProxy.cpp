@@ -150,6 +150,11 @@ bool UGridProxy::IsAttackTile(UGridProxy* GridProxy)
 	return false;
 }
 
+FVector UGridProxy::GetWorldLocation() const
+{
+	return GridTile->GetActorLocation();
+}
+
 FGridPosition UGridProxy::GetGridPosition() const
 {
 	return UGridUtility::CalculateGridPosition(GridTile);

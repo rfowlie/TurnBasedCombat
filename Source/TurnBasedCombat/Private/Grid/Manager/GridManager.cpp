@@ -1,19 +1,31 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "TurnBasedCombat/Public/Grid/GridManager.h"
-
+#include "Grid/Manager/GridManager.h"
+#include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystemComponent.h"
 #include "Grid/GridUtility.h"
-#include "Grid/TurnManager.h"
+#include "Grid/Manager/TurnManager.h"
+#include "Grid/Manager/GridEventPayload.h"
 #include "TurnBasedCombat/Public/Grid/Tile/GridTile.h"
 #include "TurnBasedCombat/Public/Grid/Unit/GridUnit.h"
 
 
+UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Grid_Move, "Event.Grid.Move");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Grid_Attack, "Event.Grid.Attack");
+
+
 UGridManager::UGridManager()
+{	
+}
+
+void UGridManager::Initialize(UTurnManager* InTurnManager)
 {
-	// TurnManager = NewObject<UTurnManager>(this);
-	TurnManager = CreateDefaultSubobject<UTurnManager>(TEXT("TurnManager"));
+	TurnManager = InTurnManager;
+	// TurnManager = CreateDefaultSubobject<UTurnManager>(TEXT("TurnManager"));
+	//
+	// // bind function to FactionWin
+	// TurnManager->OnFactionWin.BindUObject(this, &ThisClass::)
 }
 
 void UGridManager::RegisterGridTile(AGridTile* GridTile)
@@ -96,35 +108,26 @@ void UGridManager::CreateMoveEvent(UGridProxy* Instigator, UGridProxy* Location)
 		OnGridEventStart.Broadcast();
 	}
 
-	AGridUnit* GridUnit = Instigator->GridUnit;
-	
-	FGridPosition GridPosition = UGridUtility::CalculateGridPosition(GridUnit);
-	LocationGridUnitMap.Remove(GridPosition);
-	GridUnitLocationMap.Remove(GridUnit);
-
-	GridUnit->OnEventMoveEnd.AddUniqueDynamic(this, &ThisClass::PostMoveEvent);
-	// GridUnit->OnAbilityMoveEnd.AddLambda([this, GridUnit]()
-	// {		
-	// 	// update the unit that has moved
-	// 	FGridPosition GridPosition = UGridUtility::CalculateGridPosition(GridUnit);		
-	// 	LocationGridUnitMap.Add(GridPosition, GridUnit);
-	// 	GridUnitLocationMap.Add(GridUnit, GridPosition);
-	// 	
-	// 	if (OnGridEventEnd.IsBound())
-	// 	{
-	// 		OnGridEventEnd.Broadcast();
-	// 	}
-	// });
-	
+	// subscribe to end event and notify grid unit to move
+	Instigator->GridUnit->OnEventMoveEnd.AddUniqueDynamic(this, &ThisClass::PostEvent_Move);
+	// TODO: use a gameplay event instead
 	Instigator->GridUnit->MovementEvent(Location->GridTile->GetPlacementLocation());
 }
 
-void UGridManager::PostMoveEvent(AGridUnit* GridUnit)
+void UGridManager::PostEvent_Move(AGridUnit* GridUnit)
 {
 	if (!IsValid(GridUnit)) { return; }
+
+	// update turn manager
+	TurnManager->UpdateGridUnitMoved(GridUnit);
 	
-	// update the unit that has moved
-	FGridPosition GridPosition = UGridUtility::CalculateGridPosition(GridUnit);		
+	// update unit mappings
+	// remove mapping for grid unit (will be updated on complete)
+	LocationGridUnitMap.Remove(GridUnitLocationMap[GridUnit]);
+	GridUnitLocationMap.Remove(GridUnit);
+
+	// update the unit that has moved	
+	const FGridPosition GridPosition = UGridUtility::CalculateGridPosition(GridUnit);
 	LocationGridUnitMap.Add(GridPosition, GridUnit);
 	GridUnitLocationMap.Add(GridUnit, GridPosition);
 		
@@ -134,15 +137,74 @@ void UGridManager::PostMoveEvent(AGridUnit* GridUnit)
 	}
 }
 
-// bool UGridManager::CreateMoveEvent(
-// 	UGridProxy* Instigator, UGridProxy* Location, const TMulticastDelegate<void(UGameplayAbility*)>::FDelegate& Callback)
-// {
-// 	
-// }
-
-bool UGridManager::CreateAttackEvent(UGridProxy* Instigator, UGridProxy* Target, UGridProxy* Location)
+void UGridManager::CreateAttackEvent(UGridProxy* Instigator, UGridProxy* Location, UGridProxy* Target)
 {
-	return false;
+	// TODO
+	if (!IsValid(Instigator) || !IsValid(Location) || !IsValid(Target))
+	{
+		UE_LOG(LogTemp, Error, TEXT("Create Attack Event: parameter null..."));
+		return;
+	}
+
+	// check if this unit can move and location does not contain a unit
+	if (!TurnManager->CanTakeTurn(Instigator->GridUnit) ||
+		Location->GridUnit != nullptr ||
+		Target->GridUnit == nullptr)
+	{
+		UE_LOG(LogTemp, Error, TEXT("Create Attack Event: conditions not met..."));
+		return;
+	}
+	
+	// broadcast event starting
+	if (OnGridEventStart.IsBound())
+	{
+		OnGridEventStart.Broadcast();
+	}
+	
+	// subscribe to end event and notify grid unit to move
+	Instigator->GridUnit->OnEventAttackEnd.AddUniqueDynamic(this, &ThisClass::PostEvent_Attack);
+	// TODO: use a gameplay event instead
+	Instigator->GridUnit->AttackEvent(Location->GridTile->GetPlacementLocation(), Target->GridUnit);
+
+	// TODO: try and activate through gameplay event instead of this current way...
+	{
+		// UAbilitySystemComponent* AbilitySystemComponent = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(Instigator->GridUnit);
+		// FGameplayAbilitySpecHandle AbilityHandle;
+		// FGameplayEventData EventData;
+		// EventData.Instigator = Instigator->GridUnit;
+		// EventData.Target = Target->GridUnit;
+		// UGridEventPayload* GridEventPayload = NewObject<UGridEventPayload>(this);
+		// EventData.OptionalObject = GridEventPayload;
+		// AbilitySystemComponent->TriggerAbilityFromGameplayEvent(
+		// 	AbilityHandle,
+		// 	AbilitySystemComponent->AbilityActorInfo.Get(),
+		// 	TAG_Event_Grid_Attack,
+		// 	&EventData, 
+		// 	*AbilitySystemComponent);
+	}
+}
+
+void UGridManager::PostEvent_Attack(AGridUnit* GridUnit)
+{
+	if (!IsValid(GridUnit)) { return; }
+
+	// update turn manager
+	TurnManager->UpdateGridUnitMoved(GridUnit);
+	
+	// update unit mappings
+	// remove mapping for grid unit (will be updated on complete)
+	LocationGridUnitMap.Remove(GridUnitLocationMap[GridUnit]);
+	GridUnitLocationMap.Remove(GridUnit);
+
+	// update the unit that has moved	
+	const FGridPosition GridPosition = UGridUtility::CalculateGridPosition(GridUnit);
+	LocationGridUnitMap.Add(GridPosition, GridUnit);
+	GridUnitLocationMap.Add(GridUnit, GridPosition);
+		
+	if (OnGridEventEnd.IsBound())
+	{
+		OnGridEventEnd.Broadcast();
+	}
 }
 
 void UGridManager::OnEndEvent()
@@ -155,7 +217,9 @@ void UGridManager::OnEndEvent()
 
 bool UGridManager::IsMatch(const UGridProxy* GridProxy_A, const UGridProxy* GridProxy_B)
 {
-	return GridProxy_A->GridTile == GridProxy_B->GridTile && GridProxy_A->GridUnit == GridProxy_B->GridUnit;
+	bool bMatch_Tile = GridProxy_A->GridTile == GridProxy_B->GridTile;
+	bool bMatch_Unit = GridProxy_A->GridUnit == GridProxy_B->GridUnit;
+	return bMatch_Tile && bMatch_Unit;
 }
 
 void UGridManager::OnBeginCursorOverGridTile(AActor* Actor)
@@ -176,9 +240,7 @@ void UGridManager::OnBeginCursorOverGridTile(AActor* Actor)
 		CurrentHoveredTile->SetHovered(true);
 		if (OnGridTileHovered.IsBound())
 		{
-			// TODO: what are we broadcasting???
-			// OnGridTileHovered.Broadcast();
-			// OnGridTileHovered.Broadcast(GridTileHovered->TerrainDataAsset, GridTileHovered->GetSnapshot(), GridTileHovered->Terrain_Internal);
+			OnGridTileHovered.Broadcast(CurrentHoveredTile);
 		}
 
 		// unit

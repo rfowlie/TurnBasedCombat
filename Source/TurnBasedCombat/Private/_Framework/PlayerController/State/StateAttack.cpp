@@ -7,9 +7,7 @@
 #include "EnhancedInputComponent.h"
 #include "InputMappingContext.h"
 #include "InputAction.h"
-#include "EventSystem/Events/EventUnitAttack.h"
-#include "EventSystem/Events/EventUnitMove.h"
-#include "Grid/GridManager.h"
+#include "Grid/Manager/GridManager.h"
 #include "Grid/GridProxy.h"
 
 
@@ -26,11 +24,9 @@ UStateAttack::UStateAttack()
 
 void UStateAttack::Initialize(UGridManager* InGridManager)
 {
-	// only allow setting once?
-	if (GridManager == nullptr && InGridManager)
-	{
-		GridManager = InGridManager;
-	}
+	GridManager = InGridManager;
+	GridManager->OnGridEventStart.AddUObject(this, &ThisClass::Disable);
+	GridManager->OnGridEventEnd.AddUObject(this, &ThisClass::Enable);
 }
 
 UInputMappingContext* UStateAttack::SetupInputMappingContext(APlayerController* PlayerController)
@@ -151,15 +147,18 @@ void UStateAttack::OnSelect()
 			Phase = EAttackPhase::SelectedAttackTile;
 		}
 		// check if same tile is selected to confirm attack
-		if (GridProxyMoveTo == GridProxy)
+		if (GridManager->IsMatch(GridProxyMoveTo ,GridProxy))
 		{
-			TArray<UAbstractEvent*> Events;
-			UEventUnitMove* EventMove = NewObject<UEventUnitMove>(this);
-			UEventUnitAttack* EventAttack = NewObject<UEventUnitAttack>(this);
-			Events.AddUnique(EventMove);
-			Events.AddUnique(EventAttack);
-			OnEventCreate.Execute(Events);
+			GridManager->CreateAttackEvent(GridProxyCurrent, GridProxyMoveTo, GridProxyTarget);
 		}
+		// {
+		// 	TArray<UAbstractEvent*> Events;
+		// 	UEventUnitMove* EventMove = NewObject<UEventUnitMove>(this);
+		// 	UEventUnitAttack* EventAttack = NewObject<UEventUnitAttack>(this);
+		// 	Events.AddUnique(EventMove);
+		// 	Events.AddUnique(EventAttack);
+		// 	OnEventCreate.Execute(Events);
+		// }
 		break;
 	}
 }
@@ -222,4 +221,32 @@ void UStateAttack::UndoSelectedAttackTile()
 {
 	if (GridProxyMoveTo) { GridProxyMoveTo->SetMoveToTile(false); }
 	GridProxyMoveTo = nullptr;
+}
+
+void UStateAttack::Enable()
+{
+	UE_LOG(LogTemp, Warning, TEXT("UAttackState - Enable"));
+	if (GridProxyCurrent)
+	{
+		GridProxyCurrent->SetMoveableTiles(false);
+		GridProxyCurrent = nullptr;
+	}
+	if (GridProxyTarget)
+	{
+		GridProxyTarget->UndoAll();
+		GridProxyTarget = nullptr;
+	}
+	if (GridProxyMoveTo)
+	{
+		GridProxyMoveTo->UndoAll();
+		GridProxyMoveTo = nullptr;
+	}
+		
+	Phase = EAttackPhase::Idle;
+}
+
+void UStateAttack::Disable()
+{
+	UE_LOG(LogTemp, Warning, TEXT("UAttackState - Disable"));
+	Phase = EAttackPhase::None;
 }

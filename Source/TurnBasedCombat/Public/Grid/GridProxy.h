@@ -65,6 +65,7 @@ public:
 	bool IsMoveTile(UGridProxy* GridProxy);
 	bool IsAttackTile(UGridProxy* GridProxy);
 
+	FVector GetWorldLocation() const;
 	FGridPosition GetGridPosition() const;
 protected:
 	UPROPERTY()

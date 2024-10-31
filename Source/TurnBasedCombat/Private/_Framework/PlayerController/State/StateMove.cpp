@@ -7,24 +7,18 @@
 #include "EnhancedInputComponent.h"
 #include "InputAction.h"
 #include "InputMappingContext.h"
-#include "Abilities/GameplayAbility.h"
-#include "TurnBasedCombat/Public/EventSystem/Events/EventUnitMove.h"
-#include "TurnBasedCombat/Public/Grid/GridManager.h"
+#include "TurnBasedCombat/Public/Grid/Manager/GridManager.h"
 
 
 UStateMove::UStateMove()
 {
-	ResetCallback.BindUObject(this, &ThisClass::Reset);
 }
 
 void UStateMove::Initialize(UGridManager* InGridManager)
 {
 	GridManager = InGridManager;
-	// GridManager->OnGridEventStart.AddUObject(this, &ThisClass::Disable);
-	// GridManager->OnGridEventStart.AddLambda([this](){ Disable(); });
-	GridManager->OnGridEventStart.AddDynamic(this, &ThisClass::Disable);
-	// GridManager->OnGridEventEnd.AddUObject(this, &ThisClass::Enable);
-	GridManager->OnGridEventEnd.AddDynamic(this, &ThisClass::Enable);
+	GridManager->OnGridEventStart.AddUObject(this, &ThisClass::Disable);
+	GridManager->OnGridEventEnd.AddUObject(this, &ThisClass::Enable);
 }
 
 UInputMappingContext* UStateMove::SetupInputMappingContext(APlayerController* PlayerController)
@@ -223,9 +217,4 @@ void UStateMove::Disable()
 {
 	UE_LOG(LogTemp, Warning, TEXT("UStateMove - Disable"));
 	Phase = EMovePhase::None;
-}
-
-void UStateMove::Reset(UGameplayAbility* GameplayAbility)
-{
-	Enable();
 }

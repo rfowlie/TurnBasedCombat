@@ -68,7 +68,8 @@ protected:
 	UPROPERTY()
 	UInputAction* IA_Cycle = nullptr;
 	
-	virtual UInputMappingContext* SetupInputMappingContext(APlayerController* PlayerController) override;
+	virtual UInputMappingContext* SetupInputMappingContext(
+		APlayerController* PlayerController) override;
 
 	virtual void OnEnter() override;
 	virtual void OnExit() override;
@@ -81,4 +82,9 @@ protected:
 	void UndoSelectedAttacker();
 	void UndoSelectedTarget();
 	void UndoSelectedAttackTile();
+	
+	UFUNCTION()
+	void Enable();
+	UFUNCTION()
+	void Disable();
 };

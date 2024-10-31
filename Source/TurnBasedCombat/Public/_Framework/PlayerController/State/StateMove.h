@@ -4,7 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "AbstractPlayerControllerState.h"
-#include "Grid/Unit/GridUnit.h"
 #include "StateMove.generated.h"
 
 
@@ -28,10 +27,6 @@ public:
 	UStateMove();
 	
 	void Initialize(UGridManager* InGridManager);
-	
-	FGameplayAbilityEndCallback ResetCallback;
-	UFUNCTION()
-	void Reset(UGameplayAbility* GameplayAbility);
 	
 
 protected:
