@@ -8,15 +8,16 @@
 #include "StateAttack.generated.h"
 
 
-class UInputAction;
-class UGridProxy;
-class UGridManager;
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Encounter_Mode_Attack);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Grid_State_Attacker);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Grid_State_Attackable);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Grid_State_Target);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Grid_State_TargetFrom);
 
+
+class UInputAction;
+class UGridProxy;
+class UGridManager;
 
 // USTRUCT()
 // struct FTilesInRange
@@ -67,7 +68,8 @@ protected:
 	UPROPERTY()
 	UInputAction* IA_Cycle = nullptr;
 	
-	virtual UInputMappingContext* SetupInputMappingContext(APlayerController* PlayerController) override;
+	virtual UInputMappingContext* SetupInputMappingContext(
+		APlayerController* PlayerController) override;
 
 	virtual void OnEnter() override;
 	virtual void OnExit() override;
@@ -80,4 +82,9 @@ protected:
 	void UndoSelectedAttacker();
 	void UndoSelectedTarget();
 	void UndoSelectedAttackTile();
+	
+	UFUNCTION()
+	void Enable();
+	UFUNCTION()
+	void Disable();
 };

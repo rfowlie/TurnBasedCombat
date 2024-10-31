@@ -8,13 +8,14 @@
 #include "GridProxy.generated.h"
 
 
-struct FGridPosition;
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Encounter_Mode_Move);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Grid_State_Idle);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Grid_State_Mover);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Grid_State_Moveable);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Grid_State_MoveTo);
 
 
+struct FGridPosition;
 struct FGridMovement;
 class UTurnManager;
 class AGridUnit;
@@ -31,6 +32,8 @@ class TURNBASEDCOMBAT_API UGridProxy : public UObject
 {
 	GENERATED_BODY()
 
+	friend class UGridManager;
+
 public:
 	// Factory method
 	static UGridProxy* CreateGridProxy(
@@ -40,6 +43,8 @@ public:
 		AGridUnit* GridUnit,
 		const FCalculateGridMovement& InMovementDelegate,
 		TArray<FGridMovement> InGridMovements);
+	
+	// void SetState(FGameplayTag State);
 	
 	void UndoAll();
 	void SetMoveableTiles(bool Activate);
@@ -53,12 +58,15 @@ public:
 
 	TArray<int32> GetAttackRanges();
 
+	bool HasUnit() const;
 	bool IsAlly(UGridProxy* GridProxy);
 	bool IsPlayer();
 	bool IsEnemy();
 	bool IsMoveTile(UGridProxy* GridProxy);
 	bool IsAttackTile(UGridProxy* GridProxy);
 
+	FVector GetWorldLocation() const;
+	FGridPosition GetGridPosition() const;
 protected:
 	UPROPERTY()
 	UTurnManager* TurnManager = nullptr;	

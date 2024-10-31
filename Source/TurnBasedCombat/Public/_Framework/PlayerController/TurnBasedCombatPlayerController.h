@@ -7,6 +7,8 @@
 #include "TurnBasedCombatPlayerController.generated.h"
 
 
+class UInputMappingContext;
+class UInputAction;
 class UAbstractPlayerControllerState;
 class UGridManager;
 
@@ -20,6 +22,7 @@ class TURNBASEDCOMBAT_API ATurnBasedCombatPlayerController : public APlayerContr
 
 public:
 	ATurnBasedCombatPlayerController();
+	virtual void BeginPlay() override;
 
 	virtual void Initialize(UGridManager* InGridManager);
 
@@ -35,4 +38,25 @@ protected:
 	int32 ControllerStateIndex = -1;
 	UFUNCTION()
 	void SetState(UAbstractPlayerControllerState* NewState);
+
+	void CreateDefaultInputMapping();
+	UFUNCTION()
+	void AddInputMapping();
+	UFUNCTION()
+	void RemoveInputMapping();
+
+	UPROPERTY()
+	UInputMappingContext* InputMappingContext = nullptr;
+	UPROPERTY()
+	UInputAction* IA_Pause = nullptr;
+	UFUNCTION()
+	void PauseMenu();
+	UPROPERTY()
+	UInputAction* IA_CycleMode = nullptr;
+	UFUNCTION()
+	void CycleMode();
+	UPROPERTY()
+	UInputAction* IA_MoveCamera = nullptr;
+	UFUNCTION()
+	void Controls();
 };

@@ -3,10 +3,13 @@
 
 #include "TurnBasedCombat/Public/Grid/Tile/GridTile.h"
 
+#include "Grid/Manager/GridManager.h"
+#include "_Framework/GameMode/TurnBasedCombatGameMode.h"
+
 
 AGridTile::AGridTile()
 {
-	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bCanEverTick = false;
 }
 
 // Called every frame
@@ -20,6 +23,21 @@ bool AGridTile::SetState_Implementation(const FGameplayTag State)
 	return false;
 }
 
+FVector AGridTile::GetPlacementLocation_Implementation() const
+{
+	return GetActorLocation() + PlacementLocation;
+}
+
+int32 AGridTile::GetMovementCost_Implementation() const
+{
+	if (!TerrainDataAsset)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("No Terrain Data Asset Assigned To Tile: %s, movement cost = 1"), *this->GetName());
+		return 1;
+	}
+	return TerrainDataAsset->TerrainStats.MovementCost;
+}
+
 FTileStatsSnapshot AGridTile::GetSnapshot() const
 {
 	FTileStatsSnapshot Value;
@@ -31,7 +49,12 @@ FTileStatsSnapshot AGridTile::GetSnapshot() const
 // Called when the game starts or when spawned
 void AGridTile::BeginPlay()
 {
-	Super::BeginPlay();	
+	Super::BeginPlay();
+
+	if (ATurnBasedCombatGameMode* GameMode = Cast<ATurnBasedCombatGameMode>(GetWorld()->GetAuthGameMode()))
+	{
+		GameMode->RegisterGridTile(this);
+	}
 }
 
 void AGridTile::NotifyActorBeginCursorOver()
