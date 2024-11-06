@@ -21,6 +21,7 @@ UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Event_Grid_Attack);
 // TODO: do not pass GridProxy, create new class or interface to pass out
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnGridHovered, UGridProxy*, GridProxy);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FGridTileHovered, const AGridTile*, GridTile);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FGridUnitHovered, const AGridUnit*, GridUnit);
 DECLARE_MULTICAST_DELEGATE(FGridManagerDelegate);
 
 
@@ -41,6 +42,8 @@ public:
 	FOnGridHovered OnGridHovered;
 	UPROPERTY(BlueprintAssignable)
 	FGridTileHovered OnGridTileHovered;
+	UPROPERTY(BlueprintAssignable)
+	FGridUnitHovered OnGridUnitHovered;
 
 	// TODO: rename this, make it make sense
 	UGridProxy* GetCurrentHoveredGridTile();
@@ -89,8 +92,10 @@ private:
 	TMap<AGridUnit*, FGridPosition> GridUnitLocationMap;
 
 	TArray<FGridMovement> CalculateGridMovement(AGridUnit* GridUnit);
-	void CalculateGridAttacks(TArray<FGridPosition>& OutGridPositions, AGridUnit* GridUnit);
+	void CalculateGridAttacks(TArray<const AGridUnit*> OutGridUnitsInRange, AGridUnit* GridUnit);
+	TArray<FGridPair> CalculateGridAttacks(AGridUnit* GridUnit);
 	TArray<FTargetingUnit> CalculateGridTargets(AGridUnit* GridUnit);
+	void GetEnemyUnits(TArray<AGridUnit*>& EnemyGridUnits, AGridUnit* GridUnit);
 	TArray<FGridPosition> GetEnemyPositions(const AGridUnit* GridUnit) const;
 	
 	// difference from utils is that this returns AGridTile instead of FGridPositio

@@ -63,12 +63,24 @@ void UGridManager::RegisterGridUnit(AGridUnit* GridUnit)
 
 UGridProxy* UGridManager::GetCurrentHoveredGridTile()
 {
+	// check that current hovered tile and current hovered unit exist???
+	// NO a proxy is a wrapper for a grid position that will contain a tile and maybe a unit
+	if (CurrentHoveredTile == nullptr)
+	{
+		return nullptr;
+	}
+	
+	// TODO: not finished, need to determine if this makes sense...
 	// put together a grid proxy
-	FCalculateGridMovement CalculateGridMovementDelegate;
+	const FCalculateGridMovement CalculateGridMovementDelegate;
 	TArray<FGridMovement> GridMovements;
+	// TArray<const AGridUnit*> OutEnemyUnitsInRange;
+	TArray<FGridPair> GridPairs;
 	if (CurrentHoveredUnit !=  nullptr)
 	{
 		GridMovements = CalculateGridMovement(CurrentHoveredUnit);
+		// CalculateGridAttacks(OutEnemyUnitsInRange, CurrentHoveredUnit);
+		GridPairs = CalculateGridAttacks(CurrentHoveredUnit);
 	}
 	
 	return UGridProxy::CreateGridProxy(
@@ -77,7 +89,8 @@ UGridProxy* UGridManager::GetCurrentHoveredGridTile()
 		CurrentHoveredTile,
 		CurrentHoveredUnit,
 		CalculateGridMovementDelegate,
-		GridMovements);
+		GridMovements,
+		GridPairs);
 	
 	// NOTE: cannot create grid proxy with new object as we made the constructor private
 	// return NewObject<UGridProxy>(this);
@@ -256,6 +269,10 @@ void UGridManager::OnBeginCursorOverGridTile(AActor* Actor)
 		{
 			CurrentHoveredUnit = LocationGridUnitMap[GridPosition];
 			CurrentHoveredUnit->SetHovered(true);
+			if (OnGridUnitHovered.IsBound())
+			{
+				OnGridUnitHovered.Broadcast(CurrentHoveredUnit);
+			}
 		}
 	}
 }
@@ -357,11 +374,13 @@ TArray<FGridMovement> UGridManager::CalculateGridMovement(AGridUnit* GridUnit)
     return Output;
 }
 
-void UGridManager::CalculateGridAttacks(TArray<FGridPosition>& OutGridPositions, AGridUnit* GridUnit)
-{
+void UGridManager::CalculateGridAttacks(TArray<const AGridUnit*> OutGridUnitsInRange, AGridUnit* GridUnit)
+{	
 	TMap<int32, TSet<AGridTile*>> RangeTileMap;
 	TSet<int32> WeaponRanges = GridUnit->GetWeaponRanges();
 	TArray<FGridPosition> EnemyPositions = GetEnemyPositions(GridUnit);
+	TArray<AGridUnit*> EnemyGridUnits;
+	GetEnemyUnits(EnemyGridUnits, GridUnit);
 	TArray<FGridMovement> GridMovements = CalculateGridMovement(GridUnit);
 	TMap<FGridPosition, bool> MovementMap;
 	for (const auto GridMovement : GridMovements)
@@ -370,30 +389,63 @@ void UGridManager::CalculateGridAttacks(TArray<FGridPosition>& OutGridPositions,
 	}
 
 	TArray<FGridPosition> TempPositions;
-	for (const FGridPosition EnemyPosition : EnemyPositions)
+	for (const AGridUnit* EnemyUnit : EnemyGridUnits)
 	{
 		for (const int32 WeaponRange : WeaponRanges)
 		{
 			TempPositions.Empty();
-			UGridUtility::GetGridPositionsAtRange(EnemyPosition, WeaponRange, TempPositions);
+			UGridUtility::GetGridPositionsAtRange(
+				UGridUtility::CalculateGridPosition(EnemyUnit), WeaponRange, TempPositions);
 			for (FGridPosition RangePosition : TempPositions)
 			{
-				if (MovementMap.Contains(RangePosition))
+				if (MovementMap.Contains(RangePosition) && MovementMap[RangePosition] == false)
 				{
 					MovementMap[RangePosition] = true;
+					OutGridUnitsInRange.AddUnique(EnemyUnit);
 				}
 			}
 		}		
 	}
+}
 
-	// only return map values that are true
-	for (auto Pair : MovementMap)
+TArray<FGridPair> UGridManager::CalculateGridAttacks(AGridUnit* GridUnit)
+{
+	TArray<FGridPair> OutGridPairs;
+
+	TMap<int32, TSet<AGridTile*>> RangeTileMap;
+	TSet<int32> WeaponRanges = GridUnit->GetWeaponRanges();
+	TArray<FGridPosition> EnemyPositions = GetEnemyPositions(GridUnit);
+	TArray<AGridUnit*> EnemyGridUnits;
+	GetEnemyUnits(EnemyGridUnits, GridUnit);
+	TArray<FGridMovement> GridMovements = CalculateGridMovement(GridUnit);
+	TMap<FGridPosition, bool> MovementMap;
+	for (const auto GridMovement : GridMovements)
 	{
-		if (Pair.Value)
-		{
-			OutGridPositions.Add(Pair.Key);
-		}
+		MovementMap.Add(GridMovement.GridPosition, false);
 	}
+
+	TArray<FGridPosition> TempPositions;
+	for (AGridUnit* EnemyUnit : EnemyGridUnits)
+	{
+		for (const int32 WeaponRange : WeaponRanges)
+		{
+			TempPositions.Empty();
+			UGridUtility::GetGridPositionsAtRange(
+				UGridUtility::CalculateGridPosition(EnemyUnit), WeaponRange, TempPositions);
+			for (FGridPosition RangePosition : TempPositions)
+			{
+				if (MovementMap.Contains(RangePosition) && MovementMap[RangePosition] == false)
+				{
+					MovementMap[RangePosition] = true;
+					// find the tile that matches with this unit					
+					OutGridPairs.Add(
+						FGridPair(LocationGridTileMap[GridUnitLocationMap[EnemyUnit]], EnemyUnit));
+				}
+			}
+		}		
+	}
+	
+	return OutGridPairs;
 }
 
 TArray<FTargetingUnit> UGridManager::CalculateGridTargets(AGridUnit* GridUnit)
@@ -494,6 +546,18 @@ TArray<FTargetingUnit> UGridManager::CalculateGridTargets(AGridUnit* GridUnit)
 	// }
 	//
 	// return UnitsBeingTargeted;
+}
+
+void UGridManager::GetEnemyUnits(TArray<AGridUnit*>& EnemyGridUnits, AGridUnit* GridUnit)
+{
+	// TODO: will need to have some checking to not include allied factions...
+	for (const auto Unit : GridUnitsAll)
+	{
+		if (GridUnit->GetFaction() != Unit->GetFaction())
+		{
+			EnemyGridUnits.AddUnique(Unit);
+		}		
+	}
 }
 
 TArray<FGridPosition> UGridManager::GetEnemyPositions(const AGridUnit* GridUnit) const

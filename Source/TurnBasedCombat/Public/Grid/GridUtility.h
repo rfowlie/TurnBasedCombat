@@ -33,6 +33,9 @@ public:
 	};		
 
 	UFUNCTION(BlueprintCallable)
+	static int32 GetDistanceBetweenGridPositions(const FGridPosition& positionA, const FGridPosition& positionB);
+
+	UFUNCTION(BlueprintCallable)
 	static int32 GetGridSize() { return 100; }
 
 	UFUNCTION(BlueprintCallable)

@@ -50,7 +50,16 @@ struct TURNBASEDCOMBAT_API FGridPosition
 	FGridPosition operator-(const FGridPosition& Other) const
 	{
 		return FGridPosition(X - Other.X, Y - Other.Y);
-	}	
+	}
+
+	/*
+	 * LEARNING
+	 * you can have C++ functions on structs
+	 */
+	// int32 InRange(const FGridPosition& Other) const
+	// {
+	// 	return FMath::Abs((X - Other.X) + (Y - Other.Y));
+	// }
 };
 
 // Define a custom GetTypeHash function for hashing
@@ -73,7 +82,7 @@ struct TURNBASEDCOMBAT_API FGridMovement
 	// 	GridTile(GridTileVal), GridLocation(GridPositionVal), AvailableMovement(AvailableMovementVal) {}
 	
 
-	UPROPERTY()
+	UPROPERTY(BlueprintReadOnly)
 	TSoftObjectPtr<AGridTile> GridTile = nullptr;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -133,5 +142,25 @@ struct FTileStatsSnapshot
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	FTerrainStats TerrainStats;
+	
+};
+
+USTRUCT(BlueprintType)
+struct FGridPair
+{
+	GENERATED_BODY()
+
+	/*
+	 * LEARNING
+	 * Default constructors are mandatory for USTRUCTS???
+	 */
+	FGridPair() {}
+	FGridPair(AGridTile* InGridTile, AGridUnit* InGridUnit) : GridTile(InGridTile), GridUnit(InGridUnit) {}
+	
+	UPROPERTY(BlueprintReadOnly)
+	AGridTile* GridTile = nullptr;
+
+	UPROPERTY(BlueprintReadOnly)
+	AGridUnit* GridUnit = nullptr;
 	
 };

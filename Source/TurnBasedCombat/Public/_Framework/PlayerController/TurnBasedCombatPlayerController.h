@@ -29,7 +29,9 @@ public:
 protected:
 	UPROPERTY()
 	UGridManager* GridManager = nullptr;
-	
+
+	UPROPERTY()
+	UAbstractPlayerControllerState* StateWait = nullptr;
 	UPROPERTY()
 	TArray<UAbstractPlayerControllerState*> ControllerStates;
 	UPROPERTY()
@@ -59,4 +61,10 @@ protected:
 	UInputAction* IA_MoveCamera = nullptr;
 	UFUNCTION()
 	void Controls();
+
+	void CreateStates();
+	UFUNCTION()
+	void EnableState();
+	UFUNCTION()
+	void DisableState();
 };

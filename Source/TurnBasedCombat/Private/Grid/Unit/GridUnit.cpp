@@ -145,13 +145,15 @@ bool AGridUnit::MovementEvent(const FVector& Location)
 bool AGridUnit::AttackEvent(const FVector& Location, AGridUnit* Target)
 {
 	// TODO
-	if (!AbilitySystemComponent) { return false; }
+	if (!AbilitySystemComponent || Target == nullptr) { return false; }
 	
 	FGameplayAbilitySpec* GameplayAbilitySpec = AbilitySystemComponent->FindAbilitySpecFromHandle(GameplayAbilitySpecHandle_Attack);
 	if (GameplayAbilitySpec->Ability == nullptr) { return false; }
 
-	// set location as parameter on ability???
+	// TODO: will use GAS to populate data and pass the data instead of the actor holding the information
+	// pass loaction and target
 	MoveAbilityLocation = Location;
+	AttackAbilityTarget = Target;
 	
 	// activate ability
 	return AbilitySystemComponent->TryActivateAbility(GameplayAbilitySpecHandle_Attack);
@@ -160,21 +162,17 @@ bool AGridUnit::AttackEvent(const FVector& Location, AGridUnit* Target)
 FName AGridUnit::GetFaction() const
 {
 	// TODO: for now...
-	const FString F = "Faction_" + FString::FromInt(Faction);
-	return FName(F);
-}
-
-TArray<UWeapon*> AGridUnit::GetEquippedWeapons() const
-{
-	return EquippedWeapons;
+	// const FString F = "Faction_" + FString::FromInt(Faction);
+	// return "Faction_" + FString::FromInt(Faction);
+	return FName(FString::FromInt(Faction));
 }
 
 TSet<int32> AGridUnit::GetWeaponRanges() const
 {
 	TSet<int32> OutValues;
-	for (const auto Weapon : EquippedWeapons)
+	for (const auto DataAsset : WeaponDataAssets)
 	{
-		OutValues.Add(Weapon->GetRange());
+		OutValues.Add(DataAsset->WeaponStats.Range);
 	}
 
 	return OutValues;

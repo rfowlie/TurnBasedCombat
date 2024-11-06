@@ -4,6 +4,11 @@
 #include "Grid/GridUtility.h"
 
 
+int32 UGridUtility::GetDistanceBetweenGridPositions(const FGridPosition& positionA, const FGridPosition& positionB)
+{
+	return FMath::Abs(positionA.X - positionB.X) + FMath::Abs(positionA.Y - positionB.Y);
+}
+
 FGridPosition UGridUtility::CalculateGridPosition(const AActor* Actor)
 {
 	FGridPosition GridPosition;

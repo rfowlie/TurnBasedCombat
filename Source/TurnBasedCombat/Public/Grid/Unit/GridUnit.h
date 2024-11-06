@@ -54,6 +54,8 @@ public:
 
 	UPROPERTY(BlueprintReadOnly)
 	FVector MoveAbilityLocation = FVector::ZeroVector;
+	UPROPERTY(BlueprintReadOnly)
+	AGridUnit* AttackAbilityTarget = nullptr;
 	
 	// DECLARE_EVENT(AGridUnit, FGridUnitAbilityEvent)
 	// FGridUnitAbilityEvent OnAbilityMoveEnd;
@@ -101,24 +103,14 @@ public:
 	bool MovementEvent(const FVector& Location);
 	bool AttackEvent(const FVector& Location, AGridUnit* Target);
 
-protected:	
-	UPROPERTY()
-	TArray<UWeapon*> EquippedWeapons;
-	
-	UPROPERTY()
-	TArray<UItemBase*> EquippedItems;
-	
+protected:
 	// Just for setup, will then need to instance to keep track of changes
 	UPROPERTY(EditInstanceOnly, BlueprintReadOnly)
 	TArray<UWeaponDataAsset*> WeaponDataAssets;
 
-	//////////////////////////////////////////////////////
 public:
 	UFUNCTION(BlueprintCallable)
 	FName GetFaction() const;
-	
-	UFUNCTION(BlueprintCallable)
-	TArray<UWeapon*> GetEquippedWeapons() const;
 
 	TSet<int32> GetWeaponRanges() const;
 
