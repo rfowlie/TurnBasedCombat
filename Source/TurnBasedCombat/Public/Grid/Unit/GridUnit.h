@@ -11,6 +11,7 @@
 #include "GridUnit.generated.h"
 
 
+class UGridUnitAttributeSet;
 class UGameplayAbility;
 class UAttributeSet;
 class UWeaponDataAsset;
@@ -38,36 +39,38 @@ public:
 	AGridUnit();
 	virtual void Tick(float DeltaTime) override;
 
-	// Ability System - start
+	// Ability System ~ start
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	UGridUnitAttributeSet* AttributeSet_GridUnit;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	UAbilitySystemComponent* AbilitySystemComponent;
-
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override { return AbilitySystemComponent; }
 	
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	UAttributeSet* AttributeSet;
-
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TSubclassOf<UGameplayAbility> GameplayAbilityClass_Move;	
 	UPROPERTY(BlueprintReadOnly)
 	FGameplayAbilitySpecHandle GameplayAbilitySpecHandle_Move;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TSubclassOf<UGameplayAbility> GameplayAbilityClass_Attack;	
+	UPROPERTY(BlueprintReadOnly)
+	FGameplayAbilitySpecHandle GameplayAbilitySpecHandle_Attack;
+	// Ability System ~ end
 
+	// Placeholders ~ start
+	// TODO: temp placeholder variables
+	// will remove when we switch to calling abilities through gameplay events passing in event data
 	UPROPERTY(BlueprintReadOnly)
 	FVector MoveAbilityLocation = FVector::ZeroVector;
 	UPROPERTY(BlueprintReadOnly)
 	AGridUnit* AttackAbilityTarget = nullptr;
+	// Placeholders ~ end
 	
 	// DECLARE_EVENT(AGridUnit, FGridUnitAbilityEvent)
 	// FGridUnitAbilityEvent OnAbilityMoveEnd;
 	// FGridUnitAbilityEvent OnAbilityAttackEnd;
 	FGridUnitEventDelegate OnEventMoveEnd;
 	FGridUnitEventDelegate OnEventAttackEnd;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TSubclassOf<UGameplayAbility> GameplayAbilityClass_Attack;	
-	UPROPERTY(BlueprintReadOnly)
-	FGameplayAbilitySpecHandle GameplayAbilitySpecHandle_Attack;
-	// Ability System - end
 	
 	UPROPERTY(EditInstanceOnly)
 	UStatsDataAsset* StatsDataAsset;	
@@ -99,11 +102,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	UAnimMontage* Attack;
 	
-	// UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	bool MovementEvent(const FVector& Location);
 	bool AttackEvent(const FVector& Location, AGridUnit* Target);
 
-protected:
+protected:	
 	// Just for setup, will then need to instance to keep track of changes
 	UPROPERTY(EditInstanceOnly, BlueprintReadOnly)
 	TArray<UWeaponDataAsset*> WeaponDataAssets;
@@ -114,25 +116,8 @@ public:
 
 	TSet<int32> GetWeaponRanges() const;
 
-	// UNIT STATS start
-protected:	
-	UPROPERTY()
-	FUnitStatsSnapshot UnitStatsSnapshot;
-	
-public:		
-	UFUNCTION(BlueprintCallable)
-	FUnitStatsSnapshot GetSnapshot() const;
-	
-	UFUNCTION()
-	void UpdateStats(const FUnitStatsSnapshot& StatAdjustments);
-	
-	// UNIT STATS end
-
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	int32 Faction;
-
-	//////////////////////////////////////////////////////
-	///
 
 private:
 	UFUNCTION()

@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "AbilitySystemComponent.h"
 #include "AttributeSet.h"
+#include "Stats/StatsDataAsset.h"
 
 #include "GridUnitAttributeSet.generated.h"
 
@@ -16,6 +17,8 @@
 	GAMEPLAYATTRIBUTE_VALUE_INITTER(PropertyName)
 
 
+struct FUnitStatsSnapshot;
+class UStatsDataAsset;
 /**
  * 
  */
@@ -47,16 +50,29 @@ public:
 	UFUNCTION()
 	void OnRep_HealthMax(const FGameplayAttributeData& PreviousValue) const;
 
-	UPROPERTY(ReplicatedUsing="OnRep_HealthMax", BlueprintReadOnly, Category="Attributes | Core")
+	UPROPERTY(ReplicatedUsing="OnRep_Strength", BlueprintReadOnly, Category="Attributes | Core")
 	FGameplayAttributeData Strength;
 	ATTRIBUTE_ACCESSORS(UGridUnitAttributeSet, Strength);
 	UFUNCTION()
 	void OnRep_Strength(const FGameplayAttributeData& PreviousValue) const;
 
-	UPROPERTY(ReplicatedUsing="OnRep_HealthMax", BlueprintReadOnly, Category="Attributes | Core")
+	UPROPERTY(ReplicatedUsing="OnRep_Defence", BlueprintReadOnly, Category="Attributes | Core")
 	FGameplayAttributeData Defence;
 	ATTRIBUTE_ACCESSORS(UGridUnitAttributeSet, Defence);
 	UFUNCTION()
 	void OnRep_Defence(const FGameplayAttributeData& PreviousValue) const;
 
+	UPROPERTY(ReplicatedUsing="OnRep_Movement", BlueprintReadOnly, Category="Attributes | Core")
+	FGameplayAttributeData Movement;
+	ATTRIBUTE_ACCESSORS(UGridUnitAttributeSet, Movement);
+	UFUNCTION()
+	void OnRep_Movement(const FGameplayAttributeData& PreviousValue) const;
+
+	// custom
+	UPROPERTY(BlueprintReadOnly)
+	FUnitStatsSnapshot StatsSnapshot;
+	
+	UFUNCTION(BlueprintCallable)
+	void InitializeAttributesFromStatsDataAsset(UStatsDataAsset* StatsDataAsset, const int32 Level);
+	
 };

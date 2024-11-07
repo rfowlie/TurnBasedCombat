@@ -5,6 +5,7 @@
 #include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystemComponent.h"
 #include "Grid/GridUtility.h"
+#include "Grid/Event/GridEventPayload_Move.h"
 #include "Grid/Manager/TurnManager.h"
 #include "Grid/Manager/GridEventPayload.h"
 #include "TurnBasedCombat/Public/Grid/Tile/GridTile.h"
@@ -159,9 +160,11 @@ void UGridManager::CreateAttackEvent(UGridProxy* Instigator, UGridProxy* Locatio
 		return;
 	}
 
-	// check if this unit can move and location does not contain a unit
+	// check if this unit can move
+	// check if location is empty or is instigator (instigator does not move)
+	// check target has a grid unit
 	if (!TurnManager->CanTakeTurn(Instigator->GridUnit) ||
-		Location->GridUnit != nullptr ||
+		(Location->GridUnit != nullptr && Location->GridUnit != Instigator->GridUnit) ||
 		Target->GridUnit == nullptr)
 	{
 		UE_LOG(LogTemp, Error, TEXT("Create Attack Event: conditions not met..."));
@@ -176,25 +179,30 @@ void UGridManager::CreateAttackEvent(UGridProxy* Instigator, UGridProxy* Locatio
 	
 	// subscribe to end event and notify grid unit to move
 	Instigator->GridUnit->OnEventAttackEnd.AddUniqueDynamic(this, &ThisClass::PostEvent_Attack);
+
 	// TODO: use a gameplay event instead
-	Instigator->GridUnit->AttackEvent(Location->GridTile->GetPlacementLocation(), Target->GridUnit);
+	// Instigator->GridUnit->AttackEvent(Location->GridTile->GetPlacementLocation(), Target->GridUnit);
 
 	// TODO: try and activate through gameplay event instead of this current way...
-	{
-		// UAbilitySystemComponent* AbilitySystemComponent = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(Instigator->GridUnit);
-		// FGameplayAbilitySpecHandle AbilityHandle;
-		// FGameplayEventData EventData;
-		// EventData.Instigator = Instigator->GridUnit;
-		// EventData.Target = Target->GridUnit;
-		// UGridEventPayload* GridEventPayload = NewObject<UGridEventPayload>(this);
-		// EventData.OptionalObject = GridEventPayload;
-		// AbilitySystemComponent->TriggerAbilityFromGameplayEvent(
-		// 	AbilityHandle,
-		// 	AbilitySystemComponent->AbilityActorInfo.Get(),
-		// 	TAG_Event_Grid_Attack,
-		// 	&EventData, 
-		// 	*AbilitySystemComponent);
-	}
+	// create gameplay event information
+	// UAbilitySystemComponent* AbilitySystemComponent = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(Instigator->GridUnit);
+	// FGameplayAbilitySpecHandle AbilityHandle;
+	// FGameplayAbilityActorInfo ActorInfo = *AbilitySystemComponent->AbilityActorInfo.Get();
+	FGameplayEventData EventData;
+	EventData.Instigator = Instigator->GridUnit;
+	EventData.Target = Target->GridUnit;
+	UGridEventPayload_Move* GridEventPayload = UGridEventPayload_Move::CreatePayload(Location->GridTile->GetPlacementLocation());
+	EventData.OptionalObject = GridEventPayload;
+
+	// send gameplay event
+	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(
+		Instigator->GridUnit, TAG_Event_Grid_Attack, EventData);
+	// AbilitySystemComponent->TriggerAbilityFromGameplayEvent(
+	// 	AbilityHandle,
+	// 	&ActorInfo,
+	// 	TAG_Event_Grid_Attack,
+	// 	&EventData, 
+	// 	*AbilitySystemComponent);
 }
 
 void UGridManager::PostEvent_Attack(AGridUnit* GridUnit)

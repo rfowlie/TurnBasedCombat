@@ -4,7 +4,6 @@
 
 #include "TurnBasedCombat/Public/_Framework/GameMode/TurnBasedCombatGameMode.h"
 
-#include "IContentBrowserSingleton.h"
 #include "Engine/StaticMeshActor.h"
 #include "Grid/Manager/TurnManager.h"
 #include "Grid/Tile/GridTile.h"

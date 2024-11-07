@@ -14,7 +14,7 @@ AGridUnit::AGridUnit()
 	PrimaryActorTick.bCanEverTick = true;
 
 	AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
-	AttributeSet = CreateDefaultSubobject<UGridUnitAttributeSet>(TEXT("AttributeSet"));
+	AttributeSet_GridUnit = CreateDefaultSubobject<UGridUnitAttributeSet>(TEXT("AttributeSet_GridUnit"));
 }
 
 void AGridUnit::Tick(float DeltaTime)
@@ -32,11 +32,24 @@ void AGridUnit::BeginPlay()
 		GameMode->RegisterGridUnit(this);
 	}
 
+	// IS THIS BEING USED???
 	FGameplayAbilitySpec Spec = FGameplayAbilitySpec(GameplayAbilityClass_Move, 1, INDEX_NONE, this);
 	Spec.Ability->OnGameplayAbilityEnded.AddLambda([](UGameplayAbility* Ability)
 	{
 		UE_LOG(LogTemp, Error, TEXT("I don't understand..."));
 	});
+
+	// give attribute set
+	AbilitySystemComponent->AddAttributeSetSubobject(AttributeSet_GridUnit);
+	// assign stats
+	if (!IsValid(StatsDataAsset))
+	{
+		UE_LOG(LogTemp, Error, TEXT("No Stats Data Asset Assigned To Unit: %s"), *this->GetName());
+	}
+	else
+	{
+		AttributeSet_GridUnit->InitializeAttributesFromStatsDataAsset(StatsDataAsset, Level);
+	}
 	
 	// give move ability
 	GameplayAbilitySpecHandle_Move = AbilitySystemComponent->GiveAbility(Spec);
@@ -48,16 +61,8 @@ void AGridUnit::BeginPlay()
 	GameplayAbilitySpecHandle_Attack = AbilitySystemComponent->GiveAbility(
 		   FGameplayAbilitySpec(GameplayAbilityClass_Attack, 1, INDEX_NONE, this));
 
-	// calculate stats
-	if (IsValid(StatsDataAsset))
-	{	
-		StatsDataAsset->GetStats(Level, UnitStatsSnapshot);
-	}
-	else
-	{
-		UE_LOG(LogTemp, Error, TEXT("No Stats Data Asset Assigned To Unit: %s"), *this->GetName());
-	}
-
+	
+	/////////////////////////////////////////////////////////////////////
 	// TESTING ability system shit
 	// AbilitySystemComponent->OnAbilityEnded.AddUObject(this, &ThisClass::OnAbilityEnded);
 	AbilitySystemComponent->OnAbilityEnded.AddLambda([this](const FAbilityEndedData& Data)
@@ -75,36 +80,8 @@ void AGridUnit::BeginPlay()
 
 int32 AGridUnit::GetAvailableMovement() const
 {
-	return UnitStatsSnapshot.Movement;
+	return AttributeSet_GridUnit->GetMovement();
 }
-//
-// bool AGridUnit::ActivateMovement_Implementation(FVector Location, const TMulticastDelegate<void(UGameplayAbility*)>::FDelegate& Callback)
-// {
-// 	if (!AbilitySystemComponent) { return false; }
-//
-// 	FGameplayAbilitySpec* GameplayAbilitySpec = AbilitySystemComponent->FindAbilitySpecFromHandle(GameplayAbilitySpecHandle_Move);
-// 	if (GameplayAbilitySpec->Ability == nullptr) { return false; }
-//
-// 	UE_LOG(LogTemp, Warning, TEXT("GridProxy Location: %s"), *Location.ToString());
-// 	// set location as parameter on ability???
-// 	MoveAbilityLocation = Location;
-// 	UE_LOG(LogTemp, Warning, TEXT("GridProxy Location: %s"), *MoveAbilityLocation.ToString());	
-// 		
-// 	// bind to end callback
-// 	// GameplayAbilitySpec->Ability->OnGameplayAbilityEnded.Clear();
-// 	// TMulticastDelegate<void(UGameplayAbility*)>::FDelegate InDelegate;
-// 	GameplayAbilitySpec->Ability->OnGameplayAbilityEnded.Add(Callback);
-// 	// GameplayAbilitySpec->Ability->OnGameplayAbilityEnded.AddLambda([&Callback, GameplayAbilitySpec](UGameplayAbility* Ability)
-// 	// {
-// 	// 	if (Callback.IsBound())
-// 	// 	{
-// 	// 		Callback.ExecuteIfBound();
-// 	// 	}
-// 	// });
-//
-// 	// activate ability
-// 	return AbilitySystemComponent->TryActivateAbility(GameplayAbilitySpecHandle_Move);	
-// }
 
 bool AGridUnit::MovementEvent(const FVector& Location)
 {
@@ -177,18 +154,6 @@ TSet<int32> AGridUnit::GetWeaponRanges() const
 
 	return OutValues;
 }
-
-FUnitStatsSnapshot AGridUnit::GetSnapshot() const
-{
-	return UnitStatsSnapshot;
-}
-
-void AGridUnit::UpdateStats(const FUnitStatsSnapshot& StatAdjustments)
-{
-	// TODO: this is so sketch
-	UnitStatsSnapshot += StatAdjustments;
-}
-
 
 /*
  * NOTE

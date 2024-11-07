@@ -211,15 +211,6 @@ bool UGridProxy::CanAttackFromTile(UGridProxy* Other) const
 			return true;
 		}
 	}
-	
-	// for (const int32 WeaponRange : GridUnit->GetWeaponRanges())
-	// {
-	// 	if (UGridUtility::GetDistanceBetweenGridPositions(
-	// 		GetGridPosition(), Other->GetGridPosition()) == WeaponRange)
-	// 	{
-	// 		return true;
-	// 	}
-	// }
 
 	return false;
 }

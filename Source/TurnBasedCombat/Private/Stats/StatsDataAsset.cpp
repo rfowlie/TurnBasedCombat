@@ -6,7 +6,7 @@
 #include "TurnBasedCombat/Public/Stats/StatsHelpers.h"
 
 
-void UStatsDataAsset::GetStats(const int32 Level, FUnitStatsSnapshot& UnitStats) const
+void UStatsDataAsset::GetStats(FUnitStatsSnapshot& UnitStats, const int32 Level) const
 {
 	const float LevelSample = FMath::Clamp(Level, UStatsHelpers::GetMinLevel(), UStatsHelpers::GetMaxLevel()) / UStatsHelpers::GetMaxLevelFloat();
 
