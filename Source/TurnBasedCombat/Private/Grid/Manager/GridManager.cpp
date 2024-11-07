@@ -238,11 +238,7 @@ bool UGridManager::IsMatch(const UGridProxy* GridProxy_A, const UGridProxy* Grid
 void UGridManager::OnBeginCursorOverGridTile(AActor* Actor)
 {
 	if (AGridTile* GridTile = Cast<AGridTile>(Actor); IsValid(GridTile))
-	{
-		// TODO: how do we turn this into a GridProxy???
-		// use the grid tile to find the proxy that is in some list
-		
-		
+	{		
 		// tile
 		if (IsValid(CurrentHoveredTile))
 		{

@@ -4,6 +4,7 @@
 
 #include "TurnBasedCombat/Public/_Framework/GameMode/TurnBasedCombatGameMode.h"
 
+#include "IContentBrowserSingleton.h"
 #include "Engine/StaticMeshActor.h"
 #include "Grid/Manager/TurnManager.h"
 #include "Grid/Tile/GridTile.h"
@@ -23,19 +24,29 @@ ATurnBasedCombatGameMode::ATurnBasedCombatGameMode()
 	
 	GridManager = CreateDefaultSubobject<UGridManager>(TEXT("GridManager"));
 	GridManager->Initialize(TurnManager);
+
 	// game mode will act as facade and hold blueprint assignable delegate for OnEventStart/End
 	// when game manger fires on event start, the game mode will do some stuff then broadcast to the rest of game
 	GridManager->OnGridEventStart.AddLambda([this]()
 	{
-		// other stuff to do...
 		UE_LOG(LogTemp, Warning, TEXT("Game Mode: OnGridEventStart"));
 		if (OnGridEventStart.IsBound()) { OnGridEventStart.Broadcast(); }
 	});
 	GridManager->OnGridEventEnd.AddLambda([this]()
 	{
-		// other stuff to do...
 		UE_LOG(LogTemp, Warning, TEXT("Game Mode: OnGridEventEnd"));
 		if (OnGridEventEnd.IsBound()) { OnGridEventEnd.Broadcast(); }
+	});
+	GridManager->OnGridTileHovered.AddLambda([this](const AGridTile* Tile)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Game Mode: OnGridTileHovered"));
+		if (OnGridTileHovered.IsBound()) { OnGridTileHovered.Broadcast(Tile); }
+		UpdateCursor(Tile);
+	});
+	GridManager->OnGridUnitHovered.AddLambda([this](const AGridUnit* Unit)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Game Mode: OnGridUnitHovered"));
+		if (OnGridUnitHovered.IsBound()) { OnGridUnitHovered.Broadcast(Unit); }
 	});
 }
 
@@ -52,7 +63,6 @@ void ATurnBasedCombatGameMode::BeginPlay()
 	UStaticMeshComponent* StaticMeshComponent = Cast<AStaticMeshActor>(Cursor)->GetStaticMeshComponent();
 	StaticMeshComponent->SetStaticMesh(CursorMesh);
 	StaticMeshComponent->SetMobility(EComponentMobility::Movable);
-	GridManager->OnGridTileHovered.AddDynamic(this, &ThisClass::UpdateCursor);
 
 	// TODO: HACKYYY
 	// for now wait a few seconds then fire onstart
@@ -73,11 +83,6 @@ UEventSystem* ATurnBasedCombatGameMode::GetEventSystem()
 {
 	return EventSystem;
 }
-
-// UGridManager* ATurnBasedCombatGameMode::GetGridManager()
-// {
-// 	return GridManager;
-// }
 
 void ATurnBasedCombatGameMode::RegisterGridTile(AGridTile* GridTile)
 {

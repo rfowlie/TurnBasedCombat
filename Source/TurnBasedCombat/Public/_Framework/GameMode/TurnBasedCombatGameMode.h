@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/GameModeBase.h"
+#include "Grid/Manager/GridManager.h"
 #include "TurnBasedCombatGameMode.generated.h"
 
 
@@ -15,7 +16,9 @@ class AGridUnit;
 class AGridTile;
 
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FTurnBasedCombatEvents);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FTurnBasedCombat_Events);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FTurnBasedCombat_TileHovered, const AGridTile*, GridTile);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FTurnBasedCombat_UnitHovered, const AGridUnit*, GridUnit);
 // DECLARE_EVENT(ATurnBasedCombatGameMode, FGridEvent);
 
 /**
@@ -38,21 +41,24 @@ public:
 
 	// GameMode Interface ~ start
 	UPROPERTY(BlueprintAssignable)
-	FTurnBasedCombatEvents OnCombatStart;
+	FTurnBasedCombat_Events OnCombatStart;
 	UPROPERTY(BlueprintAssignable)
-	FTurnBasedCombatEvents OnCombatEnd;
+	FTurnBasedCombat_Events OnCombatEnd;
 	// GameMode Interface ~ end
 	
 	// GridManager Interface ~ start
-	// UGridManager* GetGridManager();
 	UPROPERTY(BlueprintAssignable)
-	FTurnBasedCombatEvents OnGridEventStart;
+	FTurnBasedCombat_Events OnGridEventStart;
 	UPROPERTY(BlueprintAssignable)
-	FTurnBasedCombatEvents OnGridEventEnd;
+	FTurnBasedCombat_Events OnGridEventEnd;
 	UFUNCTION(BlueprintCallable)
 	void RegisterGridTile(AGridTile* GridTile);
 	UFUNCTION(BlueprintCallable)
 	void RegisterGridUnit(AGridUnit* GridUnit);
+	UPROPERTY(BlueprintAssignable)
+	FTurnBasedCombat_TileHovered OnGridTileHovered;
+	UPROPERTY(BlueprintAssignable)
+	FTurnBasedCombat_UnitHovered OnGridUnitHovered;
 	// GridManager Interface ~ end
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Cursor")
