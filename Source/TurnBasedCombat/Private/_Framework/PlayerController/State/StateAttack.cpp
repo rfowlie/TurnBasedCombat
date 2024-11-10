@@ -13,7 +13,7 @@
 
 UE_DEFINE_GAMEPLAY_TAG(TAG_Encounter_Mode_Attack, "Encounter.Mode.Attack");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Grid_State_Attacker, "Grid.State.Attacker");
-UE_DEFINE_GAMEPLAY_TAG(TAG_Grid_State_Attackable, "Grid.State.Attackable");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Grid_State_CanTargetFrom, "Grid.State.CanTargetFrom");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Grid_State_Target, "Grid.State.Target");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Grid_State_TargetFrom, "Grid.State.TargetFrom");
 
@@ -35,6 +35,11 @@ UInputMappingContext* UStateAttack::SetupInputMappingContext(APlayerController* 
 	check(EIC)
 	
 	UInputMappingContext* NewInputMappingContext = NewObject<UInputMappingContext>(this);
+
+	IA_Select = NewObject<UInputAction>(this);
+	IA_Select->ValueType = EInputActionValueType::Boolean;
+	FEnhancedActionKeyMapping& Mapping_Select = NewInputMappingContext->MapKey(IA_Select, EKeys::LeftMouseButton);
+	EIC->BindAction(IA_Select, ETriggerEvent::Started, this, &UStateAttack::OnSelect);
 	
 	IA_Deselect = NewObject<UInputAction>(this);
 	IA_Deselect->ValueType = EInputActionValueType::Boolean;
@@ -53,7 +58,7 @@ UInputMappingContext* UStateAttack::SetupInputMappingContext(APlayerController* 
 
 void UStateAttack::OnEnter()
 {	
-	UE_LOG(LogTemp, Warning, TEXT("OnEnter - ATTACK"));
+	UE_LOG(LogTemp, Warning, TEXT("OnEnter - ATTACK STATE"));
 	
 	Phase = EAttackPhase::Idle;	
 }
@@ -66,7 +71,7 @@ void UStateAttack::OnExit()
 }
 
 void UStateAttack::OnSelect()
-{
+{	
 	UGridProxy* GridProxy = GridManager->GetCurrentHoveredGridTile();
 	if (!GridProxy)
 	{
@@ -86,50 +91,55 @@ void UStateAttack::OnSelect()
 		}
 		// set new selection
 		GridProxyCurrent = GridProxy;
-		GridProxyCurrent->SetTargetableEnemies(true);
-		// if player unit selected move to next phase
-		if (GridProxyCurrent->IsPlayer())
+		if (GridProxyCurrent->IsAlly() && GridProxyCurrent->HasEnemiesToAttack())
 		{
+			GridProxyCurrent->SetEnemiesInRange(true);
 			Phase = EAttackPhase::SelectedAttacker;
 		}
 		break;
 	case EAttackPhase::SelectedAttacker:
 		// check if new player unit selected
-		if (GridProxyCurrent != GridProxy && GridProxy->IsPlayer())
+		// if (GridProxyCurrent != GridProxy && GridProxy->IsAlly())
+		// {
+		// 	GridProxyCurrent->UndoAll();
+		// 	GridProxyCurrent = GridProxy;
+		// 	GridProxyCurrent->SetEnemiesInRange(true);
+		// }
+		// check if target is enemy that can be attacked, move to next phase
+		if (GridProxyCurrent->CanAttack(GridProxy))
 		{
-			GridProxyCurrent->UndoAll();
-			GridProxyCurrent = GridProxy;
-			GridProxyCurrent->SetTargetableEnemies(true);
-			Phase = EAttackPhase::SelectedAttacker;
-		}
-		// check if new enemy target selected
-		if (GridProxyTarget != GridProxy && GridProxy->IsEnemy())
-		{
-			GridProxyTarget->UndoAll();
+			if (GridProxyTarget) { GridProxyTarget->UndoAll(); }
+			GridProxyCurrent->SetCanTargetFromTiles(GridProxyTarget, false);
 			GridProxyTarget = GridProxy;
-			GridProxyCurrent->SetAttackTiles(GridProxyTarget, true);
+			GridProxyCurrent->SetCanTargetFromTiles(GridProxyTarget, true);
 			Phase = EAttackPhase::SelectedTarget;
 		}
+		// check if new enemy target selected
+		// if (GridProxyTarget != GridProxy)
+		// {
+		// 	if (GridProxyTarget) { GridProxyTarget->UndoAll(); }
+		// 	GridProxyTarget = GridProxy;
+		// }		
 		break;
 	case EAttackPhase::SelectedTarget:
-		// check if new player unit selected
-		if (GridProxyCurrent != GridProxy && GridProxy->IsPlayer())
-		{
-			GridProxyCurrent->UndoAll();
-			GridProxyCurrent = GridProxy;
-			GridProxyCurrent->SetTargetableEnemies(true);
-			Phase = EAttackPhase::SelectedAttacker;
-		}
-		// check if new enemy target selected
-		else if (GridProxyTarget != GridProxy && GridProxy->IsEnemy())
-		{
-			GridProxyTarget->UndoAll();
-			GridProxyTarget = GridProxy;
-			GridProxyCurrent->SetAttackTiles(GridProxyTarget, true);
-			Phase = EAttackPhase::SelectedTarget;
-		}
+		// check if new player unit selected, return to previous phase
+		// if (GridProxyCurrent != GridProxy && GridProxy->IsAlly())
+		// {
+		// 	GridProxyCurrent->UndoAll();
+		// 	GridProxyCurrent = GridProxy;
+		// 	GridProxyCurrent->SetEnemiesInRange(true);
+		// 	Phase = EAttackPhase::SelectedAttacker;
+		// }
+		// check if new enemy target selected, stay on phase
+		// else if (GridProxyTarget != GridProxy && GridProxyCurrent->CanAttack(GridProxy) && !GridProxy->IsAlly())
+		// {
+		// 	GridProxyCurrent->SetCanTargetFromTiles(GridProxyTarget, false);
+		// 	GridProxyTarget->UndoAll();
+		// 	GridProxyTarget = GridProxy;
+		// 	GridProxyCurrent->SetCanTargetFromTiles(GridProxyTarget, true);
+		// }
 		// check if tile can attack from is selected
-		else if (GridProxyTarget->IsAttackTile(GridProxy))
+		if (GridProxyCurrent->CanAttackFromTile(GridProxy))
 		{
 			if (GridProxyMoveTo) { GridProxyMoveTo->UndoAll(); }
 			GridProxyMoveTo = GridProxy;
@@ -138,19 +148,20 @@ void UStateAttack::OnSelect()
 		}
 		break;
 	case EAttackPhase::SelectedAttackTile:
-		// check if other tile can attack from is selected
-		if (GridProxyMoveTo != GridProxy && GridProxyTarget->IsAttackTile(GridProxy))
-		{
-			if (GridProxyMoveTo) { GridProxyMoveTo->UndoAll(); }
-			GridProxyMoveTo = GridProxy;
-			GridProxyMoveTo->SetMoveToTile(true);
-			Phase = EAttackPhase::SelectedAttackTile;
-		}
+		// check if other tile can attack from is selected, stay on phase
+		// if (GridProxyMoveTo != GridProxy && GridProxyTarget->CanAttackFromTile(GridProxy))
+		// {
+		// 	if (GridProxyMoveTo) { GridProxyMoveTo->UndoAll(); }
+		// 	GridProxyMoveTo = GridProxy;
+		// 	GridProxyMoveTo->SetMoveToTile(true);
+		// }
+		// TODO: for now hackyyy
 		// check if same tile is selected to confirm attack
 		if (GridManager->IsMatch(GridProxyMoveTo ,GridProxy))
 		{
 			GridManager->CreateAttackEvent(GridProxyCurrent, GridProxyMoveTo, GridProxyTarget);
 		}
+		// THIS IS THE OLD WAY USING CUSTOM MADE EVENT SYSTEM INSTEAD OF Gameplay Ability System
 		// {
 		// 	TArray<UAbstractEvent*> Events;
 		// 	UEventUnitMove* EventMove = NewObject<UEventUnitMove>(this);
@@ -161,6 +172,8 @@ void UStateAttack::OnSelect()
 		// }
 		break;
 	}
+
+	UE_LOG(LogTemp, Error, TEXT("Mode: Attack - On Select, Phase: %d"), Phase);
 }
 
 void UStateAttack::OnDeselect()
@@ -192,7 +205,7 @@ void UStateAttack::OnCycleUnit()
 	UndoAll();
 	
 	GridProxyCurrent = GridManager->GetNextGridUnit(GridProxyCurrent);
-	GridProxyCurrent->SetTargetableEnemies(true);
+	GridProxyCurrent->SetEnemiesInRange(true);
 	Phase = EAttackPhase::SelectedAttacker;
 }
 
@@ -207,7 +220,7 @@ void UStateAttack::UndoAll()
 
 void UStateAttack::UndoSelectedAttacker()
 {
-	if (GridProxyCurrent) { GridProxyCurrent->SetTargetableEnemies(false); }
+	if (GridProxyCurrent) { GridProxyCurrent->SetEnemiesInRange(false); }
 	GridProxyCurrent = nullptr;
 }
 

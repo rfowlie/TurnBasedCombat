@@ -12,93 +12,73 @@ UTurnManager::UTurnManager()
 
 void UTurnManager::RegisterGridUnit(AGridUnit* GridUnit)
 {
-	if (IsValid(GridUnit) && !GridUnitsMap.Contains(GridUnit))
+	if (!IsValid(GridUnit)) { return; }
+
+	FGameplayTag FactionTag = GridUnit->Execute_GetFaction(GridUnit);
+	bool FactionFound = false;
+	for (FFactionInfo FactionInfo : Factions)
 	{
-		GridUnitsMap.Add(GridUnit, false);
-		Factions.AddUnique(GridUnit->GetFaction());
-		FactionsMap.Add(GridUnit->GetFaction(), true);
+		if (FactionInfo.Tag == FactionTag)
+		{
+			FactionInfo.GridUnits.Add(GridUnit);
+			FactionFound = true;
+			break;
+		}
 	}
+	if (!FactionFound)
+	{
+		FFactionInfo FactionInfo;
+		FactionInfo.Tag = FactionTag;
+		FactionInfo.GridUnits.Add(GridUnit);
+		Factions.Add(FactionInfo);	
+	}
+
+	// make adjustments when a unit is defeated
+	GridUnit->OnDefeat.AddDynamic(this, &ThisClass::CheckFactionDefeated);
 }
 
 void UTurnManager::UnregisterGridUnit(AGridUnit* GridUnit)
 {
-	if (IsValid(GridUnit) && GridUnitsMap.Contains(GridUnit))
+	if (!IsValid(GridUnit)) { return; }
+	
+	for (FFactionInfo FactionInfo : Factions)
 	{
-		GridUnitsMap.Remove(GridUnit);
+		if (FactionInfo.Tag == GridUnit->Execute_GetFaction(GridUnit))
+		{
+			FactionInfo.GridUnits.Remove(GridUnit);
+			break;
+		}
 	}
 }
 
-FName UTurnManager::GetCurrentFaction() const
+FGameplayTag UTurnManager::GetCurrentFaction() const
 {
-	return Factions[FactionIndex];
+	return Factions[FactionIndex].Tag;
 }
 
 bool UTurnManager::CanTakeTurn(AGridUnit* GridUnit)
 {
-	if (!CheckGridUnit(GridUnit)) { return false; }
-
-	return GridUnitsMap[GridUnit];
+	return Factions[FactionIndex].GridUnits.Contains(GridUnit);
 }
 
-void UTurnManager::UpdateGridUnitMoved(AGridUnit* GridUnit)
+void UTurnManager::UpdateGridUnitActionTaken(AGridUnit* GridUnit)
 {
-	if (!CheckGridUnit(GridUnit)) { return; }
-
-	// set unit cannot move
-	GridUnitsMap[GridUnit] = false;
-
-	// check if any units can move, if not signal new turn should start
-	for (const auto Pair : GridUnitsMap)
+	for (FFactionInfo FactionInfo : Factions)
 	{
-		if (Pair.Value) { return; }
+		if (FactionInfo.Tag == GridUnit->Execute_GetFaction(GridUnit))
+		{
+			FactionInfo.GridUnits[GridUnit] = false;
+
+			// check if any units can move, if not signal new turn should start
+			if (!FactionInfo.CanUnitsMove())
+			{
+				if (OnTurnFinish.IsBound()) { OnTurnFinish.Broadcast(GetCurrentFaction()); }
+				SetNextFaction();				
+			}			
+			
+			break;
+		}
 	}
-
-	SetNextFaction();
-	if (OnTurnFinish.IsBound()) { OnTurnFinish.Broadcast(GetCurrentFaction()); }
-}
-
-void UTurnManager::UpdateGridUnitAttacked(AGridUnit* GridUnit)
-{
-	if (!CheckGridUnit(GridUnit)) { return; }
-
-	// set unit cannot move
-	GridUnitsMap[GridUnit] = false;
-
-	// check if any units can move, if not signal new turn should start
-	for (const auto Pair : GridUnitsMap)
-	{
-		if (Pair.Value) { return; }
-	}
-
-	SetNextFaction();
-	if (OnTurnFinish.IsBound()) { OnTurnFinish.Broadcast(GetCurrentFaction()); }
-}
-
-void UTurnManager::UpdateGridUnitKilled(AGridUnit* GridUnit)
-{
-	if (!CheckGridUnit(GridUnit)) { return; }
-
-	GridUnitsMap.Remove(GridUnit);
-
-	// update faction map
-	TArray<AGridUnit*> GridUnits;
-	GridUnitsMap.GetKeys(GridUnits);
-	for (const AGridUnit* Unit : GridUnits)
-	{
-		FactionsMap[Unit->GetFaction()] = true;
-	}
-	
-	// TODO: this will need to be more robust to support different scenarios
-	// check to see if only units of one faction remain	
-	FName RemainingFaction = GridUnits[0]->GetFaction();
-	for (const AGridUnit* Unit : GridUnits)
-	{
-		// two or more teams present keep playings
-		if (Unit->GetFaction() != RemainingFaction) { return; }
-	}
-
-	// all grid units had same faction therefore game over
-	if (OnFactionWin.IsBound()) { OnFactionWin.Execute(RemainingFaction); }
 }
 
 void UTurnManager::IncrementFaction()
@@ -106,35 +86,39 @@ void UTurnManager::IncrementFaction()
 	FactionIndex = (FactionIndex + 1 + Factions.Num()) % Factions.Num();
 }
 
+void UTurnManager::CheckFactionDefeated(AGridUnit* GridUnit)
+{
+	for (FFactionInfo FactionInfo : Factions)
+	{
+		if (FactionInfo.Tag == GridUnit->Execute_GetFaction(GridUnit))
+		{
+			if (FactionInfo.IsFactionDefeated())
+			{
+				if (OnFactionDefeated.IsBound()) { OnFactionDefeated.Execute(GridUnit->Execute_GetFaction(GridUnit)); }
+				break;
+			}
+		}
+	}
+}
+
 void UTurnManager::SetNextFaction()
 {
 	IncrementFaction();
 	// check to see if all units of faction destroyed, skip turn???
-	while(!FactionsMap[Factions[FactionIndex]]) { IncrementFaction(); }
+	while(Factions[FactionIndex].IsFactionDefeated()) { IncrementFaction(); }
 
-	UE_LOG(LogTemp, Log, TEXT("Faction Start Turn: %s"), *Factions[FactionIndex].ToString());
+	UE_LOG(LogTemp, Log, TEXT("Faction Start Turn: %s"), *Factions[FactionIndex].Tag.ToString());
 	
-	TArray<AGridUnit*> GridUnits;
-	GridUnitsMap.GetKeys(GridUnits);
-	for (const AGridUnit* GridUnit : GridUnits)
-	{
-		GridUnit->GetFaction() == Factions[FactionIndex] ?
-			GridUnitsMap[GridUnit] = true : GridUnitsMap[GridUnit] = false;
-	}
+	Factions[FactionIndex].ActivateUnits();
 }
 
-bool UTurnManager::CheckGridUnit(const AGridUnit* GridUnit) const
+void UTurnManager::GetActiveFactions(TArray<FGameplayTag>& ActiveFactions)
 {
-	if (!GridUnit)
+	for (FFactionInfo FactionInfo : Factions)
 	{
-		UE_LOG(LogTemp, Error, TEXT("grid unit passed to turn manager nullptr..."))
-		return false;
+		if (!FactionInfo.IsFactionDefeated())
+		{
+			ActiveFactions.Add(FactionInfo.Tag);
+		}
 	}
-	if (!GridUnitsMap.Contains(GridUnit))
-	{
-		UE_LOG(LogTemp, Error, TEXT("grid unit not registered with turn manager..."))
-		return false;
-	}
-
-	return true;
 }

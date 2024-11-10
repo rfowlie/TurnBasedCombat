@@ -32,7 +32,7 @@ int32 AGridTile::GetMovementCost_Implementation() const
 {
 	if (!TerrainDataAsset)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("No Terrain Data Asset Assigned To Tile: %s, movement cost = 1"), *this->GetName());
+		// UE_LOG(LogTemp, Warning, TEXT("No Terrain Data Asset Assigned To Tile: %s, movement cost = 1"), *this->GetName());
 		return 1;
 	}
 	return TerrainDataAsset->TerrainStats.MovementCost;

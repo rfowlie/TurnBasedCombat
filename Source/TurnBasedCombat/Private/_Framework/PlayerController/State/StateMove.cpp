@@ -63,7 +63,7 @@ void UStateMove::OnExit()
 
 void UStateMove::OnSelect()
 {
-	// UE_LOG(LogTemp, Warning, TEXT("Mode: Move - On Select"))
+	// UE_LOG(LogTemp, Error, TEXT("Mode: Move - On Select"))
 
 	if (Phase == EMovePhase::None)
 	{
@@ -100,7 +100,7 @@ void UStateMove::OnSelect()
 			// GridProxyCurrent->SetState(TAG_Grid_State_Moveable);
 		}		
 		// if player unit selected move to next phase
-		if (GridProxyCurrent->IsPlayer())
+		if (GridProxyCurrent->IsAlly())
 		{
 			Phase = EMovePhase::SelectedMoveUnit;
 		}
@@ -108,7 +108,7 @@ void UStateMove::OnSelect()
 	case EMovePhase::SelectedMoveUnit:
 		UE_LOG(LogTemp, Warning, TEXT("Move - SelectedMoveUnit"))
 		// check if new player unit selected
-		if (GridProxyCurrent != GridProxy && GridProxy->IsPlayer())
+		if (GridProxyCurrent != GridProxy && GridProxy->IsAlly())
 		{
 			GridProxyCurrent->UndoAll();
 			GridProxyCurrent = GridProxy;
@@ -144,7 +144,7 @@ void UStateMove::OnSelect()
 			Phase = EMovePhase::SelectedMoveTile;
 		}
 		// check if new player unit selected
-		else if (GridProxyCurrent != GridProxy && GridProxy->IsPlayer())
+		else if (GridProxyCurrent != GridProxy && GridProxy->IsAlly())
 		{
 			GridProxyCurrent->UndoAll();
 			GridProxyCurrent = GridProxy;

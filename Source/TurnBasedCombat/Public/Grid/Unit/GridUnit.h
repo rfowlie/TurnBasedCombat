@@ -5,12 +5,16 @@
 #include "CoreMinimal.h"
 #include "AbilitySystemInterface.h"
 #include "GameplayAbilitySpec.h"
+#include "GridUnitAttributeSet.h"
+#include "GridUnit_Interface.h"
 #include "Abilities/GameplayAbility.h"
 #include "GameFramework/Actor.h"
 #include "TurnBasedCombat/Public/Stats/StatsDataAsset.h"
 #include "GridUnit.generated.h"
 
 
+class UAbilityAsync_WaitAttributeChanged;
+class UGridUnitAttributeSet;
 class UGameplayAbility;
 class UAttributeSet;
 class UWeaponDataAsset;
@@ -27,7 +31,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FGridUnitEventDelegate, AGridUnit*, 
 
 
 UCLASS(Blueprintable, BlueprintType)
-class TURNBASEDCOMBAT_API AGridUnit : public AActor, public IAbilitySystemInterface
+class TURNBASEDCOMBAT_API AGridUnit : public AActor, public IAbilitySystemInterface, public IGridUnit_Interface
 {
 	GENERATED_BODY()
 
@@ -38,34 +42,61 @@ public:
 	AGridUnit();
 	virtual void Tick(float DeltaTime) override;
 
-	// Ability System - start
+	// Ability System ~ start
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	UGridUnitAttributeSet* AttributeSet_GridUnit;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	UAbilitySystemComponent* AbilitySystemComponent;
-
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override { return AbilitySystemComponent; }
 	
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	UAttributeSet* AttributeSet;
-
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TSubclassOf<UGameplayAbility> GameplayAbilityClass_Move;	
 	UPROPERTY(BlueprintReadOnly)
 	FGameplayAbilitySpecHandle GameplayAbilitySpecHandle_Move;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TSubclassOf<UGameplayAbility> GameplayAbilityClass_Attack;	
+	UPROPERTY(BlueprintReadOnly)
+	FGameplayAbilitySpecHandle GameplayAbilitySpecHandle_Attack;
 
+	UFUNCTION(BlueprintCallable)
+	int32 GetHealth() const { return AttributeSet_GridUnit->GetHealth(); }
+	UPROPERTY(BlueprintAssignable)
+	FGridUnitEventDelegate OnDefeat;
+protected:
+	UFUNCTION(BlueprintImplementableEvent)
+	void EventOnDefeat();
+	UPROPERTY()
+	UAbilityAsync_WaitAttributeChanged* WaitForHealthZero;
+	UFUNCTION()
+	void NotifyHealthZero();
+	UFUNCTION()
+	void OnHealthZero(FGameplayAttribute Attribute, float NewValue, float OldValue)
+	{
+		UE_LOG(LogTemp, Log, TEXT("On Health Zero"));
+		if (NewValue == 0)
+		{
+			EventOnDefeat();
+			if (OnDefeat.IsBound()) { OnDefeat.Broadcast(this); }
+		}		
+	}
+	// Ability System ~ end
+
+public:
+	// Placeholders ~ start
+	// TODO: temp placeholder variables
+	// will remove when we switch to calling abilities through gameplay events passing in event data
 	UPROPERTY(BlueprintReadOnly)
 	FVector MoveAbilityLocation = FVector::ZeroVector;
+	UPROPERTY(BlueprintReadOnly)
+	AGridUnit* AttackAbilityTarget = nullptr;
+	// Placeholders ~ end
 	
 	// DECLARE_EVENT(AGridUnit, FGridUnitAbilityEvent)
 	// FGridUnitAbilityEvent OnAbilityMoveEnd;
 	// FGridUnitAbilityEvent OnAbilityAttackEnd;
 	FGridUnitEventDelegate OnEventMoveEnd;
 	FGridUnitEventDelegate OnEventAttackEnd;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TSubclassOf<UGameplayAbility> GameplayAbilityClass_Attack;	
-	UPROPERTY(BlueprintReadOnly)
-	FGameplayAbilitySpecHandle GameplayAbilitySpecHandle_Attack;
-	// Ability System - end
 	
 	UPROPERTY(EditInstanceOnly)
 	UStatsDataAsset* StatsDataAsset;	
@@ -97,50 +128,16 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	UAnimMontage* Attack;
 	
-	// UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	bool MovementEvent(const FVector& Location);
 	bool AttackEvent(const FVector& Location, AGridUnit* Target);
 
 protected:	
-	UPROPERTY()
-	TArray<UWeapon*> EquippedWeapons;
-	
-	UPROPERTY()
-	TArray<UItemBase*> EquippedItems;
-	
 	// Just for setup, will then need to instance to keep track of changes
 	UPROPERTY(EditInstanceOnly, BlueprintReadOnly)
 	TArray<UWeaponDataAsset*> WeaponDataAssets;
 
-	//////////////////////////////////////////////////////
 public:
-	UFUNCTION(BlueprintCallable)
-	FName GetFaction() const;
-	
-	UFUNCTION(BlueprintCallable)
-	TArray<UWeapon*> GetEquippedWeapons() const;
-
 	TSet<int32> GetWeaponRanges() const;
-
-	// UNIT STATS start
-protected:	
-	UPROPERTY()
-	FUnitStatsSnapshot UnitStatsSnapshot;
-	
-public:		
-	UFUNCTION(BlueprintCallable)
-	FUnitStatsSnapshot GetSnapshot() const;
-	
-	UFUNCTION()
-	void UpdateStats(const FUnitStatsSnapshot& StatAdjustments);
-	
-	// UNIT STATS end
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	int32 Faction;
-
-	//////////////////////////////////////////////////////
-	///
 
 private:
 	UFUNCTION()

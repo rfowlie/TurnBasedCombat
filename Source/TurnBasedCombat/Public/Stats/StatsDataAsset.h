@@ -142,7 +142,7 @@ public:
 	FStatRange MovementRecovery;	
 	
 	UFUNCTION(BlueprintCallable)
-	void GetStats(const int32 Level, FUnitStatsSnapshot& UnitStats) const;
+	void GetStats(FUnitStatsSnapshot& UnitStats, const int32 Level) const;
 
 private:
 	float GetStatValue(const FStatRange& StatRange, const float Level) const;

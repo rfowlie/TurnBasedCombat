@@ -3,11 +3,64 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Grid/Unit/GridUnit.h"
 #include "UObject/Object.h"
 #include "TurnManager.generated.h"
 
 
 class AGridUnit;
+
+
+USTRUCT()
+struct FFactionInfo
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	FGameplayTag Tag;
+	
+	UPROPERTY()
+	TMap<AGridUnit*, bool> GridUnits;
+
+	void ActivateUnits()
+	{
+		TArray<AGridUnit*> Units;
+		GridUnits.GetKeys(Units);
+		for (AGridUnit* GridUnit : Units)
+		{
+			if (GridUnit->GetHealth() > 0)
+			{
+				GridUnits[GridUnit] = true;
+			}
+		}
+	}
+	
+	bool IsFactionDefeated() const
+	{
+		TArray<AGridUnit*> Units;
+		GridUnits.GetKeys(Units);
+		for (AGridUnit* GridUnit : Units)
+		{
+			if (GridUnit->GetHealth() > 0)
+			{
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	bool CanUnitsMove()
+	{
+		for (auto Pair : GridUnits)
+		{
+			if (Pair.Value) { return true; }
+		}
+
+		return false;
+	}
+};
+
 
 /**
  * FOR NOW
@@ -23,35 +76,31 @@ class TURNBASEDCOMBAT_API UTurnManager : public UObject
 public:
 	UTurnManager();
 
-	// grid manager will set a function that it wants this to call when someone wins
-	DECLARE_DELEGATE_OneParam(FFactionWin, FName)
-	FFactionWin OnFactionWin;
-	
-	DECLARE_EVENT_OneParam(UTurnManager, FTurnEvent, FName)
+	// grid manager will set a function that it wants this to call when someone wins	
+	DECLARE_EVENT_OneParam(UTurnManager, FTurnEvent, FGameplayTag)
 	FTurnEvent OnTurnBegin;
 	FTurnEvent OnTurnFinish;
+	DECLARE_DELEGATE_OneParam(FFactionEventDelegate, FGameplayTag)
+	FFactionEventDelegate OnFactionDefeated;	
 	
 	void RegisterGridUnit(AGridUnit* GridUnit);
 	void UnregisterGridUnit(AGridUnit* GridUnit);
 
-	FName GetCurrentFaction() const;	
+	FGameplayTag GetCurrentFaction() const;
 	bool CanTakeTurn(AGridUnit* GridUnit);
-	void UpdateGridUnitMoved(AGridUnit* GridUnit);
-	void UpdateGridUnitAttacked(AGridUnit* GridUnit);
-	void UpdateGridUnitKilled(AGridUnit* GridUnit);
+	void UpdateGridUnitActionTaken(AGridUnit* GridUnit);
 
 	void SetNextFaction();
+	void GetActiveFactions(TArray<FGameplayTag>& ActiveFactions);
 	
-private:
-	UPROPERTY()
-	TMap<AGridUnit*, bool> GridUnitsMap;
-	UPROPERTY()
-	TArray<FName> Factions;
-	UPROPERTY()
-	TMap<FName, bool> FactionsMap;
+	UFUNCTION()
+	void CheckFactionDefeated(AGridUnit* GridUnit);
+	
+protected:
 	UPROPERTY()
 	int32 FactionIndex = -1;
+	void IncrementFaction();
+	UPROPERTY()
+	TArray<FFactionInfo> Factions;
 
-	void IncrementFaction();	
-	bool CheckGridUnit(const AGridUnit* GridUnit) const;
 };

@@ -11,6 +11,8 @@
 #include "Grid/Manager/GridManager.h"
 #include "TurnBasedCombat/Public/_Framework/PlayerController/State/StateMove.h"
 #include "TurnBasedCombat/Public/_Framework/PlayerController/State/StateWait.h"
+#include "_Framework/GameMode/TurnBasedCombatGameMode.h"
+#include "_Framework/PlayerController/State/StateAttack.h"
 
 
 class UEnhancedInputLocalPlayerSubsystem;
@@ -29,37 +31,24 @@ ATurnBasedCombatPlayerController::ATurnBasedCombatPlayerController()
 void ATurnBasedCombatPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
-
+	
+	CreateStates();
+	DisableState();
 	CreateDefaultInputMapping();
 	AddInputMapping();
-	
-	ControllerStateIndex = 0;
-	SetState(ControllerStates[ControllerStateIndex]);
+
+	if (ATurnBasedCombatGameMode* GameMode = Cast<ATurnBasedCombatGameMode>(GetWorld()->GetAuthGameMode()))
+	{
+		GameMode->OnCombatEnable.AddDynamic(this, &ThisClass::EnableState);
+		GameMode->OnCombatDisable.AddDynamic(this, &ThisClass::DisableState);
+	}
 }
 
 void ATurnBasedCombatPlayerController::Initialize(UGridManager* InGridManager)
 {
-	GridManager = InGridManager;
-
-	// TODO: figure out what needs to stop when a grid event is firing
-	// GridManager->OnGridEventStart.AddLambda([this]()
-	// {
-	// 	RemoveInputMapping();
-	// });
-	// GridManager->OnGridEventEnd.AddLambda([this]()
-	// {
-	// 	AddInputMapping();
-	// });
-	
+	GridManager = InGridManager;	
 	GridManager->OnGridEventStart.AddUObject(this, &ThisClass::RemoveInputMapping);
 	GridManager->OnGridEventEnd.AddUObject(this, &ThisClass::AddInputMapping);
-	
-	// Create States
-	UStateWait* StateWait = NewObject<UStateWait>(this);
-	ControllerStates.Add(StateWait);
-	UStateMove* StateMove = NewObject<UStateMove>(this);
-	ControllerStates.Add(StateMove);	
-	StateMove->Initialize(GridManager);
 }
 
 void ATurnBasedCombatPlayerController::SetState(UAbstractPlayerControllerState* NewState)
@@ -146,7 +135,6 @@ void ATurnBasedCombatPlayerController::CycleMode()
 	}
 	else
 	{
-		// sets wait...
 		SetState(ControllerStates[0]);
 	}
 }
@@ -154,4 +142,29 @@ void ATurnBasedCombatPlayerController::CycleMode()
 void ATurnBasedCombatPlayerController::Controls()
 {
 	UE_LOG(LogTemp, Error, TEXT("PC Input"));
+}
+
+void ATurnBasedCombatPlayerController::CreateStates()
+{
+	StateWait = NewObject<UStateWait>(this);
+	
+	UStateMove* StateMove = NewObject<UStateMove>(this);
+	ControllerStates.Add(StateMove);
+	StateMove->Initialize(GridManager);
+	
+	UStateAttack* StateAttack = NewObject<UStateAttack>(this);
+	ControllerStates.Add(StateAttack);
+	StateAttack->Initialize(GridManager);
+}
+
+void ATurnBasedCombatPlayerController::EnableState()
+{
+	ControllerStateIndex = 0;
+	SetState(ControllerStates[ControllerStateIndex]);
+}
+
+void ATurnBasedCombatPlayerController::DisableState()
+{
+	ControllerStateIndex = -1;
+	SetState(StateWait);
 }

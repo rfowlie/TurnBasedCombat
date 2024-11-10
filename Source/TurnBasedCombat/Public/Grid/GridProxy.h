@@ -8,11 +8,14 @@
 #include "GridProxy.generated.h"
 
 
+struct FGridPair;
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Encounter_Mode_Move);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Grid_State_Idle);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Grid_State_Mover);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Grid_State_Moveable);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Grid_State_MoveTo);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Grid_State_CanAttack);
+
 
 
 struct FGridPosition;
@@ -42,31 +45,32 @@ public:
 		AGridTile* GridTile,
 		AGridUnit* GridUnit,
 		const FCalculateGridMovement& InMovementDelegate,
-		TArray<FGridMovement> InGridMovements);
+		TArray<FGridMovement> InGridMovements,
+		TArray<FGridPair> InEnemyUnitsInRange);
 	
 	// void SetState(FGameplayTag State);
 	
 	void UndoAll();
 	void SetMoveableTiles(bool Activate);
-	void SetTargetableEnemies(bool Activate);
+	void SetEnemiesInRange(bool Activate);
 	void SetMoveToTile(bool Activate);
 	void SetEnemyTargetTile(bool Activate);
-	void SetAttackTiles(UGridProxy* GridProxy, bool Activate);
+	bool SetCanTargetFromTiles(UGridProxy* GridProxy, bool Activate);
 
 	bool CanMoveToo(UGridProxy* GridProxy);
 	bool CanAttack(UGridProxy* GridProxy);
 
-	TArray<int32> GetAttackRanges();
+	// TArray<int32> GetAttackRanges();
 
 	bool HasUnit() const;
-	bool IsAlly(UGridProxy* GridProxy);
-	bool IsPlayer();
-	bool IsEnemy();
-	bool IsMoveTile(UGridProxy* GridProxy);
-	bool IsAttackTile(UGridProxy* GridProxy);
+	bool IsAlly() const;
+	bool IsMoveTile(UGridProxy* Other);
+	bool CanAttackFromTile(UGridProxy* Other) const;
+	bool HasEnemiesToAttack() const;
 
 	FVector GetWorldLocation() const;
 	FGridPosition GetGridPosition() const;
+	FGameplayTag GetFaction() const;
 protected:
 	UPROPERTY()
 	UTurnManager* TurnManager = nullptr;	
@@ -81,9 +85,9 @@ protected:
 	UPROPERTY()
 	TArray<FGridMovement> GridMovements;
 	UPROPERTY()
-	TArray<FGridPosition> AttackFrom;
-
-	
+	TArray<FGridPair> EnemyGridUnitsInRange;
+	UPROPERTY()
+	TArray<FGridMovement> CurrentCanAttackFromTiles;
 
 private:
 	// force factory method to create this class
@@ -94,7 +98,8 @@ private:
 		AGridTile* InGridTile,
 		AGridUnit* InGridUnit,
 		const FCalculateGridMovement& InMovementDelegate,
-		TArray<FGridMovement> InGridMovements);
+		TArray<FGridMovement> InGridMovements,
+		TArray<FGridPair> InEnemyUnitsInRange);
 	
 	FCalculateGridMovement CalculateGridMovementDelegate;
 };

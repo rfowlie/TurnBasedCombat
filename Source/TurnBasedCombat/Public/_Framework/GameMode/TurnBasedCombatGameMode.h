@@ -4,6 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/GameModeBase.h"
+#include "Grid/Manager/GridManager.h"
+#include "WinCondition_Abstract.h"
 #include "TurnBasedCombatGameMode.generated.h"
 
 
@@ -15,7 +17,9 @@ class AGridUnit;
 class AGridTile;
 
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FTurnBasedCombatEvents);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FTurnBasedCombat_Events);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FTurnBasedCombat_TileHovered, const AGridTile*, GridTile);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FTurnBasedCombat_UnitHovered, const AGridUnit*, GridUnit);
 // DECLARE_EVENT(ATurnBasedCombatGameMode, FGridEvent);
 
 /**
@@ -38,23 +42,27 @@ public:
 
 	// GameMode Interface ~ start
 	UPROPERTY(BlueprintAssignable)
-	FTurnBasedCombatEvents OnCombatStart;
+	FTurnBasedCombat_Events OnCombatEnable;
 	UPROPERTY(BlueprintAssignable)
-	FTurnBasedCombatEvents OnCombatEnd;
+	FTurnBasedCombat_Events OnCombatDisable;
 	// GameMode Interface ~ end
 	
 	// GridManager Interface ~ start
-	// UGridManager* GetGridManager();
 	UPROPERTY(BlueprintAssignable)
-	FTurnBasedCombatEvents OnGridEventStart;
+	FTurnBasedCombat_Events OnGridEventStart;
 	UPROPERTY(BlueprintAssignable)
-	FTurnBasedCombatEvents OnGridEventEnd;
+	FTurnBasedCombat_Events OnGridEventEnd;
 	UFUNCTION(BlueprintCallable)
 	void RegisterGridTile(AGridTile* GridTile);
 	UFUNCTION(BlueprintCallable)
 	void RegisterGridUnit(AGridUnit* GridUnit);
+	UPROPERTY(BlueprintAssignable)
+	FTurnBasedCombat_TileHovered OnGridTileHovered;
+	UPROPERTY(BlueprintAssignable)
+	FTurnBasedCombat_UnitHovered OnGridUnitHovered;
 	// GridManager Interface ~ end
-	
+
+	// Cursor ~ start
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Cursor")
 	TObjectPtr<UStaticMesh> CursorMesh;
 	UPROPERTY()
@@ -63,8 +71,20 @@ public:
 	FVector Cursor_ExtraHeight = FVector(0.f, 0.f, 5.f);
 	UFUNCTION()
 	void UpdateCursor(const AGridTile* GridTile);
+	// Cursor ~ end
 
-
+protected:
+	// win condition ~ start
+	UPROPERTY(Instanced, EditDefaultsOnly)
+	UWinCondition_Abstract* WinCondition;
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FTurnBasedCombatOver, EWinConditionType, ConditionType);
+	UFUNCTION()
+	void OnWinConditionReceived(EWinConditionType InWinCondition);
+	
+public:
+	FTurnBasedCombatOver OnCombatOver;
+	// win condition ~ end
+	
 private:
 	virtual void HandleStartingNewPlayer_Implementation(APlayerController* NewPlayer) override;
 	
@@ -75,11 +95,6 @@ private:
 	UGridManager* GridManager = nullptr;
 
 	UPROPERTY()
-	UTurnManager* TurnManager = nullptr;
-
-	FTimerHandle Handle;
-	
-	UFUNCTION()
-	void OnFactionWin(FName Faction);
+	UTurnManager* TurnManager = nullptr;	
 	
 };
