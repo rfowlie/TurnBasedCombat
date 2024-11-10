@@ -14,7 +14,7 @@ ATurnBasedCombatGameMode::ATurnBasedCombatGameMode()
 {
 	PlayerControllerClass = ATurnBasedCombatPlayerController::StaticClass();
 	
-	EventSystem = CreateDefaultSubobject<UEventSystem>(TEXT("EventSystem"));	
+	EventSystem = CreateDefaultSubobject<UEventSystem>(TEXT("EventSystem"));
 	TurnManager = CreateDefaultSubobject<UTurnManager>(TEXT("TurnManager"));	
 	GridManager = CreateDefaultSubobject<UGridManager>(TEXT("GridManager"));
 	GridManager->Initialize(TurnManager);
@@ -44,17 +44,21 @@ ATurnBasedCombatGameMode::ATurnBasedCombatGameMode()
 	});
 
 	// Win condition setup
-	if (WinCondition)
-	{
-		TurnManager->OnFactionDefeated.BindUObject(WinCondition, &UWinCondition_Abstract::CheckFactionDefeated);
-		WinCondition->OnWinCondition.BindUObject(this, &ThisClass::OnWinConditionReceived);
-	}	
+	WinCondition = CreateDefaultSubobject<UWinCondition_Abstract>(TEXT("WinCondition"));
+	
 }
 
 void ATurnBasedCombatGameMode::BeginPlay()
 {
 	Super::BeginPlay();
 
+	// Win condition setup
+	if (WinCondition)
+	{
+		TurnManager->OnFactionDefeated.BindUObject(WinCondition, &UWinCondition_Abstract::CheckFactionDefeated);
+		WinCondition->OnWinCondition.BindUObject(this, &ThisClass::OnWinConditionReceived);
+	}
+	
 	// create cursor
 	const auto SpawnTransform = FTransform::Identity;
 	FActorSpawnParameters SpawnParameters;
@@ -75,7 +79,7 @@ void ATurnBasedCombatGameMode::BeginPlay()
 		{
 			UE_LOG(LogTemp, Error, TEXT("On Combat Start Fire"));
 			TurnManager->SetNextFaction();
-			if (OnCombatActive.IsBound()) { OnCombatActive.Broadcast(); }
+			if (OnCombatEnable.IsBound()) { OnCombatEnable.Broadcast(); }
 		},
 		3,
 		false);	
@@ -106,24 +110,24 @@ void ATurnBasedCombatGameMode::RegisterGridUnit(AGridUnit* GridUnit)
 
 void ATurnBasedCombatGameMode::UpdateCursor(const AGridTile* GridTile)
 {
-	// TODO: how is this working???
+	Cursor->SetActorLocation(GridTile->GetActorLocation() + Cursor_ExtraHeight);
 }
 
 void ATurnBasedCombatGameMode::OnWinConditionReceived(EWinConditionType InWinCondition)
 {
 	// stop internal things like player controller...
-	if (OnCombatInActive.IsBound()) { OnCombatInActive.Broadcast(); }
+	if (OnCombatDisable.IsBound()) { OnCombatDisable.Broadcast(); }
 	// notify everything that condition met
 	if (OnCombatOver.IsBound()) { OnCombatOver.Broadcast(InWinCondition); }
 	
 	// TODO: what other things will need to happen internally???
 	if (InWinCondition == Win)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Win Condition: Win"));
+		UE_LOG(LogTemp, Error, TEXT("Win Condition: Win"));
 	}
 	else if (InWinCondition == Defeat)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Win Condition: Defeat"));
+		UE_LOG(LogTemp, Error, TEXT("Win Condition: Defeat"));
 	}	
 }
 

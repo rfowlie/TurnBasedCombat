@@ -6,6 +6,7 @@
 #include "AbilitySystemInterface.h"
 #include "GameplayAbilitySpec.h"
 #include "GridUnitAttributeSet.h"
+#include "GridUnit_Interface.h"
 #include "Abilities/GameplayAbility.h"
 #include "GameFramework/Actor.h"
 #include "TurnBasedCombat/Public/Stats/StatsDataAsset.h"
@@ -30,7 +31,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FGridUnitEventDelegate, AGridUnit*, 
 
 
 UCLASS(Blueprintable, BlueprintType)
-class TURNBASEDCOMBAT_API AGridUnit : public AActor, public IAbilitySystemInterface
+class TURNBASEDCOMBAT_API AGridUnit : public AActor, public IAbilitySystemInterface, public IGridUnit_Interface
 {
 	GENERATED_BODY()
 
@@ -136,13 +137,7 @@ protected:
 	TArray<UWeaponDataAsset*> WeaponDataAssets;
 
 public:
-	UFUNCTION(BlueprintCallable)
-	FName GetFaction() const;
-
 	TSet<int32> GetWeaponRanges() const;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	int32 Faction;
 
 private:
 	UFUNCTION()

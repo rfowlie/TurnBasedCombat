@@ -5,7 +5,6 @@
 
 #include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystemComponent.h"
-#include "Abilities/Async/AbilityAsync_WaitAttributeChanged.h"
 #include "Grid/Unit/GridUnitAttributeSet.h"
 #include "TurnBasedCombat/Public/Item/Weapon.h"
 #include "_Framework/GameMode/TurnBasedCombatGameMode.h"
@@ -151,13 +150,13 @@ bool AGridUnit::AttackEvent(const FVector& Location, AGridUnit* Target)
 	return AbilitySystemComponent->TryActivateAbility(GameplayAbilitySpecHandle_Attack);
 }
 
-FName AGridUnit::GetFaction() const
-{
-	// TODO: for now...
-	// const FString F = "Faction_" + FString::FromInt(Faction);
-	// return "Faction_" + FString::FromInt(Faction);
-	return FName(FString::FromInt(Faction));
-}
+// FName AGridUnit::GetFaction() const
+// {
+// 	// TODO: for now...
+// 	// const FString F = "Faction_" + FString::FromInt(Faction);
+// 	// return "Faction_" + FString::FromInt(Faction);
+// 	return FName(FString::FromInt(Faction));
+// }
 
 TSet<int32> AGridUnit::GetWeaponRanges() const
 {

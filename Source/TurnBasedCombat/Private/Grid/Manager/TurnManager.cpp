@@ -14,11 +14,11 @@ void UTurnManager::RegisterGridUnit(AGridUnit* GridUnit)
 {
 	if (!IsValid(GridUnit)) { return; }
 
-	FName FactionName = GridUnit->GetFaction();
+	FGameplayTag FactionTag = GridUnit->Execute_GetFaction(GridUnit);
 	bool FactionFound = false;
 	for (FFactionInfo FactionInfo : Factions)
 	{
-		if (FactionInfo.Name == FactionName)
+		if (FactionInfo.Tag == FactionTag)
 		{
 			FactionInfo.GridUnits.Add(GridUnit);
 			FactionFound = true;
@@ -28,7 +28,7 @@ void UTurnManager::RegisterGridUnit(AGridUnit* GridUnit)
 	if (!FactionFound)
 	{
 		FFactionInfo FactionInfo;
-		FactionInfo.Name = FactionName;
+		FactionInfo.Tag = FactionTag;
 		FactionInfo.GridUnits.Add(GridUnit);
 		Factions.Add(FactionInfo);	
 	}
@@ -43,7 +43,7 @@ void UTurnManager::UnregisterGridUnit(AGridUnit* GridUnit)
 	
 	for (FFactionInfo FactionInfo : Factions)
 	{
-		if (FactionInfo.Name == GridUnit->GetFaction())
+		if (FactionInfo.Tag == GridUnit->Execute_GetFaction(GridUnit))
 		{
 			FactionInfo.GridUnits.Remove(GridUnit);
 			break;
@@ -51,9 +51,9 @@ void UTurnManager::UnregisterGridUnit(AGridUnit* GridUnit)
 	}
 }
 
-FName UTurnManager::GetCurrentFaction() const
+FGameplayTag UTurnManager::GetCurrentFaction() const
 {
-	return Factions[FactionIndex].Name;
+	return Factions[FactionIndex].Tag;
 }
 
 bool UTurnManager::CanTakeTurn(AGridUnit* GridUnit)
@@ -65,7 +65,7 @@ void UTurnManager::UpdateGridUnitActionTaken(AGridUnit* GridUnit)
 {
 	for (FFactionInfo FactionInfo : Factions)
 	{
-		if (FactionInfo.Name == GridUnit->GetFaction())
+		if (FactionInfo.Tag == GridUnit->Execute_GetFaction(GridUnit))
 		{
 			FactionInfo.GridUnits[GridUnit] = false;
 
@@ -81,7 +81,6 @@ void UTurnManager::UpdateGridUnitActionTaken(AGridUnit* GridUnit)
 	}
 }
 
-
 void UTurnManager::IncrementFaction()
 {
 	FactionIndex = (FactionIndex + 1 + Factions.Num()) % Factions.Num();
@@ -91,11 +90,11 @@ void UTurnManager::CheckFactionDefeated(AGridUnit* GridUnit)
 {
 	for (FFactionInfo FactionInfo : Factions)
 	{
-		if (FactionInfo.Name == GridUnit->GetFaction())
+		if (FactionInfo.Tag == GridUnit->Execute_GetFaction(GridUnit))
 		{
 			if (FactionInfo.IsFactionDefeated())
 			{
-				if (OnFactionDefeated.IsBound()) { OnFactionDefeated.Execute(GridUnit->GetFaction()); }
+				if (OnFactionDefeated.IsBound()) { OnFactionDefeated.Execute(GridUnit->Execute_GetFaction(GridUnit)); }
 				break;
 			}
 		}
@@ -108,18 +107,18 @@ void UTurnManager::SetNextFaction()
 	// check to see if all units of faction destroyed, skip turn???
 	while(Factions[FactionIndex].IsFactionDefeated()) { IncrementFaction(); }
 
-	UE_LOG(LogTemp, Log, TEXT("Faction Start Turn: %s"), *Factions[FactionIndex].Name.ToString());
+	UE_LOG(LogTemp, Log, TEXT("Faction Start Turn: %s"), *Factions[FactionIndex].Tag.ToString());
 	
 	Factions[FactionIndex].ActivateUnits();
 }
 
-void UTurnManager::GetActiveFactions(TArray<FName>& ActiveFactions)
+void UTurnManager::GetActiveFactions(TArray<FGameplayTag>& ActiveFactions)
 {
 	for (FFactionInfo FactionInfo : Factions)
 	{
 		if (!FactionInfo.IsFactionDefeated())
 		{
-			ActiveFactions.Add(FactionInfo.Name);
+			ActiveFactions.Add(FactionInfo.Tag);
 		}
 	}
 }

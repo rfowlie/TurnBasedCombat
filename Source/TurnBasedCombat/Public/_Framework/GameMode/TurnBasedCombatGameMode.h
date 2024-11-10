@@ -42,9 +42,9 @@ public:
 
 	// GameMode Interface ~ start
 	UPROPERTY(BlueprintAssignable)
-	FTurnBasedCombat_Events OnCombatActive;
+	FTurnBasedCombat_Events OnCombatEnable;
 	UPROPERTY(BlueprintAssignable)
-	FTurnBasedCombat_Events OnCombatInActive;
+	FTurnBasedCombat_Events OnCombatDisable;
 	// GameMode Interface ~ end
 	
 	// GridManager Interface ~ start
@@ -75,7 +75,7 @@ public:
 
 protected:
 	// win condition ~ start
-	UPROPERTY(EditInstanceOnly)
+	UPROPERTY(Instanced, EditDefaultsOnly)
 	UWinCondition_Abstract* WinCondition;
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FTurnBasedCombatOver, EWinConditionType, ConditionType);
 	UFUNCTION()

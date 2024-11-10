@@ -17,7 +17,7 @@ struct FFactionInfo
 	GENERATED_BODY()
 
 	UPROPERTY()
-	FName Name;
+	FGameplayTag Tag;
 	
 	UPROPERTY()
 	TMap<AGridUnit*, bool> GridUnits;
@@ -76,23 +76,22 @@ class TURNBASEDCOMBAT_API UTurnManager : public UObject
 public:
 	UTurnManager();
 
-	// grid manager will set a function that it wants this to call when someone wins
-	DECLARE_DELEGATE_OneParam(FFactionEventDelegate, FName)
-	FFactionEventDelegate OnFactionDefeated;	
-	
-	DECLARE_EVENT_OneParam(UTurnManager, FTurnEvent, FName)
+	// grid manager will set a function that it wants this to call when someone wins	
+	DECLARE_EVENT_OneParam(UTurnManager, FTurnEvent, FGameplayTag)
 	FTurnEvent OnTurnBegin;
 	FTurnEvent OnTurnFinish;
+	DECLARE_DELEGATE_OneParam(FFactionEventDelegate, FGameplayTag)
+	FFactionEventDelegate OnFactionDefeated;	
 	
 	void RegisterGridUnit(AGridUnit* GridUnit);
 	void UnregisterGridUnit(AGridUnit* GridUnit);
 
-	FName GetCurrentFaction() const;	
+	FGameplayTag GetCurrentFaction() const;
 	bool CanTakeTurn(AGridUnit* GridUnit);
 	void UpdateGridUnitActionTaken(AGridUnit* GridUnit);
 
 	void SetNextFaction();
-	void GetActiveFactions(TArray<FName>& ActiveFactions);
+	void GetActiveFactions(TArray<FGameplayTag>& ActiveFactions);
 	
 	UFUNCTION()
 	void CheckFactionDefeated(AGridUnit* GridUnit);

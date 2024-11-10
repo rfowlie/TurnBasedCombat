@@ -193,7 +193,7 @@ bool UGridProxy::HasUnit() const
 bool UGridProxy::IsAlly() const
 {
 	if (GridUnit == nullptr) { return false; }
-	return GridUnit->GetFaction() == TurnManager->GetCurrentFaction();
+	return GridUnit->Execute_GetFaction(GridUnit) == TurnManager->GetCurrentFaction();
 }
 
 bool UGridProxy::IsMoveTile(UGridProxy* Other)
@@ -231,10 +231,11 @@ FGridPosition UGridProxy::GetGridPosition() const
 	return UGridUtility::CalculateGridPosition(GridTile);
 }
 
-FName UGridProxy::GetFaction() const
+FGameplayTag UGridProxy::GetFaction() const
 {
+	// this seems sus...
 	// grid unit can be null
-	return GridUnit == nullptr ? FName("") : GridUnit->GetFaction();
+	return GridUnit == nullptr ? FGameplayTag() : GridUnit->Execute_GetFaction(GridUnit);
 }
 
 UGridProxy::UGridProxy()

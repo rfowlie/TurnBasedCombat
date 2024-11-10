@@ -557,7 +557,7 @@ void UGridManager::GetEnemyUnits(TArray<AGridUnit*>& EnemyGridUnits, AGridUnit* 
 	// TODO: will need to have some checking to not include allied factions...
 	for (const auto Unit : GridUnitsAll)
 	{
-		if (GridUnit->GetFaction() != Unit->GetFaction())
+		if (GridUnit->Execute_GetFaction(GridUnit) != Unit->Execute_GetFaction(Unit))
 		{
 			EnemyGridUnits.AddUnique(Unit);
 		}		
@@ -569,7 +569,7 @@ TArray<FGridPosition> UGridManager::GetEnemyPositions(const AGridUnit* GridUnit)
 	TArray<FGridPosition> Positions;
 	for (const auto Unit : GridUnitsAll)
 	{
-		if (GridUnit->GetFaction() != Unit->GetFaction())
+		if (GridUnit->Execute_GetFaction(GridUnit) != Unit->Execute_GetFaction(Unit))
 		{
 			Positions.AddUnique(UGridUtility::CalculateGridPosition(Unit));
 		}		

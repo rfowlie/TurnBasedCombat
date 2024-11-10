@@ -70,7 +70,7 @@ public:
 
 	FVector GetWorldLocation() const;
 	FGridPosition GetGridPosition() const;
-	FName GetFaction() const;
+	FGameplayTag GetFaction() const;
 protected:
 	UPROPERTY()
 	UTurnManager* TurnManager = nullptr;	
