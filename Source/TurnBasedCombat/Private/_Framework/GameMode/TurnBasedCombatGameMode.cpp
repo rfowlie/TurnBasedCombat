@@ -1,26 +1,21 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
-
-
 #include "TurnBasedCombat/Public/_Framework/GameMode/TurnBasedCombatGameMode.h"
-
 #include "Engine/StaticMeshActor.h"
 #include "Grid/Manager/TurnManager.h"
 #include "Grid/Tile/GridTile.h"
 #include "TurnBasedCombat/Public/EventSystem/EventSystem.h"
 #include "TurnBasedCombat/Public/Grid/Manager/GridManager.h"
 #include "TurnBasedCombat/Public/_Framework/PlayerController/TurnBasedCombatPlayerController.h"
+#include "_Framework/GameMode/WinCondition_Abstract.h"
 
 
 ATurnBasedCombatGameMode::ATurnBasedCombatGameMode()
 {
 	PlayerControllerClass = ATurnBasedCombatPlayerController::StaticClass();
 	
-	EventSystem = CreateDefaultSubobject<UEventSystem>(TEXT("EventSystem"));
-	
-	TurnManager = CreateDefaultSubobject<UTurnManager>(TEXT("TurnManager"));
-	TurnManager->OnFactionWin.BindUObject(this, &ThisClass::OnFactionWin);
-	
+	EventSystem = CreateDefaultSubobject<UEventSystem>(TEXT("EventSystem"));	
+	TurnManager = CreateDefaultSubobject<UTurnManager>(TEXT("TurnManager"));	
 	GridManager = CreateDefaultSubobject<UGridManager>(TEXT("GridManager"));
 	GridManager->Initialize(TurnManager);
 
@@ -47,6 +42,13 @@ ATurnBasedCombatGameMode::ATurnBasedCombatGameMode()
 		UE_LOG(LogTemp, Warning, TEXT("Game Mode: OnGridUnitHovered"));
 		if (OnGridUnitHovered.IsBound()) { OnGridUnitHovered.Broadcast(Unit); }
 	});
+
+	// Win condition setup
+	if (WinCondition)
+	{
+		TurnManager->OnFactionDefeated.BindUObject(WinCondition, &UWinCondition_Abstract::CheckFactionDefeated);
+		WinCondition->OnWinCondition.BindUObject(this, &ThisClass::OnWinConditionReceived);
+	}	
 }
 
 void ATurnBasedCombatGameMode::BeginPlay()
@@ -66,13 +68,14 @@ void ATurnBasedCombatGameMode::BeginPlay()
 	// TODO: HACKYYY
 	// for now wait a few seconds then fire onstart
 	UE_LOG(LogTemp, Error, TEXT("On Combat Start Prep"));
+	FTimerHandle Handle;
 	GetWorldTimerManager().SetTimer(
 		Handle,
 		[this]()
 		{
 			UE_LOG(LogTemp, Error, TEXT("On Combat Start Fire"));
 			TurnManager->SetNextFaction();
-			if (OnCombatStart.IsBound()) { OnCombatStart.Broadcast(); }
+			if (OnCombatActive.IsBound()) { OnCombatActive.Broadcast(); }
 		},
 		3,
 		false);	
@@ -91,11 +94,37 @@ void ATurnBasedCombatGameMode::RegisterGridTile(AGridTile* GridTile)
 void ATurnBasedCombatGameMode::RegisterGridUnit(AGridUnit* GridUnit)
 {
 	GridManager->RegisterGridUnit(GridUnit);
+
+	// Win condition setup
+	// should be aware of when units die to trigger win conditions
+	// for example, if the main character in FE dies you lose the level automatically
+	if (WinCondition)
+	{
+		GridUnit->OnDefeat.AddDynamic(WinCondition, &UWinCondition_Abstract::CheckGridUnitDefeated);
+	}	
 }
 
 void ATurnBasedCombatGameMode::UpdateCursor(const AGridTile* GridTile)
 {
-	Cursor->SetActorLocation(GridTile->GetActorLocation() + Cursor_ExtraHeight);
+	// TODO: how is this working???
+}
+
+void ATurnBasedCombatGameMode::OnWinConditionReceived(EWinConditionType InWinCondition)
+{
+	// stop internal things like player controller...
+	if (OnCombatInActive.IsBound()) { OnCombatInActive.Broadcast(); }
+	// notify everything that condition met
+	if (OnCombatOver.IsBound()) { OnCombatOver.Broadcast(InWinCondition); }
+	
+	// TODO: what other things will need to happen internally???
+	if (InWinCondition == Win)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Win Condition: Win"));
+	}
+	else if (InWinCondition == Defeat)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Win Condition: Defeat"));
+	}	
 }
 
 void ATurnBasedCombatGameMode::HandleStartingNewPlayer_Implementation(APlayerController* NewPlayer)
@@ -106,10 +135,4 @@ void ATurnBasedCombatGameMode::HandleStartingNewPlayer_Implementation(APlayerCon
 	{
 		PlayerController->Initialize(GridManager);
 	}
-}
-
-void ATurnBasedCombatGameMode::OnFactionWin(FName Faction)
-{
-	// TODO
-	UE_LOG(LogTemp, Warning, TEXT("WIN: %s"), *Faction.ToString());
 }

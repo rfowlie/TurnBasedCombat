@@ -74,5 +74,9 @@ public:
 	
 	UFUNCTION(BlueprintCallable)
 	void InitializeAttributesFromStatsDataAsset(UStatsDataAsset* StatsDataAsset, const int32 Level);
-	
+
+	UPROPERTY()
+	bool IsDefeated;
+	DECLARE_EVENT(UGridUnitAttributeSet, FGridUnitAttributeEvent)
+	FGridUnitAttributeEvent OnHealthZero;
 };

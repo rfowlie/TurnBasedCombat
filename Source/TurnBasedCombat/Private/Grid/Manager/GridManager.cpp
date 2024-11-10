@@ -133,7 +133,7 @@ void UGridManager::PostEvent_Move(AGridUnit* GridUnit)
 	if (!IsValid(GridUnit)) { return; }
 
 	// update turn manager
-	TurnManager->UpdateGridUnitMoved(GridUnit);
+	TurnManager->UpdateGridUnitActionTaken(GridUnit);
 	
 	// update unit mappings
 	// remove mapping for grid unit (will be updated on complete)
@@ -210,7 +210,7 @@ void UGridManager::PostEvent_Attack(AGridUnit* GridUnit)
 	if (!IsValid(GridUnit)) { return; }
 
 	// update turn manager
-	TurnManager->UpdateGridUnitMoved(GridUnit);
+	TurnManager->UpdateGridUnitActionTaken(GridUnit);
 	
 	// update unit mappings
 	// remove mapping for grid unit (will be updated on complete)

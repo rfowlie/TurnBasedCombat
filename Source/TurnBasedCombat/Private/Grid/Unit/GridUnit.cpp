@@ -3,7 +3,9 @@
 
 #include "TurnBasedCombat/Public/Grid/Unit/GridUnit.h"
 
+#include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystemComponent.h"
+#include "Abilities/Async/AbilityAsync_WaitAttributeChanged.h"
 #include "Grid/Unit/GridUnitAttributeSet.h"
 #include "TurnBasedCombat/Public/Item/Weapon.h"
 #include "_Framework/GameMode/TurnBasedCombatGameMode.h"
@@ -50,6 +52,12 @@ void AGridUnit::BeginPlay()
 	{
 		AttributeSet_GridUnit->InitializeAttributesFromStatsDataAsset(StatsDataAsset, Level);
 	}
+
+	// follow health attribute, when hits zero then do defeat stuff (anim, broadcast, etc.)
+	// WaitForHealthZero = UAbilityAsync_WaitAttributeChanged::WaitForAttributeChanged(
+	// 	this, UGridUnitAttributeSet::GetHealthAttribute(), false);
+	// WaitForHealthZero->Changed.AddDynamic(this, &ThisClass::OnHealthZero);
+	AttributeSet_GridUnit->OnHealthZero.AddUObject(this, &ThisClass::NotifyHealthZero);
 	
 	// give move ability
 	GameplayAbilitySpecHandle_Move = AbilitySystemComponent->GiveAbility(Spec);
@@ -76,6 +84,13 @@ void AGridUnit::BeginPlay()
 			if (OnEventAttackEnd.IsBound()) { OnEventAttackEnd.Broadcast(this); }
 		}
 	});
+}
+
+void AGridUnit::NotifyHealthZero()
+{
+	UE_LOG(LogTemp, Log, TEXT("On Health Zero"));
+	EventOnDefeat();
+	if (OnDefeat.IsBound()) { OnDefeat.Broadcast(this); }
 }
 
 int32 AGridUnit::GetAvailableMovement() const

@@ -42,6 +42,13 @@ void UGridUnitAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCa
 	if (Data.EvaluatedData.Attribute == GetHealthAttribute())
 	{
 		SetHealth(FMath::Clamp(GetHealth(), 0, GetHealthMax()));
+
+		// broadcast when health drops to zero, but only once
+		if (!IsDefeated && GetHealth() <= 0)
+		{
+			IsDefeated = true;
+			if (OnHealthZero.IsBound()) { OnHealthZero.Broadcast(); }
+		}
 	}
 }
 #pragma endregion 

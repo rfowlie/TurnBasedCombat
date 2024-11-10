@@ -39,8 +39,8 @@ void ATurnBasedCombatPlayerController::BeginPlay()
 
 	if (ATurnBasedCombatGameMode* GameMode = Cast<ATurnBasedCombatGameMode>(GetWorld()->GetAuthGameMode()))
 	{
-		GameMode->OnCombatStart.AddDynamic(this, &ThisClass::EnableState);
-		GameMode->OnCombatEnd.AddDynamic(this, &ThisClass::DisableState);
+		GameMode->OnCombatActive.AddDynamic(this, &ThisClass::EnableState);
+		GameMode->OnCombatInActive.AddDynamic(this, &ThisClass::DisableState);
 	}
 }
 

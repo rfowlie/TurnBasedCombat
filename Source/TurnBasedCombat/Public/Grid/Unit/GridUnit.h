@@ -5,12 +5,14 @@
 #include "CoreMinimal.h"
 #include "AbilitySystemInterface.h"
 #include "GameplayAbilitySpec.h"
+#include "GridUnitAttributeSet.h"
 #include "Abilities/GameplayAbility.h"
 #include "GameFramework/Actor.h"
 #include "TurnBasedCombat/Public/Stats/StatsDataAsset.h"
 #include "GridUnit.generated.h"
 
 
+class UAbilityAsync_WaitAttributeChanged;
 class UGridUnitAttributeSet;
 class UGameplayAbility;
 class UAttributeSet;
@@ -55,8 +57,31 @@ public:
 	TSubclassOf<UGameplayAbility> GameplayAbilityClass_Attack;	
 	UPROPERTY(BlueprintReadOnly)
 	FGameplayAbilitySpecHandle GameplayAbilitySpecHandle_Attack;
+
+	UFUNCTION(BlueprintCallable)
+	int32 GetHealth() const { return AttributeSet_GridUnit->GetHealth(); }
+	UPROPERTY(BlueprintAssignable)
+	FGridUnitEventDelegate OnDefeat;
+protected:
+	UFUNCTION(BlueprintImplementableEvent)
+	void EventOnDefeat();
+	UPROPERTY()
+	UAbilityAsync_WaitAttributeChanged* WaitForHealthZero;
+	UFUNCTION()
+	void NotifyHealthZero();
+	UFUNCTION()
+	void OnHealthZero(FGameplayAttribute Attribute, float NewValue, float OldValue)
+	{
+		UE_LOG(LogTemp, Log, TEXT("On Health Zero"));
+		if (NewValue == 0)
+		{
+			EventOnDefeat();
+			if (OnDefeat.IsBound()) { OnDefeat.Broadcast(this); }
+		}		
+	}
 	// Ability System ~ end
 
+public:
 	// Placeholders ~ start
 	// TODO: temp placeholder variables
 	// will remove when we switch to calling abilities through gameplay events passing in event data
