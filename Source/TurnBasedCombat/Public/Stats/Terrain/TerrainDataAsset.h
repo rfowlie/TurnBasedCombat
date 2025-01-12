@@ -24,15 +24,21 @@ struct FTerrainStats
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	ETileTerrain Terrain = ETileTerrain::Grass;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	FText Type;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	int32 MovementCost = 1;
+	int32 MovementCost;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	int32 DefencePhysical = 1;
+	int32 DefencePhysical;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	int32 DefenceMagical = 1;
+	int32 DefenceMagical;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	int32 Avoid;
 };
 
 /**

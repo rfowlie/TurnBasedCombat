@@ -131,10 +131,9 @@ public:
 	bool MovementEvent(const FVector& Location);
 	bool AttackEvent(const FVector& Location, AGridUnit* Target);
 
-protected:	
 	// Just for setup, will then need to instance to keep track of changes
 	UPROPERTY(EditInstanceOnly, BlueprintReadOnly)
-	TArray<UWeaponDataAsset*> WeaponDataAssets;
+	TArray<UWeaponDataAsset*> WeaponDataAssets;	
 
 public:
 	TSet<int32> GetWeaponRanges() const;

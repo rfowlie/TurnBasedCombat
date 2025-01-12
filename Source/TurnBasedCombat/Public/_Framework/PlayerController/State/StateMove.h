@@ -15,6 +15,9 @@ class UInputAction;
 class AGridTile;
 class AGridUnit;
 
+
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Encounter_Mode_Move);
+
 /**
  * 
  */
@@ -25,6 +28,8 @@ class TURNBASEDCOMBAT_API UStateMove : public UAbstractPlayerControllerState
 
 public:
 	UStateMove();
+
+	virtual FGameplayTag GetStateTag() const override;
 	
 	void Initialize(UGridManager* InGridManager);
 	

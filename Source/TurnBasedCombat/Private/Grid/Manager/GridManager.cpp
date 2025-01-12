@@ -4,10 +4,13 @@
 #include "Grid/Manager/GridManager.h"
 #include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystemComponent.h"
+// #include "Grid/GridMovementNode.h"
 #include "Grid/GridUtility.h"
+#include "Grid/GridStructs.h"
 #include "Grid/Event/GridEventPayload_Move.h"
 #include "Grid/Manager/TurnManager.h"
 #include "Grid/Manager/GridEventPayload.h"
+#include "Grid/Manager/GridRules.h"
 #include "TurnBasedCombat/Public/Grid/Tile/GridTile.h"
 #include "TurnBasedCombat/Public/Grid/Unit/GridUnit.h"
 
@@ -20,8 +23,9 @@ UGridManager::UGridManager()
 {	
 }
 
-void UGridManager::Initialize(UTurnManager* InTurnManager)
+void UGridManager::Initialize(UGridRules* InGridRules, UTurnManager* InTurnManager)
 {
+	GridRules = InGridRules;
 	TurnManager = InTurnManager;
 	// TurnManager = CreateDefaultSubobject<UTurnManager>(TEXT("TurnManager"));
 	//
@@ -38,6 +42,7 @@ void UGridManager::RegisterGridTile(AGridTile* GridTile)
 		// add to map
 		FGridPosition GridPosition = UGridUtility::CalculateGridPosition(GridTile);
 		LocationGridTileMap.Add(GridPosition, GridTile);
+		GridTileLocationMap.Add(GridTile, GridPosition);
 		
 		// bind to events
 		GridTile->OnBeginCursorOver.AddDynamic(this, &UGridManager::OnBeginCursorOverGridTile);
@@ -79,7 +84,7 @@ UGridProxy* UGridManager::GetCurrentHoveredGridTile()
 	TArray<FGridPair> GridPairs;
 	if (CurrentHoveredUnit !=  nullptr)
 	{
-		GridMovements = CalculateGridMovement(CurrentHoveredUnit);
+		CalculateGridMovement(GridMovements, CurrentHoveredUnit);
 		// CalculateGridAttacks(OutEnemyUnitsInRange, CurrentHoveredUnit);
 		GridPairs = CalculateGridAttacks(CurrentHoveredUnit);
 	}
@@ -151,7 +156,7 @@ void UGridManager::PostEvent_Move(AGridUnit* GridUnit)
 	}
 }
 
-void UGridManager::CreateAttackEvent(UGridProxy* Instigator, UGridProxy* Location, UGridProxy* Target)
+void UGridManager::CreateAttackEvent(UGridProxy* Instigator, UGridProxy* Target, UGridProxy* Location)
 {
 	// TODO
 	if (!IsValid(Instigator) || !IsValid(Location) || !IsValid(Target))
@@ -281,101 +286,205 @@ void UGridManager::OnBeginCursorOverGridTile(AActor* Actor)
 	}
 }
 
-TArray<FGridMovement> UGridManager::CalculateGridMovement(AGridUnit* GridUnit)
+void UGridManager::CalculateGridMovement(TArray<FGridMovement>& OutMovement, AGridUnit* GridUnit)
 {
-	// get start tile from terrain, make FStruct and set values, add Struct to queue
-    TSet<FGridMovement> Processed;
-    TSet<FGridMovement> ToProcess;
-    TQueue<FGridMovement> ProcessingQueue;
-
+	// ERROR CHECKS    
 	if (!GridUnitLocationMap.Contains(GridUnit))
 	{
 		// GridUnit does not have a location...
-		return Processed.Array();
+		UE_LOG(LogTemp, Error, TEXT("Grid unit does not have location!!"));
+		return;
 	}
-
-    // const AGridTile* StartTile = *GridTileMap.Find(StartGridPosition);
-    const AGridTile* StartTile = LocationGridTileMap[GridUnitLocationMap[GridUnit]];
-    
+	
+    AGridTile* StartTile = LocationGridTileMap[GridUnitLocationMap[GridUnit]];    
     if (!IsValid(StartTile))
     {
     	// UE_LOG(LogTemp, Error, TEXT("Tile Actor At Location (X:%d, Y:%d) is null!!"), StartGridPosition.X, StartGridPosition.Y);
-    	UE_LOG(LogTemp, Error, TEXT("Tile actor is null!!"));
-    	return Processed.Array();
+    	UE_LOG(LogTemp, Error, TEXT("No grid tile at unit location!!"));
+    	return;
     }
-    
-    FGridMovement StartTileInfo;
-	StartTileInfo.GridPosition = GridUnitLocationMap[GridUnit];
-    StartTileInfo.AvailableMovement = GridUnit->GetAvailableMovement();
-	StartTileInfo.GridTile = StartTile;
-    	
-    ProcessingQueue.Enqueue(StartTileInfo);
 
+	// for now just make sure it is clear, might want to add boolean to check to do this...
+	OutMovement.Empty();
+ 
+	// ALGORITHM
+	TSet<FGridMovement> Processed;
+	TQueue<FGridMovement> ProcessingQueue;
+	
+    FGridMovement StartNode;
+    StartNode.Cost = 0;
+	StartNode.GridTile = StartTile;    	
+    ProcessingQueue.Enqueue(StartNode);
+ 
     FGridMovement Current;
-    while(!ProcessingQueue.IsEmpty())
-    {		
-    	while (!ProcessingQueue.IsEmpty())
-    	{		
-    		ProcessingQueue.Dequeue(Current);
-    		Processed.Add(Current);
-
-    		// adjacent tiles
-    		for (AGridTile* GridTile : GetGridTilesAtRange(Current.GridPosition, 1))
-    		{
-    			// check if available movement goes below 0, do not create info
-    			// TODO: decide best best way to store terrain data and access it
-    			const int32 CalculatedMovement =
-    				Current.AvailableMovement - GridTile->GetMovementCost();
-
-    			if (CalculatedMovement < 0)
-    			{
-    				continue;
-    			}
+	while (!ProcessingQueue.IsEmpty())
+	{		
+		ProcessingQueue.Dequeue(Current);
+		Processed.Add(Current);
+    		
+		for (AGridTile* TargetTile : GetGridTilesAtRange(GridTileLocationMap[Current.GridTile], 1))
+		{
+			if (!GridRules->UnitCanMoveOnTile(this, GridUnit, Current.GridTile, TargetTile))
+			{
+				continue;
+			}    				
     			
-    			// create filled struct
-    			FGridMovement Temp;
-    			Temp.GridTile = GridTile;
-    			Temp.GridPosition = UGridUtility::CalculateGridPosition(GridTile);
-    			// GetGridPosition_DEPRECATED(GridTile, Temp.GridPosition);
-    			Temp.AvailableMovement = CalculatedMovement;
+			const int32 TerrainCost = GridRules->CalculateTerrainCost(this, GridUnit, Current.GridTile, TargetTile);
+			const int32 CalculatedMovement = Current.Cost + TerrainCost; 
+			if (GridUnit->GetAvailableMovement() < CalculatedMovement)
+			{
+				continue;
+			}
+    			
+			FGridMovement Temp;
+			Temp.GridTile = TargetTile;
+			Temp.Cost = CalculatedMovement;
+			Temp.ParentTile = Current.GridTile;
 
-    			// check if struct processed
-    			if (!Processed.Contains(Temp))
-    			{
-    				// check if struct in to process
-    				if (FGridMovement* MatchingTerrain = ToProcess.Find(Temp))
-    				{
-    					if (MatchingTerrain->AvailableMovement < Temp. AvailableMovement)
-    					{
-    						MatchingTerrain->AvailableMovement = Temp.AvailableMovement;
-    					}
-    				}
-    				else
-    				{
-    					ToProcess.Add(Temp);
-    				}
-    			}			
-    		}		
-    	}
+			if (!Processed.Contains(Temp))
+			{
+				ProcessingQueue.Enqueue(Temp);
+			}
+			else
+			{
+				FGridMovement* ProcessedCopy = Processed.Find(Temp);
+				if (Temp.Cost < ProcessedCopy->Cost)
+				{
+					Processed.Remove(*ProcessedCopy);
+					ProcessingQueue.Enqueue(Temp);
+				}
+			}	
+		}		
+	}
+	
+    OutMovement = Processed.Array();
 
-    	// move all to process into queue
-    	for (FGridMovement Info : ToProcess)
-    	{
-    		ProcessingQueue.Enqueue(Info);
-    	}
+#pragma region testing
 
-    	// empty to process
-    	ToProcess.Empty();		
-    }
+	// ERROR CHECK
+	// get start tile from terrain, make FStruct and set values, add Struct to queue
 
-    // convert to array and sort according to gridlocation
-    TArray<FGridMovement> Output = Processed.Array();
-    Output.Sort([](const FGridMovement& A, const FGridMovement& B)
-    {
-    	return A.GridPosition.X < B.GridPosition.X ? true : A.GridPosition.Y < B.GridPosition.Y ? true : false;
-    });
-    
-    return Output;
+	// NEW ALGORITHM
+	// TMap<AGridTile*, AGridTile*> ParentTiles;
+	// TMap<AGridTile*, int32> ProcessedTiles;
+	// TQueue<AGridTile*> TilesToProcess;
+	//
+	// TilesToProcess.Enqueue(LocationGridTileMap[GridUnitLocationMap[GridUnit]]);
+	//
+	// AGridTile* CurrentTile;
+	// while(!TilesToProcess.IsEmpty())
+	// {
+	// 	TilesToProcess.Dequeue(CurrentTile);
+	// 	for (AGridTile* GridTile : GetGridTilesAtRange(UGridUtility::CalculateGridPosition(CurrentTile), 1))
+	// 	{
+	// 		AGridUnit* OccupyingGridUnit = LocationGridUnitMap[GridTileLocationMap[GridTile]];
+	// 		if (GridRules->UnitCanMoveOnTile(GridUnit, GridTile, OccupyingGridUnit))
+	// 		{
+	// 			const int32 TerrianCost = GridRules->CalculateTerrainCost(GridUnit, GridTile, OccupyingGridUnit);
+	// 			const int32 CalculatedMovement = GridUnit->GetAvailableMovement(); - TerrianCost;
+ //    				
+	// 			if (CalculatedMovement >= 0)
+	// 			{}
+	// 		}
+	// 	}
+	//
+	// 	ProcessedTiles.Add(CurrentTile);
+	// }
+	
+	// ALGORITHM
+	// check for null errors
+	// if (!GridUnitLocationMap.Contains(GridUnit))
+	// {
+	// 	// GridUnit does not have a location...
+	// 	UE_LOG(LogTemp, Error, TEXT("Grid unit does not have location!!"));
+	// 	return TArray<FGridMovement>();
+	// }
+	//
+	// // const AGridTile* StartTile = *GridTileMap.Find(StartGridPosition);
+	// AGridTile* StartTile = LocationGridTileMap[GridUnitLocationMap[GridUnit]];
+ //    
+	// if (!IsValid(StartTile))
+	// {
+	// 	// UE_LOG(LogTemp, Error, TEXT("Tile Actor At Location (X:%d, Y:%d) is null!!"), StartGridPosition.X, StartGridPosition.Y);
+	// 	UE_LOG(LogTemp, Error, TEXT("No grid tile at unit location!!"));
+	// 	return TArray<FGridMovement>();
+	// }
+ //
+	// // setup containers for logic
+	// TArray<UGridMovementNode*> Explored;
+	// // TArray<UGridMovementNode*> ToProcess;
+	// TQueue<UGridMovementNode*> Unexplored;
+	//
+ //    UGridMovementNode* StartNode = NewObject<UGridMovementNode>();
+	// StartNode->GridTile = StartTile;
+	// Unexplored.Enqueue(StartNode);
+ //
+ //    UGridMovementNode* Current;
+ //    while(!Unexplored.IsEmpty())
+ //    {
+ //    	Unexplored.Dequeue(Current);
+	//     // check if already in processed
+ //    	bool bProcess = true;
+ //    	if (Explored.Contains(Current))
+ //    	{
+ //    		UGridMovementNode* Matching = Explored[Explored.Find(Current)];
+ //    		// if processed has a higher value then need to reprocess so remove, else skip this one
+ //    		if (Current->CostToReachTile < Matching->CostToReachTile)
+ //    		{
+ //    			Explored.Remove(Matching);
+ //    		}
+ //    		else
+ //    		{
+ //    			bProcess = false;
+ //    		}
+ //    	}
+ //
+ //    	if (!bProcess) { continue; }
+ //    		
+ //    	for (AGridTile* TargetTile : GetGridTilesAtRange(GridTileLocationMap[Current->GridTile], 1))
+ //    	{
+ //    		if (GridRules->UnitCanMoveOnTile(this, GridUnit, Current->GridTile, TargetTile))
+ //    		{
+ //    			const int32 TerrainCost = GridRules->CalculateTerrainCost(this, GridUnit, Current->GridTile, TargetTile);
+ //    			const int32 CalculatedMovement = Current->CostToReachTile - TerrainCost;
+ //    				
+ //    			if (CalculatedMovement >= 0)
+ //    			{
+ //    				UGridMovementNode* Temp = NewObject<UGridMovementNode>();
+ //    				Temp->GridTile = TargetTile;
+ //    				Temp->CostToReachTile = CalculatedMovement;
+ //    				Temp->ParentNode = Current;
+ //
+ //    				ProcessingQueue.Enqueue(Temp);
+ //    			}
+ //    		}
+ //    	}
+ //
+ //    	Processed.Add(Current);
+ //    }
+ //
+	// // // why does this matter???
+	//  //    // convert to array and sort according to gridlocation
+	//  //    TArray<FGridMovement> Output = Processed.Array();
+	//  //    Output.Sort([](const FGridMovement& A, const FGridMovement& B)
+	//  //    {
+	//  //    	return A.GridPosition.X < B.GridPosition.X ? true : A.GridPosition.Y < B.GridPosition.Y ? true : false;
+	//  //    });
+ //
+	// // go through movement nodes and remove any nodes that have a unit on them
+	// // even if units can move through other units they still cannot finish on the same tile as another unit
+	// // in general this is the way TB games work, if there is a need to change this later then so be it...
+	// TArray<UGridMovementNode*> Output;
+	// for (auto Node : Processed)
+	// {
+	// 	if (!GetGridUnitOnTile(Node->GridTile))
+	// 	{
+	// 		Output.Add(Node);
+	// 	}
+	// }
+ //    
+ //    return Output;
+#pragma endregion
 }
 
 void UGridManager::CalculateGridAttacks(TArray<const AGridUnit*> OutGridUnitsInRange, AGridUnit* GridUnit)
@@ -385,11 +494,12 @@ void UGridManager::CalculateGridAttacks(TArray<const AGridUnit*> OutGridUnitsInR
 	TArray<FGridPosition> EnemyPositions = GetEnemyPositions(GridUnit);
 	TArray<AGridUnit*> EnemyGridUnits;
 	GetEnemyUnits(EnemyGridUnits, GridUnit);
-	TArray<FGridMovement> GridMovements = CalculateGridMovement(GridUnit);
+	TArray<FGridMovement> GridMovements;
+	CalculateGridMovement(GridMovements, GridUnit);
 	TMap<FGridPosition, bool> MovementMap;
 	for (const auto GridMovement : GridMovements)
 	{
-		MovementMap.Add(GridMovement.GridPosition, false);
+		MovementMap.Add(GridTileLocationMap[GridMovement.GridTile], false);
 	}
 
 	TArray<FGridPosition> TempPositions;
@@ -421,11 +531,12 @@ TArray<FGridPair> UGridManager::CalculateGridAttacks(AGridUnit* GridUnit)
 	TArray<FGridPosition> EnemyPositions = GetEnemyPositions(GridUnit);
 	TArray<AGridUnit*> EnemyGridUnits;
 	GetEnemyUnits(EnemyGridUnits, GridUnit);
-	TArray<FGridMovement> GridMovements = CalculateGridMovement(GridUnit);
+	TArray<FGridMovement> GridMovements;
+	CalculateGridMovement(GridMovements, GridUnit);
 	TMap<FGridPosition, bool> MovementMap;
 	for (const auto GridMovement : GridMovements)
 	{
-		MovementMap.Add(GridMovement.GridPosition, false);
+		MovementMap.Add(GridTileLocationMap[GridMovement.GridTile], false);
 	}
 
 	TArray<FGridPosition> TempPositions;
@@ -467,12 +578,13 @@ TArray<FTargetingUnit> UGridManager::CalculateGridTargets(AGridUnit* GridUnit)
 	TMap<int32, TSet<AGridTile*>> RangeTileMap;
 	TSet<int32> WeaponRanges = GridUnit->GetWeaponRanges();
 	TArray<FGridPosition> EnemyPositions = GetEnemyPositions(GridUnit);
-	TArray<FGridMovement> GridMovements = CalculateGridMovement(GridUnit);
+	TArray<FGridMovement> GridMovements;
+	CalculateGridMovement(GridMovements, GridUnit);
 	TMap<FGridPosition, bool> MovementMap;
 	// TMap<FGridPosition, TArray<int32>> SuccessMap;
 	for (const auto GridMovement : GridMovements)
 	{
-		MovementMap.Add(GridMovement.GridPosition, false);
+		MovementMap.Add(GridTileLocationMap[GridMovement.GridTile], false);
 	}
 
 	TArray<FGridPosition> TempPositions;

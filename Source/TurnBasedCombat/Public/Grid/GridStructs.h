@@ -74,7 +74,8 @@ struct TURNBASEDCOMBAT_API FGridMovement
 {
 	GENERATED_BODY()
 
-	FGridMovement() : GridPosition(FGridPosition()), AvailableMovement(0) {}
+	FGridMovement() {}
+	// FGridMovement() : GridPosition(FGridPosition()), AvailableMovement(0) {}
 	// FGridMovement() : GridTile(nullptr), GridLocation(FGridPosition()), AvailableMovement(0) {}
 	// FGridMovement(const FGridPosition GridPositionVal, const int32 AvailableMovementVal) : GridTile(nullptr),
 	// 	GridLocation(GridPositionVal), AvailableMovement(AvailableMovementVal) {}
@@ -83,32 +84,40 @@ struct TURNBASEDCOMBAT_API FGridMovement
 	
 
 	UPROPERTY(BlueprintReadOnly)
-	TSoftObjectPtr<AGridTile> GridTile = nullptr;
+	TObjectPtr<AGridTile> GridTile = nullptr;
+
+	UPROPERTY(BlueprintReadOnly)
+	TObjectPtr<AGridTile> ParentTile = nullptr;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FGridPosition GridPosition;
+	// UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	// FGridPosition GridPosition;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	int32 AvailableMovement;
+	int32 Cost = 0;
+
+	// UPROPERTY(BlueprintReadOnly)
+	// FGridMovement& ParentNode;
+	
 	
 	bool operator==(const FGridMovement& Other) const
 	{
-		return (GridPosition == Other.GridPosition);
+		// return (GridPosition == Other.GridPosition) && GridTile == Other.GridTile;
+		return GridTile == Other.GridTile;
 	}
 	
-	bool operator<(const FGridMovement& Other) const
-	{
-		if (GridPosition.X < Other.GridPosition.X)
-		{
-			return true;
-		}
-		if (GridPosition.Y < Other.GridPosition.Y)
-		{
-			return true;
-		}
-		
-		return false;
-	}
+	// bool operator<(const FGridMovement& Other) const
+	// {
+	// 	if (GridPosition.X < Other.GridPosition.X)
+	// 	{
+	// 		return true;
+	// 	}
+	// 	if (GridPosition.Y < Other.GridPosition.Y)
+	// 	{
+	// 		return true;
+	// 	}
+	// 	
+	// 	return false;
+	// }
 };
 
 USTRUCT(Blueprintable, BlueprintType)
@@ -132,7 +141,7 @@ struct FTargetingUnit
 inline uint32 GetTypeHash(const FGridMovement& Struct)
 {
 	// Use a combination of GetTypeHash for FString and int32
-	return GetTypeHash(Struct.GridPosition);
+	return GetTypeHash(Struct.GridTile);
 }
 
 USTRUCT(Blueprintable, BlueprintType)

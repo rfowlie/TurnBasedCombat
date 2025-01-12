@@ -15,6 +15,7 @@ class UEventSystem;
 class UGridManager;
 class AGridUnit;
 class AGridTile;
+class UGridRules;
 
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FTurnBasedCombat_Events);
@@ -77,13 +78,14 @@ protected:
 	// win condition ~ start
 	UPROPERTY(Instanced, EditDefaultsOnly)
 	UWinCondition_Abstract* WinCondition;
-	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FTurnBasedCombatOver, EWinConditionType, ConditionType);
 	UFUNCTION()
 	void OnWinConditionReceived(EWinConditionType InWinCondition);
 	
 public:
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FTurnBasedCombatOver, EWinConditionType, ConditionType);
 	FTurnBasedCombatOver OnCombatOver;
 	// win condition ~ end
+
 	
 private:
 	virtual void HandleStartingNewPlayer_Implementation(APlayerController* NewPlayer) override;
@@ -95,6 +97,9 @@ private:
 	UGridManager* GridManager = nullptr;
 
 	UPROPERTY()
-	UTurnManager* TurnManager = nullptr;	
+	UGridRules* GridRules = nullptr;
+	
+	UPROPERTY()
+	UTurnManager* TurnManager = nullptr;
 	
 };

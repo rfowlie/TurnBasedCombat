@@ -8,25 +8,31 @@
 #include "StateAttack.generated.h"
 
 
+class ATurnBasedCombatHUD;
+class UCombatDisplayWidget;
+struct FCombatDisplayInfo;
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Encounter_Mode_Attack);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Encounter_Mode_Attack_None);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Encounter_Mode_Attack_Idle);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Encounter_Mode_Attack_SelectedAttacker);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Encounter_Mode_Attack_SelectedTarget);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Encounter_Mode_Attack_SelectedAttackTile);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Encounter_Mode_Attack_Combat);
+
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Grid_State_Attacker);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Grid_State_Attacker);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Grid_State_CanTargetFrom);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Grid_State_Target);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Grid_State_TargetFrom);
+
+// UI
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_UI_Combat_DuelInfo);
 
 
 class UInputAction;
 class UGridProxy;
 class UGridManager;
 
-// USTRUCT()
-// struct FTilesInRange
-// {
-// 	GENERATED_BODY()
-//
-// 	UPROPERTY()
-// 	TMap<AATBGridTile*, int32> Mappings;
-// };
 
 /**
  * 
@@ -36,10 +42,18 @@ class TURNBASEDCOMBAT_API UStateAttack : public UAbstractPlayerControllerState
 {
 	GENERATED_BODY()
 
+	UPROPERTY()
+	ATurnBasedCombatHUD* HUD = nullptr;
+	
 public:
 	UStateAttack();
-	void Initialize(UGridManager* InGridManager);
+	void Initialize(UGridManager* InGridManager, AHUD* InTurnBasedCombatHUD);
 
+	virtual FGameplayTag GetStateTag() const override;
+
+	DECLARE_MULTICAST_DELEGATE_OneParam(FStateAttackDelegate, const FCombatDisplayInfo&)
+	FStateAttackDelegate OnPotentialAttack;
+	
 protected:
 	enum class EAttackPhase
 	{
@@ -50,16 +64,18 @@ protected:
 		SelectedAttackTile
 	};
 	
-	EAttackPhase Phase = EAttackPhase::Idle;
-	
+	// EAttackPhase Phase;
+	FGameplayTag TagPhase;
+	void SetPhase(FGameplayTag InTagPhase);
+
 	UPROPERTY()
 	UGridManager* GridManager = nullptr;
 	UPROPERTY()
-	UGridProxy* GridProxyCurrent = nullptr;
+	UGridProxy* Instigator = nullptr;
 	UPROPERTY()
-	UGridProxy* GridProxyTarget = nullptr;
+	UGridProxy* Target = nullptr;
 	UPROPERTY()
-	UGridProxy* GridProxyMoveTo = nullptr;
+	UGridProxy* MovingTo = nullptr;
 
 	UPROPERTY()
 	UInputAction* IA_Select = nullptr;
@@ -87,4 +103,5 @@ protected:
 	void Enable();
 	UFUNCTION()
 	void Disable();
+	
 };

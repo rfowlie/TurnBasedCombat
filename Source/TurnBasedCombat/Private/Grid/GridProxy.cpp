@@ -8,10 +8,10 @@
 #include "Grid/Manager/TurnManager.h"
 #include "Grid/Tile/GridTile.h"
 #include "Grid/Unit/GridUnit.h"
+#include "Item/WeaponDataAsset.h"
 #include "_Framework/PlayerController/State/StateAttack.h"
 
 
-UE_DEFINE_GAMEPLAY_TAG(TAG_Encounter_Mode_Move, "Encounter.Mode.Move");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Grid_State_Idle, "Grid.State.Idle");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Grid_State_Mover, "Grid.State.Mover");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Grid_State_Moveable, "Grid.State.Moveable");
@@ -30,23 +30,29 @@ UGridProxy* UGridProxy::CreateGridProxy(UObject* Outer,
 	UGridProxy* GridProxy = NewObject<UGridProxy>(Outer);
 	if (GridProxy)
 	{
-		GridProxy->Init(
-			InTurnManager,
-			InGridTile,
-			InGridUnit,
-			InMovementDelegate,
-			InGridMovements,
-			InEnemyUnitsInRange);
+		// GridProxy->Init(
+		// 	InTurnManager,
+		// 	InGridTile,
+		// 	InGridUnit,
+		// 	InMovementDelegate,
+		// 	InGridMovements,
+		// 	InEnemyUnitsInRange);
+
+		GridProxy->TurnManager = InTurnManager;
+		GridProxy->GridTile = InGridTile;
+		GridProxy->GridUnit = InGridUnit;
+		GridProxy->CalculateGridMovementDelegate = InMovementDelegate;
+		GridProxy->GridMovements = InGridMovements;
+		GridProxy->EnemyGridUnitsInRange = InEnemyUnitsInRange;
 	}
 
 	return GridProxy;
 }
 
-// void UGridProxy::SetState(FGameplayTag State)
-// {
-// 	if (GridTile) { GridTile->SetState(State); }
-// 	if (GridUnit) { GridUnit->SetState(State); }
-// }
+UAbilitySystemComponent* UGridProxy::GetAbilitySystemComponent() const
+{
+	return GridUnit ? UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(GridUnit) : nullptr;
+}
 
 void UGridProxy::UndoAll()
 {
@@ -134,10 +140,9 @@ bool UGridProxy::SetCanTargetFromTiles(UGridProxy* Other, bool Activate)
 	{
 		for (const int32 WeaponRange : GridUnit->GetWeaponRanges())
 		{
-			FGridPosition Temp = GridMovement.GridPosition;
-			FGridPosition Temp2 = Other->GetGridPosition();
 			if (UGridUtility::GetDistanceBetweenGridPositions(
-			GridMovement.GridPosition, Other->GetGridPosition()) == WeaponRange)
+			UGridUtility::CalculateGridPosition(GridMovement.GridTile),
+			Other->GetGridPosition()) == WeaponRange)
 			{
 				CurrentCanAttackFromTiles.AddUnique(GridMovement);
 				break;
@@ -162,7 +167,7 @@ bool UGridProxy::CanMoveToo(UGridProxy* GridProxy)
 	FGridPosition ProxyGridPosition = GridProxy->GetGridPosition();
 	for (auto GridMovement : GridMovements)
 	{
-		if (GridMovement.GridPosition == ProxyGridPosition)
+		if (UGridUtility::CalculateGridPosition(GridMovement.GridTile) == ProxyGridPosition)
 		{
 			return true;
 		}
@@ -206,13 +211,31 @@ bool UGridProxy::CanAttackFromTile(UGridProxy* Other) const
 {
 	for (auto GridMovement : CurrentCanAttackFromTiles)
 	{
-		if (GridMovement.GridPosition == Other->GetGridPosition())
+		if (UGridUtility::CalculateGridPosition(GridMovement.GridTile) == Other->GetGridPosition())
 		{
 			return true;
 		}
 	}
 
 	return false;
+}
+
+bool UGridProxy::GetValidWeaponsToAttackWith(UGridProxy* Other, TArray<UWeaponDataAsset*> ValidWeapons) const
+{
+	if (!CanAttackFromTile(Other)) { return false; }
+
+	// find out what weapons can be used from other proxy positions
+	int32 Distance = UGridUtility::GetDistanceBetweenGridPositions(
+		GetGridPosition(), Other->GetGridPosition());
+	for (auto Weapon : GridUnit->WeaponDataAssets)
+	{
+		if (Weapon->WeaponStats.Range == Distance)
+		{
+			ValidWeapons.Add(Weapon);
+		}
+	}
+
+	return true;
 }
 
 bool UGridProxy::HasEnemiesToAttack() const
@@ -242,18 +265,18 @@ UGridProxy::UGridProxy()
 {
 }
 
-void UGridProxy::Init(
-	UTurnManager* InTurnManager,
-	AGridTile* InGridTile,
-	AGridUnit* InGridUnit,
-	const FCalculateGridMovement& InMovementDelegate,
-	TArray<FGridMovement> InGridMovements,
-	TArray<FGridPair> InEnemyUnitsInRange)
-{
-	TurnManager = InTurnManager;
-	GridTile = InGridTile;
-	GridUnit = InGridUnit;
-	CalculateGridMovementDelegate = InMovementDelegate;
-	GridMovements = InGridMovements;
-	EnemyGridUnitsInRange = InEnemyUnitsInRange;
-}
+// void UGridProxy::Init(
+// 	UTurnManager* InTurnManager,
+// 	AGridTile* InGridTile,
+// 	AGridUnit* InGridUnit,
+// 	const FCalculateGridMovement& InMovementDelegate,
+// 	TArray<FGridMovement> InGridMovements,
+// 	TArray<FGridPair> InEnemyUnitsInRange)
+// {
+// 	TurnManager = InTurnManager;
+// 	GridTile = InGridTile;
+// 	GridUnit = InGridUnit;
+// 	CalculateGridMovementDelegate = InMovementDelegate;
+// 	GridMovements = InGridMovements;
+// 	EnemyGridUnitsInRange = InEnemyUnitsInRange;
+// }

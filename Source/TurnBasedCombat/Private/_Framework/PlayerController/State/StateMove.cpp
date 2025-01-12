@@ -10,8 +10,15 @@
 #include "TurnBasedCombat/Public/Grid/Manager/GridManager.h"
 
 
+UE_DEFINE_GAMEPLAY_TAG(TAG_Encounter_Mode_Move, "Encounter.Mode.Move");
+
 UStateMove::UStateMove()
 {
+}
+
+FGameplayTag UStateMove::GetStateTag() const
+{
+	return TAG_Encounter_Mode_Move;
 }
 
 void UStateMove::Initialize(UGridManager* InGridManager)
@@ -63,8 +70,6 @@ void UStateMove::OnExit()
 
 void UStateMove::OnSelect()
 {
-	// UE_LOG(LogTemp, Error, TEXT("Mode: Move - On Select"))
-
 	if (Phase == EMovePhase::None)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Move - None"))
@@ -130,7 +135,8 @@ void UStateMove::OnSelect()
 	case EMovePhase::SelectedMoveTile:
 		// check if tile selected again to confirm movement
 		UE_LOG(LogTemp, Warning, TEXT("Move - SelectedMoveTile"))
-		if (GridManager->IsMatch(GridProxyMoveTo ,GridProxy))
+		// if (GridManager->IsMatch(GridProxyMoveTo ,GridProxy))
+		if (GridManager->IsMatch(GridProxyMoveTo, GridProxy))
 		{
 			GridManager->CreateMoveEvent(GridProxyCurrent, GridProxyMoveTo);
 		}

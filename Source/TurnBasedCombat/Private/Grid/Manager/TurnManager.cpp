@@ -51,8 +51,11 @@ void UTurnManager::UnregisterGridUnit(AGridUnit* GridUnit)
 	}
 }
 
+// TODO: seems like move/attack event firing before factions can even be updated???
 FGameplayTag UTurnManager::GetCurrentFaction() const
 {
+	// TODO: this sometimes fires before it can be updated
+	if (FactionIndex < 0) { return FGameplayTag(); }
 	return Factions[FactionIndex].Tag;
 }
 

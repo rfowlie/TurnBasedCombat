@@ -15,6 +15,7 @@ public class TurnBasedCombat : ModuleRules
 			"Engine", 
 			"InputCore", 
 			"EnhancedInput",
+			"UMG",
 			"GameplayTags",
 			"GameplayAbilities",
 			"GameplayTasks"
