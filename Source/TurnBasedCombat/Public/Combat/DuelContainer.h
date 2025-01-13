@@ -3,12 +3,21 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameplayTagContainer.h"
+#include "NativeGameplayTags.h"
 #include "UObject/Object.h"
 #include "DuelContainer.generated.h"
 
 
 class AGridTile;
 class AGridUnit;
+
+
+// define all the calculations we would like to expose externally (BLUEPRINT, UI, etc.)
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Duel_Instigator_Damage);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Duel_Instigator_Accuracy);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Duel_Target_Damage);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Duel_Target_Accuracy);
 
 /*
  *	just like grid proxy, this will be a wrapper class that we can use to answer combat related
@@ -26,6 +35,11 @@ public:
 	static UDuelContainer* CreateContainer(AGridUnit* InInstigatorUnit, AGridTile* InInstigatorTile,
 		AGridUnit* InTargetUnit, AGridTile* InTargetTile);
 
+	// for UI, so that it can query something cleanly without issue...
+	UFUNCTION(BlueprintCallable)
+	FString GetDuelAttribute(FGameplayTag InTag) const;
+
+protected:
 	UPROPERTY()
 	AGridUnit* InstigatorUnit;
 	UPROPERTY()
@@ -35,14 +49,10 @@ public:
 	UPROPERTY()
 	AGridTile* TargetTile;
 	
-	UFUNCTION(BlueprintCallable)
+	
 	int32 GetInstigatorDamage() const;
-	UFUNCTION(BlueprintCallable)
 	int32 GetInstigatorHitPercentage() const;
-
-	UFUNCTION(BlueprintCallable)
 	int32 GetTargetDamage() const;
-	UFUNCTION(BlueprintCallable)
 	int32 GetTargetHitPercentage() const;
 	
 };

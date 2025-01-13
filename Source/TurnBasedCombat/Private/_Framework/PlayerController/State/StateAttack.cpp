@@ -7,15 +7,16 @@
 #include "EnhancedInputComponent.h"
 #include "InputMappingContext.h"
 #include "InputAction.h"
-#include "Combat/DuelContainer.h"
 #include "Grid/Manager/GridManager.h"
 #include "Grid/GridProxy.h"
+#include "Combat/DuelContainer.h"
 #include "_Framework/TBC_InfoWorldSubsystem.h"
 #include "_Framework/HUD/TurnBasedCombatHUD.h"
-#include "_Framework/PlayerController/UI/CombatDisplayWidget.h"
 
 
+// mode
 UE_DEFINE_GAMEPLAY_TAG(TAG_Encounter_Mode_Attack, "Encounter.Mode.Attack");
+// phase
 UE_DEFINE_GAMEPLAY_TAG(TAG_Encounter_Mode_Attack_None, "Encounter.Mode.Attack.None");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Encounter_Mode_Attack_Idle, "Encounter.Mode.Attack.Idle");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Encounter_Mode_Attack_SelectedAttacker, "Encounter.Mode.Attack.SelectedAttacker");
@@ -23,11 +24,11 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Encounter_Mode_Attack_SelectedTarget, "Encounter.Mode
 UE_DEFINE_GAMEPLAY_TAG(TAG_Encounter_Mode_Attack_SelectedAttackTile, "Encounter.Mode.Attack.SelectedAttackTile");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Encounter_Mode_Attack_Combat, "Encounter.Mode.Attack.Combat");
 
-
-UE_DEFINE_GAMEPLAY_TAG(TAG_Grid_State_Attacker, "Grid.State.Attacker");
-UE_DEFINE_GAMEPLAY_TAG(TAG_Grid_State_CanTargetFrom, "Grid.State.CanTargetFrom");
-UE_DEFINE_GAMEPLAY_TAG(TAG_Grid_State_Target, "Grid.State.Target");
-UE_DEFINE_GAMEPLAY_TAG(TAG_Grid_State_TargetFrom, "Grid.State.TargetFrom");
+// tile
+UE_DEFINE_GAMEPLAY_TAG(TAG_Tile_State_Attacker, "Tile.State.Attacker");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Tile_State_CanTargetFrom, "Tile.State.CanTargetFrom");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Tile_State_Target, "Tile.State.Target");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Tile_State_TargetFrom, "Tile.State.TargetFrom");
 
 // UI
 UE_DEFINE_GAMEPLAY_TAG(TAG_UI_Combat_DuelInfo, "UI.Combat.DuelInfo");
@@ -106,7 +107,7 @@ void UStateAttack::OnExit()
 
 	if (HUD)
 	{
-		HUD->ToggleUI(TAG_UI_Combat_DuelInfo, false);
+		// HUD->ToggleUI(TAG_UI_Combat_DuelInfo, false);
 	}
 
 	UndoAll();
@@ -188,8 +189,12 @@ void UStateAttack::OnSelect()
 		{
 			UDuelContainer* DuelContainer = UDuelContainer::CreateContainer(
 				Instigator->GridUnit, Instigator->GridTile, Target->GridUnit, Target->GridTile);
-			HUD->UpdateUI(TAG_UI_Combat_DuelInfo, DuelContainer);
-			HUD->ToggleUI(TAG_UI_Combat_DuelInfo, true);
+			if (UTBC_InfoWorldSubsystem* Subsystem = GetWorld()->GetSubsystem<UTBC_InfoWorldSubsystem>())
+			{
+				Subsystem->SetDuelContainer(DuelContainer);
+			}
+			// HUD->UpdateUI(TAG_UI_Combat_DuelInfo, DuelContainer);
+			// HUD->ToggleUI(TAG_UI_Combat_DuelInfo, true);
 
 			if (MovingTo) { MovingTo->UndoAll(); }
 			MovingTo = NewGridProxy;
@@ -292,7 +297,7 @@ void UStateAttack::UndoSelectedTarget()
 	if (Target) { Target->SetEnemyTargetTile(false); }
 	Target = nullptr;
 
-	HUD->ToggleUI(TAG_UI_Combat_DuelInfo.GetTag(), false);
+	// HUD->ToggleUI(TAG_UI_Combat_DuelInfo.GetTag(), false);
 }
 
 void UStateAttack::UndoSelectedAttackTile()

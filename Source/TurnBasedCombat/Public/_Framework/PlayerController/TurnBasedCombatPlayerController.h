@@ -77,10 +77,6 @@ protected:
 	void EnableState();
 	UFUNCTION()
 	void DisableState();
-
-	// UI
-	UFUNCTION()
-	void UpdateGridTileUI(const AGridTile* InGridTile) const;
 	
 private:
 	// FOR NOW

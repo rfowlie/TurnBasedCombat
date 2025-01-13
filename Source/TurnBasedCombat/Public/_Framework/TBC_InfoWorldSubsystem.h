@@ -8,11 +8,13 @@
 #include "TBC_InfoWorldSubsystem.generated.h"
 
 
+class UDuelContainer;
 class AGridUnit;
 class AGridTile;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FGridTileChanged, const AGridTile*, GridTile);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FGridUnitChanged, const AGridUnit*, GridUnit);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FPlayerControllerChanged, const FGameplayTag, State);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDuelContainerChanged, const UDuelContainer*, DuelContainer);
 
 /**
  * this will act as a facade for events and accessing important information that designers might need
@@ -87,4 +89,19 @@ private:
 	FGameplayTag PlayerControllerPhase;	
 
 	// PC ~ end
+
+	// COMBAT ~
+public:
+	UPROPERTY(BlueprintAssignable, Category="Turn Based Combat")
+	FDuelContainerChanged OnDuelContainerChanged;
+	UFUNCTION()
+	void SetDuelContainer(UDuelContainer* InDuelContainer);
+	UFUNCTION(BlueprintCallable)
+	UDuelContainer* GetDuelContainer() { return DuelContainerCurrent; }
+
+protected:
+	UPROPERTY()
+	UDuelContainer* DuelContainerCurrent;
+
+	// COMBAT ~ end
 };

@@ -38,3 +38,9 @@ void UTBC_InfoWorldSubsystem::SetPlayerControllerPhase(FGameplayTag InGameplayTa
 	PlayerControllerPhase = InGameplayTag;
 	if (OnPlayerControllerUpdatePhase.IsBound()) { OnPlayerControllerUpdatePhase.Broadcast(PlayerControllerPhase); }
 }
+
+void UTBC_InfoWorldSubsystem::SetDuelContainer(UDuelContainer* InDuelContainer)
+{
+	DuelContainerCurrent = InDuelContainer;
+	if (OnDuelContainerChanged.IsBound()) { OnDuelContainerChanged.Broadcast(DuelContainerCurrent); }
+}

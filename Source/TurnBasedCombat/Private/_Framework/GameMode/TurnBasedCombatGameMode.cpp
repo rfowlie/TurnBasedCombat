@@ -74,6 +74,8 @@ void ATurnBasedCombatGameMode::BeginPlay()
 	UStaticMeshComponent* StaticMeshComponent = Cast<AStaticMeshActor>(Cursor)->GetStaticMeshComponent();
 	StaticMeshComponent->SetStaticMesh(CursorMesh);
 	StaticMeshComponent->SetMobility(EComponentMobility::Movable);
+	StaticMeshComponent->SetAffectDistanceFieldLighting(false);
+	StaticMeshComponent->SetAffectDynamicIndirectLighting(false);
 
 	// TODO: HACKYYY
 	// for now wait a few seconds then fire onstart

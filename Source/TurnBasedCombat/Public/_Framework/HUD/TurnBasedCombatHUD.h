@@ -13,6 +13,12 @@ class AGridTile;
 class UGridProxy;
 
 
+// TODO: rework in progress, the hud should not allow C++ code to reach in and do things
+// instead what should happen is that C++ fires off events when something significant happens
+// and then the UI on the design side can react accordingly
+// MAYBE down the road, there might be complex logic that needs to dictate some UI, at that point
+// perhaps subclassing and adding the desired alterations, but for now we should decouple
+
 /**
  * 
  */
@@ -22,11 +28,11 @@ class TURNBASEDCOMBAT_API ATurnBasedCombatHUD : public AHUD
 	GENERATED_BODY()
 
 public:
-	UFUNCTION(BlueprintImplementableEvent)
-	void ToggleUI(FGameplayTag UserInterfaceTag, bool bToggle);
-	
-	UFUNCTION(BlueprintImplementableEvent)
-	void UpdateUI(FGameplayTag UserInterfaceTag, const UObject* Payload);
+	// UFUNCTION(BlueprintImplementableEvent)
+	// void ToggleUI(FGameplayTag UserInterfaceTag, bool bToggle);
+	//
+	// UFUNCTION(BlueprintImplementableEvent)
+	// void UpdateUI(FGameplayTag UserInterfaceTag, const UObject* Payload);
 	
 	// UFUNCTION(BlueprintImplementableEvent)
 	// void UpdateGridUnitDisplay(const AGridTile* GridTile);

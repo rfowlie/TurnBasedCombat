@@ -51,9 +51,6 @@ void ATurnBasedCombatPlayerController::BeginPlay()
 	DisableState();
 	CreateDefaultInputMapping();
 	AddInputMapping();
-	
-	// UI
-	GridManager->OnGridTileHovered.AddUObject(this, &ThisClass::UpdateGridTileUI);
 }
 
 void ATurnBasedCombatPlayerController::Initialize(UGridManager* InGridManager)
@@ -185,12 +182,4 @@ void ATurnBasedCombatPlayerController::DisableState()
 {
 	ControllerStateIndex = -1;
 	SetState(StateWait);
-}
-
-void ATurnBasedCombatPlayerController::UpdateGridTileUI(const AGridTile* InGridTile) const
-{
-	if (ATurnBasedCombatHUD* HUD = Cast<ATurnBasedCombatHUD>(GetHUD()))
-	{
-		HUD->UpdateUI(TAG_UI_Combat_GridTileInfo, InGridTile);
-	}
 }
