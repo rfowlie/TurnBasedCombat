@@ -83,6 +83,9 @@ void AGridUnit::BeginPlay()
 			if (OnEventAttackEnd.IsBound()) { OnEventAttackEnd.Broadcast(this); }
 		}
 	});
+
+	// weapons
+	SetEquippedWeapon(WeaponsInventory.First());
 }
 
 void AGridUnit::NotifyHealthZero()
@@ -157,6 +160,19 @@ bool AGridUnit::AttackEvent(const FVector& Location, AGridUnit* Target)
 // 	// return "Faction_" + FString::FromInt(Faction);
 // 	return FName(FString::FromInt(Faction));
 // }
+
+void AGridUnit::SetEquippedWeapon(FGameplayTag WeaponToEquip)
+{
+	if (WeaponsInventory.HasTagExact(WeaponToEquip))
+	{
+		EquippedWeapon = WeaponToEquip;
+	}
+}
+
+FGameplayTag AGridUnit::GetEquippedWeapon()
+{
+	return EquippedWeapon;
+}
 
 TSet<int32> AGridUnit::GetWeaponRanges() const
 {

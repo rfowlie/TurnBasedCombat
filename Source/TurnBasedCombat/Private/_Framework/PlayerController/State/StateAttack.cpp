@@ -10,6 +10,7 @@
 #include "Grid/Manager/GridManager.h"
 #include "Grid/GridProxy.h"
 #include "Combat/DuelContainer.h"
+#include "Combat/CombatCalculator/CombatCalculator.h"
 #include "_Framework/TBC_InfoWorldSubsystem.h"
 #include "_Framework/HUD/TurnBasedCombatHUD.h"
 
@@ -138,6 +139,7 @@ void UStateAttack::OnSelect()
 			if (UTBC_InfoWorldSubsystem* Subsystem = GetWorld()->GetSubsystem<UTBC_InfoWorldSubsystem>())
 			{
 				Subsystem->SetGridUnitSelected(Instigator->GridUnit);
+				Subsystem->CombatCalculator->SetInstigator(Instigator->GridUnit);
 			}
 		}
 	}
@@ -157,6 +159,13 @@ void UStateAttack::OnSelect()
 			Instigator->SetCanTargetFromTiles(Target, false);
 			Target = NewGridProxy;
 			Instigator->SetCanTargetFromTiles(Target, true);
+			
+			if (UTBC_InfoWorldSubsystem* Subsystem = GetWorld()->GetSubsystem<UTBC_InfoWorldSubsystem>())
+			{
+				Subsystem->CombatCalculator->SetTarget(Target->GridUnit);
+				Subsystem->CombatCalculator->SetTargetTile(Target->GridTile);
+			}
+			
 			SetPhase(TAG_Encounter_Mode_Attack_SelectedTarget);
 		}
 		// check if new enemy target selected
@@ -187,18 +196,15 @@ void UStateAttack::OnSelect()
 		// check if tile can attack from is selected
 		if (Instigator->CanAttackFromTile(NewGridProxy))
 		{
-			UDuelContainer* DuelContainer = UDuelContainer::CreateContainer(
-				Instigator->GridUnit, Instigator->GridTile, Target->GridUnit, Target->GridTile);
-			if (UTBC_InfoWorldSubsystem* Subsystem = GetWorld()->GetSubsystem<UTBC_InfoWorldSubsystem>())
-			{
-				Subsystem->SetDuelContainer(DuelContainer);
-			}
-			// HUD->UpdateUI(TAG_UI_Combat_DuelInfo, DuelContainer);
-			// HUD->ToggleUI(TAG_UI_Combat_DuelInfo, true);
-
 			if (MovingTo) { MovingTo->UndoAll(); }
 			MovingTo = NewGridProxy;
 			MovingTo->SetMoveToTile(true);
+
+			if (UTBC_InfoWorldSubsystem* Subsystem = GetWorld()->GetSubsystem<UTBC_InfoWorldSubsystem>())
+			{
+				Subsystem->CombatCalculator->SetInstigatorTile(MovingTo->GridTile);
+			}
+			
 			SetPhase(TAG_Encounter_Mode_Attack_SelectedAttackTile);
 		}
 	}
@@ -216,6 +222,7 @@ void UStateAttack::OnSelect()
 		// if (GridManager->IsMatch(MovingTo ,NewGridProxy))
 		if (GridManager->IsMatch(MovingTo, NewGridProxy))
 		{
+			SetPhase(TAG_Encounter_Mode_Attack_Combat);
 			GridManager->CreateAttackEvent(Instigator, Target, MovingTo);
 		}
 		// THIS IS THE OLD WAY USING CUSTOM MADE EVENT SYSTEM INSTEAD OF Gameplay Ability System

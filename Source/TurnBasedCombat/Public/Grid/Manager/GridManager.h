@@ -92,7 +92,7 @@ protected:
 	TMap<AGridUnit*, FGridPosition> GridUnitLocationMap;
 
 public:
-	AGridUnit* GetGridUnitOnTile(const AGridTile* GridTile)
+	AGridUnit* GetGridUnitOnTile(const AGridTile* GridTile) const
 	{
 		if (GridTileLocationMap.Contains(GridTile))
 		{
@@ -105,7 +105,7 @@ public:
 		return nullptr;
 	}
 	
-	AGridTile* GetGridTileOfUnit(const AGridUnit* GridUnit)
+	AGridTile* GetGridTileOfUnit(const AGridUnit* GridUnit) const
 	{
 		if (GridUnitLocationMap.Contains(GridUnit))
 		{

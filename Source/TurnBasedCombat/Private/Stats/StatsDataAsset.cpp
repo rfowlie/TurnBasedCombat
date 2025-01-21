@@ -15,7 +15,7 @@ void UStatsDataAsset::GetStats(FUnitStatsSnapshot& UnitStats, const int32 Level)
 	UnitStats.Strength = GetStatValue(Strength, LevelSample);
 	UnitStats.Defence = GetStatValue(Defence, LevelSample);
 	UnitStats.Speed = GetStatValue(Speed, LevelSample);
-	UnitStats.Dexterity = GetStatValue(Dexterity, LevelSample);
+	UnitStats.Dexterity = GetStatValue(Skill, LevelSample);
 	UnitStats.Magic = GetStatValue(Magic, LevelSample);
 	UnitStats.Resistance = GetStatValue(Resistance, LevelSample);
 	UnitStats.Luck = GetStatValue(Luck, LevelSample);

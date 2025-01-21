@@ -8,6 +8,7 @@
 #include "TBC_InfoWorldSubsystem.generated.h"
 
 
+class UCombatCalculator;
 class UDuelContainer;
 class AGridUnit;
 class AGridTile;
@@ -15,6 +16,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FGridTileChanged, const AGridTile*, 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FGridUnitChanged, const AGridUnit*, GridUnit);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FPlayerControllerChanged, const FGameplayTag, State);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDuelContainerChanged, const UDuelContainer*, DuelContainer);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FGameplayEventChanged);
 
 /**
  * this will act as a facade for events and accessing important information that designers might need
@@ -26,28 +28,33 @@ class TURNBASEDCOMBAT_API UTBC_InfoWorldSubsystem : public UWorldSubsystem
 	
 	// GRID ~
 public:
-	UPROPERTY(BlueprintAssignable, Category="Turn Based Combat")
+	UPROPERTY(BlueprintAssignable, Category="Turn Based Combat | Event")
+	FGameplayEventChanged OnMovementBegin;
+	UPROPERTY(BlueprintAssignable, Category="Turn Based Combat | Event")
+	FGameplayEventChanged OnMovementEnd;
+	
+	UPROPERTY(BlueprintAssignable, Category="Turn Based Combat | Grid")
 	FGridTileChanged OnGridTileHovered;
 	UFUNCTION()
 	void SetGridTileHovered(AGridTile* InGridTile);
 	UFUNCTION(BlueprintCallable)
 	const AGridTile* GetGridTileHovered() { return GridTileHoveredCurrent; }
 
-	UPROPERTY(BlueprintAssignable, Category="Turn Based Combat")
+	UPROPERTY(BlueprintAssignable, Category="Turn Based Combat | Grid")
 	FGridTileChanged OnGridTileSelected;
 	UFUNCTION()
 	void SetGridTileSelected(AGridTile* InGridTile);
 	UFUNCTION(BlueprintCallable)
 	const AGridTile* GetGridTileSelected() { return GridTileSelectedCurrent; }
 
-	UPROPERTY(BlueprintAssignable, Category="Turn Based Combat")
+	UPROPERTY(BlueprintAssignable, Category="Turn Based Combat | Grid")
 	FGridUnitChanged OnGridUnitHovered;
 	UFUNCTION()
 	void SetGridUnitHovered(AGridUnit* InGridUnit);
 	UFUNCTION(BlueprintCallable)
 	const AGridUnit* GetGridUnitHovered() { return GridUnitHoveredCurrent; }
 
-	UPROPERTY(BlueprintAssignable, Category="Turn Based Combat")
+	UPROPERTY(BlueprintAssignable, Category="Turn Based Combat | Grid")
 	FGridUnitChanged OnGridUnitSelected;
 	UFUNCTION()
 	void SetGridUnitSelected(AGridUnit* InGridUnit);
@@ -68,14 +75,14 @@ private:
 
 	// PC ~
 public:
-	UPROPERTY(BlueprintAssignable, Category="Turn Based Combat")
+	UPROPERTY(BlueprintAssignable, Category="Turn Based Combat | PC")
 	FPlayerControllerChanged OnPlayerControllerUpdateMode;
 	UFUNCTION()
 	void SetPlayerControllerMode(FGameplayTag InGameplayTag);
 	UFUNCTION(BlueprintCallable)
 	FGameplayTag GetPlayerControllerMode() const { return PlayerControllerMode; }
 
-	UPROPERTY(BlueprintAssignable, Category="Turn Based Combat")
+	UPROPERTY(BlueprintAssignable, Category="Turn Based Combat | PC")
 	FPlayerControllerChanged OnPlayerControllerUpdatePhase;	
 	UFUNCTION()
 	void SetPlayerControllerPhase(FGameplayTag InGameplayTag);
@@ -92,16 +99,24 @@ private:
 
 	// COMBAT ~
 public:
-	UPROPERTY(BlueprintAssignable, Category="Turn Based Combat")
+	UPROPERTY(BlueprintAssignable, Category="Turn Based Combat | Combat")
 	FDuelContainerChanged OnDuelContainerChanged;
 	UFUNCTION()
 	void SetDuelContainer(UDuelContainer* InDuelContainer);
 	UFUNCTION(BlueprintCallable)
 	UDuelContainer* GetDuelContainer() { return DuelContainerCurrent; }
 
+	UPROPERTY(BlueprintAssignable, Category="Turn Based Combat | Combat")
+	FGameplayEventChanged OnCombatBegin;
+	UPROPERTY(BlueprintAssignable, Category="Turn Based Combat | Combat")
+	FGameplayEventChanged OnCombatEnd;
+
+	UPROPERTY()
+	UCombatCalculator* CombatCalculator;
+	
 protected:
 	UPROPERTY()
 	UDuelContainer* DuelContainerCurrent;
-
+	
 	// COMBAT ~ end
 };

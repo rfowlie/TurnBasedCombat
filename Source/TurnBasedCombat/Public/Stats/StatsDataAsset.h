@@ -121,10 +121,10 @@ public:
 	FStatRange Defence;
 
 	UPROPERTY(EditDefaultsOnly)
-	FStatRange Speed;
-
+	FStatRange Skill;
+	
 	UPROPERTY(EditDefaultsOnly)
-	FStatRange Dexterity;
+	FStatRange Speed;
 
 	UPROPERTY(EditDefaultsOnly)
 	FStatRange Magic;
@@ -139,7 +139,10 @@ public:
 	FStatRange Movement;
 
 	UPROPERTY(EditDefaultsOnly)
-	FStatRange MovementRecovery;	
+	FStatRange MovementRecovery;
+	
+	UPROPERTY(EditDefaultsOnly)
+	FStatRange Constitution;
 	
 	UFUNCTION(BlueprintCallable)
 	void GetStats(FUnitStatsSnapshot& UnitStats, const int32 Level) const;

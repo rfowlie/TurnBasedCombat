@@ -9,6 +9,7 @@
 #include "DuelContainer.generated.h"
 
 
+class UGridManager;
 class AGridTile;
 class AGridUnit;
 
@@ -32,14 +33,19 @@ class TURNBASEDCOMBAT_API UDuelContainer : public UObject
 	UDuelContainer();
 
 public:
-	static UDuelContainer* CreateContainer(AGridUnit* InInstigatorUnit, AGridTile* InInstigatorTile,
-		AGridUnit* InTargetUnit, AGridTile* InTargetTile);
+	static UDuelContainer* CreateContainer(
+		UGridManager* InGridManager, AGridUnit* InInstigatorUnit, AGridUnit* InTargetUnit);
 
 	// for UI, so that it can query something cleanly without issue...
 	UFUNCTION(BlueprintCallable)
 	FString GetDuelAttribute(FGameplayTag InTag) const;
 
+	UFUNCTION(BlueprintCallable)
+	TArray<AGridUnit*> GetCombatOrder();
+
 protected:
+	UPROPERTY()
+	UGridManager* GridManager;
 	UPROPERTY()
 	AGridUnit* InstigatorUnit;
 	UPROPERTY()

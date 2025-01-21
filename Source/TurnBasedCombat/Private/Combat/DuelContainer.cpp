@@ -3,6 +3,7 @@
 
 #include "Combat/DuelContainer.h"
 
+#include "Grid/Manager/GridManager.h"
 #include "Grid/Unit/GridUnit.h"
 
 
@@ -12,21 +13,22 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Duel_Target_Damage, "Duel.Target.Damage");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Duel_Target_Accuracy, "Duel.Target.Accuracy");
 
 
-UDuelContainer::UDuelContainer(): InstigatorUnit(nullptr), InstigatorTile(nullptr), TargetUnit(nullptr),
-                                  TargetTile(nullptr)
+UDuelContainer::UDuelContainer(): GridManager(nullptr), InstigatorUnit(nullptr), InstigatorTile(nullptr),
+                                  TargetUnit(nullptr), TargetTile(nullptr)
 {
 }
 
-UDuelContainer* UDuelContainer::CreateContainer(AGridUnit* InInstigatorUnit, AGridTile* InInstigatorTile,
-                                                AGridUnit* InTargetUnit, AGridTile* InTargetTile)
+UDuelContainer* UDuelContainer::CreateContainer(
+	UGridManager* InGridManager, AGridUnit* InInstigatorUnit, AGridUnit* InTargetUnit)
 {
-	UDuelContainer* CombatProxy = NewObject<UDuelContainer>();
-	CombatProxy->InstigatorUnit = InInstigatorUnit;
-	CombatProxy->InstigatorTile = InInstigatorTile;
-	CombatProxy->TargetUnit = InTargetUnit;
-	CombatProxy->TargetTile = InTargetTile;
+	UDuelContainer* DuelContainer = NewObject<UDuelContainer>();
+	DuelContainer->GridManager = InGridManager;
+	DuelContainer->InstigatorUnit = InInstigatorUnit;
+	DuelContainer->InstigatorTile = DuelContainer->GridManager->GetGridTileOfUnit(DuelContainer->InstigatorUnit);
+	DuelContainer->TargetUnit = InTargetUnit;
+	DuelContainer->TargetTile = DuelContainer->GridManager->GetGridTileOfUnit(DuelContainer->TargetUnit);
 
-	return CombatProxy;
+	return DuelContainer;
 }
 
 // return calculation for all exposes tags
@@ -52,6 +54,12 @@ FString UDuelContainer::GetDuelAttribute(FGameplayTag InTag) const
 	}
 
 	return Output;
+}
+
+// TODO: once design is more fleshed can update this
+TArray<AGridUnit*> UDuelContainer::GetCombatOrder()
+{
+	return TArray { InstigatorUnit, TargetUnit };
 }
 
 int32 UDuelContainer::GetInstigatorDamage() const

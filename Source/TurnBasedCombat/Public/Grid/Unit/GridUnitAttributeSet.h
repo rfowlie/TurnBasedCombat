@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "AbilitySystemComponent.h"
 #include "AttributeSet.h"
+#include "NativeGameplayTags.h"
 #include "Stats/StatsDataAsset.h"
 
 #include "GridUnitAttributeSet.generated.h"
@@ -19,6 +20,8 @@
 
 struct FUnitStatsSnapshot;
 class UStatsDataAsset;
+
+
 /**
  * 
  */
@@ -56,17 +59,47 @@ public:
 	UFUNCTION()
 	void OnRep_Strength(const FGameplayAttributeData& PreviousValue) const;
 
+	UPROPERTY(ReplicatedUsing="OnRep_Skill", BlueprintReadOnly, Category="Attributes | Core")
+	FGameplayAttributeData Skill;
+	ATTRIBUTE_ACCESSORS(UGridUnitAttributeSet, Skill);
+	UFUNCTION()
+	void OnRep_Skill(const FGameplayAttributeData& PreviousValue) const;
+
+	UPROPERTY(ReplicatedUsing="OnRep_Speed", BlueprintReadOnly, Category="Attributes | Core")
+	FGameplayAttributeData Speed;
+	ATTRIBUTE_ACCESSORS(UGridUnitAttributeSet, Speed);
+	UFUNCTION()
+	void OnRep_Speed(const FGameplayAttributeData& PreviousValue) const;
+
+	UPROPERTY(ReplicatedUsing="OnRep_Luck", BlueprintReadOnly, Category="Attributes | Core")
+	FGameplayAttributeData Luck;
+	ATTRIBUTE_ACCESSORS(UGridUnitAttributeSet, Luck);
+	UFUNCTION()
+	void OnRep_Luck(const FGameplayAttributeData& PreviousValue) const;
+
 	UPROPERTY(ReplicatedUsing="OnRep_Defence", BlueprintReadOnly, Category="Attributes | Core")
 	FGameplayAttributeData Defence;
 	ATTRIBUTE_ACCESSORS(UGridUnitAttributeSet, Defence);
 	UFUNCTION()
 	void OnRep_Defence(const FGameplayAttributeData& PreviousValue) const;
-
+	
+	UPROPERTY(ReplicatedUsing="OnRep_Resistance", BlueprintReadOnly, Category="Attributes | Core")
+	FGameplayAttributeData Resistance;
+	ATTRIBUTE_ACCESSORS(UGridUnitAttributeSet, Resistance);
+	UFUNCTION()
+	void OnRep_Resistance(const FGameplayAttributeData& PreviousValue) const;
+	
 	UPROPERTY(ReplicatedUsing="OnRep_Movement", BlueprintReadOnly, Category="Attributes | Core")
 	FGameplayAttributeData Movement;
 	ATTRIBUTE_ACCESSORS(UGridUnitAttributeSet, Movement);
 	UFUNCTION()
 	void OnRep_Movement(const FGameplayAttributeData& PreviousValue) const;
+
+	UPROPERTY(ReplicatedUsing="OnRep_Constitution", BlueprintReadOnly, Category="Attributes | Core")
+	FGameplayAttributeData Constitution;
+	ATTRIBUTE_ACCESSORS(UGridUnitAttributeSet, Constitution);
+	UFUNCTION()
+	void OnRep_Constitution(const FGameplayAttributeData& PreviousValue) const;
 
 	// custom
 	UPROPERTY(BlueprintReadOnly)
@@ -76,7 +109,7 @@ public:
 	void InitializeAttributesFromStatsDataAsset(UStatsDataAsset* StatsDataAsset, const int32 Level);
 
 	UPROPERTY()
-	bool IsDefeated;
+	bool IsDefeated = false;
 	DECLARE_EVENT(UGridUnitAttributeSet, FGridUnitAttributeEvent)
 	FGridUnitAttributeEvent OnHealthZero;
 };

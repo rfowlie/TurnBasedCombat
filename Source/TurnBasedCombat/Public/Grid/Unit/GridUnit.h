@@ -136,6 +136,11 @@ public:
 	TArray<UWeaponDataAsset*> WeaponDataAssets;	
 
 public:
+	UPROPERTY(EditInstanceOnly, BlueprintReadOnly)
+	FGameplayTagContainer WeaponsInventory;
+	FGameplayTag EquippedWeapon;
+	virtual void SetEquippedWeapon(FGameplayTag WeaponToEquip);
+	virtual FGameplayTag GetEquippedWeapon();
 	TSet<int32> GetWeaponRanges() const;
 
 private:
