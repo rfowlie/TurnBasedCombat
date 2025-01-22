@@ -18,6 +18,8 @@ class TURNBASEDCOMBAT_API UUnitSolver : public UObject
 	GENERATED_BODY()
 
 public:
+	UUnitSolver();
+	
 	UFUNCTION(BlueprintCallable)
 	virtual void GetUnitSolved(TMap<FGameplayTag, int32>& Attributes, TArray<FGameplayTag> Traits);
 	

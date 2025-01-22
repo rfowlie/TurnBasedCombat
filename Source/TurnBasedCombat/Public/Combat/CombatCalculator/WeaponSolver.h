@@ -92,7 +92,7 @@ public:
 		const FCombatCalculatorPayload_FireEmblem& Payload);
 	virtual void Solve(
 		TMap<FGameplayTag, int32>& Attributes, TArray<FGameplayTag> Traits,
-		const UGridManager* GridManager, const AGridUnit* Instigator, const AGridUnit* Target);
+		const UGridManager* InGridManager, const AGridUnit* InInstigator, const AGridUnit* InTarget);
 	
 	
 	void SetGridManager(UGridManager* InGridManager) { GridManager = InGridManager; }

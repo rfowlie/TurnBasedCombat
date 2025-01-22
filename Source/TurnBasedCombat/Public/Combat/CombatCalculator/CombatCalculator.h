@@ -13,7 +13,7 @@
 class UGridManager;
 class AGridTile;
 class AGridUnit;
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FCombatCalculatorEvent)
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FCombatCalculatorEvent);
 
 /**
  * 

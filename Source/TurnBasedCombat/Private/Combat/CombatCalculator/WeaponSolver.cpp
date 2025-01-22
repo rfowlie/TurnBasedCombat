@@ -27,7 +27,7 @@ void UWeaponSolver::Solve(TMap<FGameplayTag, int32>& Attributes, TArray<FGamepla
 }
 
 void UWeaponSolver::Solve(TMap<FGameplayTag, int32>& Attributes, TArray<FGameplayTag> Traits,
-	const UGridManager* GridManager, const AGridUnit* Instigator, const AGridUnit* Target)
+	const UGridManager* InGridManager, const AGridUnit* InInstigator, const AGridUnit* InTarget)
 {
 }
 

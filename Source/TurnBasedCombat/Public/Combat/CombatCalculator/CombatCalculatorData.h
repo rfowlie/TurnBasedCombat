@@ -1,11 +1,17 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
+
+#include "CoreMinimal.h"
+#include "UObject/Object.h"
 #include "NativeGameplayTags.h"
+#include "CombatCalculatorData.generated.h"
 
 
 class AGridUnit;
 class UGridManager;
+
+
 // Fire Emblem ~ Base Stats
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Combat_Stat_Strength);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Combat_Stat_Skill);
@@ -28,6 +34,7 @@ UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Combat_Stat_CriticalDamage);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Combat_Stat_CriticalRate);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Combat_Stat_CriticalEvade);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Combat_Stat_CriticalChance);
+
 
 USTRUCT(BlueprintType)
 struct FUnitCombatSnapshot

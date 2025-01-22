@@ -15,8 +15,7 @@ class AGridTile;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FGridTileChanged, const AGridTile*, GridTile);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FGridUnitChanged, const AGridUnit*, GridUnit);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FPlayerControllerChanged, const FGameplayTag, State);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDuelContainerChanged, const UDuelContainer*, DuelContainer);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FGameplayEventChanged);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FInfoGameplayEvent);
 
 /**
  * this will act as a facade for events and accessing important information that designers might need
@@ -29,9 +28,9 @@ class TURNBASEDCOMBAT_API UTBC_InfoWorldSubsystem : public UWorldSubsystem
 	// GRID ~
 public:
 	UPROPERTY(BlueprintAssignable, Category="Turn Based Combat | Event")
-	FGameplayEventChanged OnMovementBegin;
+	FInfoGameplayEvent OnMovementBegin;
 	UPROPERTY(BlueprintAssignable, Category="Turn Based Combat | Event")
-	FGameplayEventChanged OnMovementEnd;
+	FInfoGameplayEvent OnMovementEnd;
 	
 	UPROPERTY(BlueprintAssignable, Category="Turn Based Combat | Grid")
 	FGridTileChanged OnGridTileHovered;
@@ -100,23 +99,12 @@ private:
 	// COMBAT ~
 public:
 	UPROPERTY(BlueprintAssignable, Category="Turn Based Combat | Combat")
-	FDuelContainerChanged OnDuelContainerChanged;
-	UFUNCTION()
-	void SetDuelContainer(UDuelContainer* InDuelContainer);
-	UFUNCTION(BlueprintCallable)
-	UDuelContainer* GetDuelContainer() { return DuelContainerCurrent; }
-
+	FInfoGameplayEvent OnCombatBegin;
 	UPROPERTY(BlueprintAssignable, Category="Turn Based Combat | Combat")
-	FGameplayEventChanged OnCombatBegin;
-	UPROPERTY(BlueprintAssignable, Category="Turn Based Combat | Combat")
-	FGameplayEventChanged OnCombatEnd;
+	FInfoGameplayEvent OnCombatEnd;
 
 	UPROPERTY()
 	UCombatCalculator* CombatCalculator;
-	
-protected:
-	UPROPERTY()
-	UDuelContainer* DuelContainerCurrent;
 	
 	// COMBAT ~ end
 };

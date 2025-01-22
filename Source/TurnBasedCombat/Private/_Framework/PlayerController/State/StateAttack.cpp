@@ -9,7 +9,6 @@
 #include "InputAction.h"
 #include "Grid/Manager/GridManager.h"
 #include "Grid/GridProxy.h"
-#include "Combat/DuelContainer.h"
 #include "Combat/CombatCalculator/CombatCalculator.h"
 #include "_Framework/TBC_InfoWorldSubsystem.h"
 #include "_Framework/HUD/TurnBasedCombatHUD.h"

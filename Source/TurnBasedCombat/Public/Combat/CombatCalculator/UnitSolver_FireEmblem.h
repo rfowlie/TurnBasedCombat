@@ -6,6 +6,7 @@
 #include "UnitSolver.h"
 #include "UnitSolver_FireEmblem.generated.h"
 
+struct FCombatCalculatorPayload_FireEmblem;
 // struct FCombatCalculatorPayload_FireEmblem;
 /**
  * 
@@ -16,7 +17,8 @@ class TURNBASEDCOMBAT_API UUnitSolver_FireEmblem : public UUnitSolver
 	GENERATED_BODY()
 	
 public:
-	UFUNCTION(BlueprintCallable)
+	UUnitSolver_FireEmblem();
+	
 	virtual void GetUnitSolved(TMap<FGameplayTag, int32>& Attributes, TArray<FGameplayTag> Traits) override;
 	virtual void Solve(
 		TMap<FGameplayTag, int32>& Attributes, TArray<FGameplayTag> Traits,

@@ -9,9 +9,13 @@
 #include "Grid/Tile/GridTile.h"
 #include "Grid/Unit/GridUnit.h"
 
+UUnitSolver_FireEmblem::UUnitSolver_FireEmblem()
+{
+}
+
 void UUnitSolver_FireEmblem::GetUnitSolved(TMap<FGameplayTag, int32>& Attributes, TArray<FGameplayTag> Traits)
 {
-	Super::GetUnitSolved(Attributes, Traits);
+	// Super::GetUnitSolved(Attributes, Traits);
 }
 
 void UUnitSolver_FireEmblem::Solve(TMap<FGameplayTag, int32>& Attributes, TArray<FGameplayTag> Traits,
@@ -64,16 +68,5 @@ void UUnitSolver_FireEmblem::Solve(TMap<FGameplayTag, int32>& Attributes, TArray
 int32 UUnitSolver_FireEmblem::SolveAttribute(FGameplayTag Attribute, TArray<FGameplayTag> Traits,
 	const UGridManager* GridManager, AGridUnit* Instigator, AGridUnit* Target)
 {
-	switch (Attribute)
-	{
-	case TAG_Combat_Stat_Avoid:
-		return Instigator->GetAbilitySystemComponent()->GetNumericAttribute(UGridUnitAttributeSet::GetSpeedAttribute()) +
-		Instigator->GetAbilitySystemComponent()->GetNumericAttribute(UGridUnitAttributeSet::GetLuckAttribute()) / 2 +
-		GridManager->GetGridTileOfUnit(Instigator)->TerrainDataAsset->TerrainStats.Avoid;
-		break;
-;
-
-		
-	default: ;
-	}
+	return 0;
 }
