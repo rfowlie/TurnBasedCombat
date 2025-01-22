@@ -3,6 +3,8 @@
 
 #include "_Framework/TBC_InfoWorldSubsystem.h"
 
+#include "Combat/CombatCalculator/CombatCalculator.h"
+
 void UTBC_InfoWorldSubsystem::SetGridTileHovered(AGridTile* InGridTile)
 {
 	GridTileHoveredCurrent = InGridTile;

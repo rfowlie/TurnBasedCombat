@@ -193,14 +193,15 @@ void UStateMove::OnDeselect()
 
 void UStateMove::OnCycleUnit()
 {
-	if (GridProxyCurrent)
-	{
-		GridProxyCurrent->UndoAll();					
-	}
-	
-	GridProxyCurrent = GridManager->GetNextGridUnit(GridProxyCurrent);
-	GridProxyCurrent->SetMoveableTiles(true);
-	Phase = EMovePhase::SelectedMoveUnit;
+	// TODO: does not return anything at the moment
+	// if (GridProxyCurrent)
+	// {
+	// 	GridProxyCurrent->UndoAll();					
+	// }
+	//
+	// GridProxyCurrent = GridManager->GetNextGridUnit(GridProxyCurrent);
+	// GridProxyCurrent->SetMoveableTiles(true);
+	// Phase = EMovePhase::SelectedMoveUnit;
 }
 
 void UStateMove::Enable()

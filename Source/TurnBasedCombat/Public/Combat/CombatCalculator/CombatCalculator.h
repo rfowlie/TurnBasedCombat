@@ -36,6 +36,10 @@ public:
 	FCombatCalculatorEvent OnTargetChanged;
 	UPROPERTY(BlueprintAssignable, Category="CombatCalculator")
 	FCombatCalculatorEvent OnTargetTileChanged;
+	UPROPERTY(BlueprintAssignable, Category="CombatCalculator")
+	FCombatCalculatorEvent OnCombatBegin;
+	UPROPERTY(BlueprintAssignable, Category="CombatCalculator")
+	FCombatCalculatorEvent OnCombatEnd;
 	
 	void SetEnabled() const;
 	void SetDisabled() const;
@@ -43,15 +47,23 @@ public:
 	void SetTarget(AGridUnit* Unit);
 	void SetInstigatorTile(AGridTile* Tile);
 	void SetTargetTile(AGridTile* Tile);
-	
+
+	void CalculateCombatOrder();
+	TQueue<AGridUnit*> CombatOrder;
+	void InitiateCombat();
+	UFUNCTION()
+	void NextAttacker();
+	UPROPERTY()
+	bool bCombatLock = false;
+
+protected:
 	int32 CalculateAttackSpeed(AGridUnit* Unit) const;
 	int32 CalculateHitRate(AGridUnit* Unit) const;
 	int32 CalculateAvoid(AGridUnit* Unit, AGridTile* Tile) const;
 	int32 CalculateCriticalRate(AGridUnit* Unit) const;
-	int32 CalculateCriticalAvoid(AGridUnit* Unit, AGridTile* Tile) const;
-	
+	int32 CalculateCriticalAvoid(AGridUnit* Unit, AGridTile* Tile) const;	
 	void CalculateCombatSnapshot(AGridUnit* Unit, AGridTile* Tile, FUnitCombatSnapshot& Snapshot) const;
-	
+
 	UFUNCTION(BlueprintImplementableEvent)
 	void GetWeapon(FWeaponTraits& WeaponTraits, FGameplayTag Weapon) const;
 	

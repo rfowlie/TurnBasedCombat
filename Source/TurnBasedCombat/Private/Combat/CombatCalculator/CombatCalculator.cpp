@@ -59,6 +59,80 @@ void UCombatCalculator::SetTargetTile(AGridTile* Tile)
 	}
 }
 
+void UCombatCalculator::CalculateCombatOrder()
+{
+	if (!IsValid(InstigatorUnit) || !IsValid(TargetUnit)) { return; }
+	CombatOrder.Empty();
+
+	// TODO: account for skills that alter the order of combat
+	CombatOrder.Enqueue(InstigatorUnit);
+	CombatOrder.Enqueue(TargetUnit);
+	if (4 < InstigatorSnapshot.AttackSpeed - TargetSnapshot.AttackSpeed)
+	{
+		CombatOrder.Enqueue(InstigatorUnit);
+	}
+	else if (4 < TargetSnapshot.AttackSpeed - InstigatorSnapshot.AttackSpeed)
+	{
+		CombatOrder.Enqueue(TargetUnit);
+	}
+}
+
+void UCombatCalculator::InitiateCombat()
+{
+	if (bCombatLock) { return; }
+	bCombatLock = true;
+	
+	if (OnCombatBegin.IsBound()) { OnCombatBegin.Broadcast(); }
+	
+	// // subscribe to end event and notify grid unit to move
+	// InstigatorUnit->OnEventAttackEnd.AddUniqueDynamic(this, &ThisClass::PostEvent_Attack);
+	// InstigatorUnit->GetAbilitySystemComponent()->OnAbilityEnded.AddLambda([this](const FAbilityEndedData& Data)
+	// {
+	// 	
+	// });
+	//
+	// // TODO: use a gameplay event instead
+	// // Instigator->GridUnit->AttackEvent(Location->GridTile->GetPlacementLocation(), Target->GridUnit);
+	//
+	// // TODO: try and activate through gameplay event instead of this current way...
+	// // create gameplay event information
+	// // UAbilitySystemComponent* AbilitySystemComponent = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(Instigator->GridUnit);
+	// // FGameplayAbilitySpecHandle AbilityHandle;
+	// // FGameplayAbilityActorInfo ActorInfo = *AbilitySystemComponent->AbilityActorInfo.Get();
+	// FGameplayEventData EventData;
+	// EventData.Instigator = Instigator->GridUnit;
+	// EventData.Target = Target->GridUnit;
+	// UGridEventPayload_Move* GridEventPayload = UGridEventPayload_Move::CreatePayload(Location->GridTile->GetPlacementLocation());
+	// EventData.OptionalObject = GridEventPayload;
+	//
+	// // send gameplay event
+	// UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(
+	// 	Instigator->GridUnit, TAG_Event_Grid_Attack, EventData);
+	// // AbilitySystemComponent->TriggerAbilityFromGameplayEvent(
+	// // 	AbilityHandle,
+	// // 	&ActorInfo,
+	// // 	TAG_Event_Grid_Attack,
+	// // 	&EventData, 
+	// // 	*AbilitySystemComponent);
+}
+
+void UCombatCalculator::NextAttacker()
+{
+	if (!CombatOrder.IsEmpty())
+	{
+		AGridUnit* Unit;
+		CombatOrder.Dequeue(Unit);
+		Unit->GetAbilitySystemComponent()->OnAbilityEnded.AddLambda([this](const FAbilityEndedData& Data)
+		{
+			NextAttacker();
+		});
+	}
+	else
+	{
+		if (OnCombatEnd.IsBound()) { OnCombatEnd.Broadcast(); }
+	}
+}
+
 int32 UCombatCalculator::CalculateAttackSpeed(AGridUnit* Unit) const
 {
 	int32 Speed = Unit->GetAbilitySystemComponent()->GetNumericAttribute(UGridUnitAttributeSet::GetSpeedAttribute());

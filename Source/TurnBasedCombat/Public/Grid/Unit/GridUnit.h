@@ -13,6 +13,7 @@
 #include "GridUnit.generated.h"
 
 
+class UMoveAbility;
 class UAbilityAsync_WaitAttributeChanged;
 class UGridUnitAttributeSet;
 class UGameplayAbility;
@@ -55,10 +56,15 @@ public:
 	FGameplayAbilitySpecHandle GameplayAbilitySpecHandle_Move;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TSubclassOf<UGameplayAbility> GameplayAbilityClass_Attack;	
+	TSubclassOf<UGameplayAbility> GameplayAbilityClass_Attack;
 	UPROPERTY(BlueprintReadOnly)
 	FGameplayAbilitySpecHandle GameplayAbilitySpecHandle_Attack;
 
+	// UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	// TSubclassOf<UMoveAbility> MoveAbilityClass;
+	// UPROPERTY(BlueprintReadOnly)
+	// FGameplayAbilitySpecHandle MoveAbilitySpecHandle;
+	
 	UFUNCTION(BlueprintCallable)
 	int32 GetHealth() const { return AttributeSet_GridUnit->GetHealth(); }
 	UPROPERTY(BlueprintAssignable)

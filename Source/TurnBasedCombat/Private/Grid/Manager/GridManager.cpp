@@ -5,6 +5,8 @@
 #include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystemComponent.h"
 // #include "Grid/GridMovementNode.h"
+#include "Combat/CombatCalculator/MoveAbility.h"
+#include "Combat/CombatCalculator/MoveAbilityPayload.h"
 #include "Grid/GridUtility.h"
 #include "Grid/GridStructs.h"
 #include "Grid/Event/GridEventPayload_Move.h"
@@ -64,6 +66,14 @@ void UGridManager::RegisterGridUnit(AGridUnit* GridUnit)
 		
 		// add to turn manager
 		TurnManager->RegisterGridUnit(GridUnit);
+		
+		GridUnit->GetAbilitySystemComponent()->OnAbilityEnded.AddLambda([this, GridUnit](const FAbilityEndedData& Data)
+		{
+			if (Data.AbilitySpecHandle == GridUnit->GameplayAbilitySpecHandle_Move)
+			{
+				PostEvent_Move(GridUnit);
+			}
+		});
 	}
 }
 
@@ -127,10 +137,53 @@ void UGridManager::CreateMoveEvent(UGridProxy* Instigator, UGridProxy* Location)
 		OnGridEventStart.Broadcast();
 	}
 
-	// subscribe to end event and notify grid unit to move
-	Instigator->GridUnit->OnEventMoveEnd.AddUniqueDynamic(this, &ThisClass::PostEvent_Move);
-	// TODO: use a gameplay event instead
-	Instigator->GridUnit->MovementEvent(Location->GridTile->GetPlacementLocation());
+	// TODO: will this just keep adding the same lambda over and over???
+	// ATTACHING TO THIS CALLBACK WHEN REGISTERING WITH GRIDMANAGER
+	// Instigator->GridUnit->GetAbilitySystemComponent()->OnAbilityEnded.AddLambda([this, Instigator](const FAbilityEndedData& Data)
+	// {
+	// 	if (Data.AbilitySpecHandle == Instigator->GridUnit->MoveAbilitySpecHandle)
+	// 	{
+	// 		PostEvent_Move(Instigator->GridUnit);
+	// 	}
+	// });
+
+	// DOES NOT WORK
+	// update tiles on ability...
+	// FGameplayAbilitySpec* Spec = Instigator->GridUnit->GetAbilitySystemComponent()->FindAbilitySpecFromHandle(
+	// 	Instigator->GridUnit->MoveAbilitySpecHandle);
+	// if (UMoveAbility* MoveAbility = Cast<UMoveAbility>(Spec->Ability))
+	// {
+	// 	TArray<AGridTile*> Tiles;
+	// 	Tiles.Add(Location->GridTile);
+	// 	MoveAbility->SetMovementTiles(Tiles);
+	// 	// activate ability...
+	// 	// Instigator->GridUnit->AbilitySystemComponent->TryActivateAbility(Instigator->GridUnit->MoveAbilitySpecHandle);
+	//
+	// }
+
+	/*
+	 * LEARNING
+	 * seems the only good way to pass information to a gameplay ability is through the event data
+	 * this can be helpful as you will have to cast the optional data an if the cast fails then it will
+	 * prevent abilities from firing with incorrect data...
+	 */
+	FGameplayEventData EventData;
+	EventData.Instigator = Instigator->GridUnit;
+	TArray<AGridTile*> Tiles;
+	Tiles.Add(Location->GridTile);
+	EventData.OptionalObject = UMoveAbilityPayload::Create(Tiles);
+
+	// send gameplay event
+	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(
+		Instigator->GridUnit, TAG_Event_Grid_Move, EventData);
+
+	// activate ability...
+	// Instigator->GridUnit->AbilitySystemComponent->TryActivateAbility(Instigator->GridUnit->MoveAbilitySpecHandle);
+
+	// // subscribe to end event and notify grid unit to move
+	// Instigator->GridUnit->OnEventMoveEnd.AddUniqueDynamic(this, &ThisClass::PostEvent_Move);
+	// // TODO: use a gameplay event instead
+	// Instigator->GridUnit->MovementEvent(Location->GridTile->GetPlacementLocation());
 }
 
 void UGridManager::PostEvent_Move(AGridUnit* GridUnit)

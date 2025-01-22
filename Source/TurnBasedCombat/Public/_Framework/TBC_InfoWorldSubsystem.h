@@ -98,11 +98,12 @@ private:
 
 	// COMBAT ~
 public:
-	UPROPERTY(BlueprintAssignable, Category="Turn Based Combat | Combat")
-	FInfoGameplayEvent OnCombatBegin;
-	UPROPERTY(BlueprintAssignable, Category="Turn Based Combat | Combat")
-	FInfoGameplayEvent OnCombatEnd;
-
+	// UPROPERTY(BlueprintAssignable, Category="Turn Based Combat | Combat")
+	// FInfoGameplayEvent OnCombatBegin;
+	// UPROPERTY(BlueprintAssignable, Category="Turn Based Combat | Combat")
+	// FInfoGameplayEvent OnCombatEnd;
+	// UFUNCTION()
+	// void InitiateCombat();
 	UPROPERTY()
 	UCombatCalculator* CombatCalculator;
 	
