@@ -153,7 +153,15 @@ bool UGridProxy::SetCanTargetFromTiles(UGridProxy* Other, bool Activate)
 	// set state for tiles
 	for (FGridMovement AttackTile : CurrentCanAttackFromTiles)
 	{
-		Activate ? AttackTile.GridTile->SetState(TAG_Tile_State_CanTargetFrom) : AttackTile.GridTile->SetState(TAG_Grid_State_Idle);
+		if (Activate)
+		{
+			AttackTile.GridTile->SetState(TAG_Tile_State_CanTargetFrom);
+		}
+		else
+		{
+			AttackTile.GridTile->SetState(TAG_Grid_State_Idle);
+		}
+		// Activate ? AttackTile.GridTile->SetState(TAG_Tile_State_CanTargetFrom) : AttackTile.GridTile->SetState(TAG_Grid_State_Idle);
 	}
 	
 	// remove state for other enemies??? PROBABLY won't matter as there won't be tile overlap

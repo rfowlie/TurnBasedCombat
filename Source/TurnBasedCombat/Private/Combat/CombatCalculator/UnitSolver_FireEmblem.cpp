@@ -25,7 +25,7 @@ void UUnitSolver_FireEmblem::Solve(TMap<FGameplayTag, int32>& Attributes, TArray
 }
 
 void UUnitSolver_FireEmblem::Solve(TMap<FGameplayTag, int32>& Attributes, TArray<FGameplayTag> Traits,
-	const UGridManager* GridManager, AGridUnit* Instigator, AGridUnit* Target)
+	UGridManager* GridManager, AGridUnit* Instigator, AGridUnit* Target)
 {
 	// put all attributes from unit and weapon into map
 	// add basic stats
@@ -66,7 +66,7 @@ void UUnitSolver_FireEmblem::Solve(TMap<FGameplayTag, int32>& Attributes, TArray
 }
 
 int32 UUnitSolver_FireEmblem::SolveAttribute(FGameplayTag Attribute, TArray<FGameplayTag> Traits,
-	const UGridManager* GridManager, AGridUnit* Instigator, AGridUnit* Target)
+	UGridManager* GridManager, AGridUnit* Instigator, AGridUnit* Target)
 {
 	return 0;
 }

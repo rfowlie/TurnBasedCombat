@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "UObject/Object.h"
 #include "NativeGameplayTags.h"
+#include "WeaponSolver.h"
 #include "CombatCalculatorData.generated.h"
 
 
@@ -82,5 +83,26 @@ struct FUnitCombatSnapshot
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int32 CriticalAvoid = 0;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	FWeaponTraits WeaponTraits;
 	
+};
+
+USTRUCT(BlueprintType)
+struct FCombatOutcome
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	AGridUnit* Instigator = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	AGridUnit* Target = nullptr;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int32 HealthChange = 0;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int32 MovementChange = 0;
 };

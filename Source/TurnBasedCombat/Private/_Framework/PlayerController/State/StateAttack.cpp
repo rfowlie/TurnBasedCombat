@@ -99,6 +99,15 @@ void UStateAttack::OnEnter()
 {	
 	UE_LOG(LogTemp, Warning, TEXT("OnEnter - ATTACK STATE"));
 	SetPhase(TAG_Encounter_Mode_Attack_Idle);
+
+	// TODO: for now...
+	if (UTBC_InfoWorldSubsystem* Subsystem = GetWorld()->GetSubsystem<UTBC_InfoWorldSubsystem>())
+	{
+		UCombatCalculator* CombatCalculator = NewObject<UCombatCalculator>(this);
+		CombatCalculator->SetGridManager(GridManager);
+		Subsystem->SetCombatCalculator(CombatCalculator);
+	}
+	
 }
 
 void UStateAttack::OnExit()
@@ -138,7 +147,7 @@ void UStateAttack::OnSelect()
 			if (UTBC_InfoWorldSubsystem* Subsystem = GetWorld()->GetSubsystem<UTBC_InfoWorldSubsystem>())
 			{
 				Subsystem->SetGridUnitSelected(Instigator->GridUnit);
-				Subsystem->CombatCalculator->SetInstigator(Instigator->GridUnit);
+				Subsystem->GetCombatCalculator()->SetInstigator(Instigator->GridUnit);
 			}
 		}
 	}
@@ -155,14 +164,16 @@ void UStateAttack::OnSelect()
 		if (Instigator->CanAttack(NewGridProxy))
 		{
 			if (Target) { Target->UndoAll(); }
+			// undo potential old targets...
 			Instigator->SetCanTargetFromTiles(Target, false);
+			
 			Target = NewGridProxy;
 			Instigator->SetCanTargetFromTiles(Target, true);
 			
 			if (UTBC_InfoWorldSubsystem* Subsystem = GetWorld()->GetSubsystem<UTBC_InfoWorldSubsystem>())
 			{
-				Subsystem->CombatCalculator->SetTarget(Target->GridUnit);
-				Subsystem->CombatCalculator->SetTargetTile(Target->GridTile);
+				Subsystem->GetCombatCalculator()->SetTarget(Target->GridUnit);
+				Subsystem->GetCombatCalculator()->SetTargetTile(Target->GridTile);
 			}
 			
 			SetPhase(TAG_Encounter_Mode_Attack_SelectedTarget);
@@ -201,7 +212,7 @@ void UStateAttack::OnSelect()
 
 			if (UTBC_InfoWorldSubsystem* Subsystem = GetWorld()->GetSubsystem<UTBC_InfoWorldSubsystem>())
 			{
-				Subsystem->CombatCalculator->SetInstigatorTile(MovingTo->GridTile);
+				Subsystem->GetCombatCalculator()->SetInstigatorTile(MovingTo->GridTile);
 			}
 			
 			SetPhase(TAG_Encounter_Mode_Attack_SelectedAttackTile);

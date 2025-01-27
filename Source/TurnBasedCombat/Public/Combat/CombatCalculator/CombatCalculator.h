@@ -18,7 +18,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE(FCombatCalculatorEvent);
 /**
  * 
  */
-UCLASS(Abstract, BlueprintType, Blueprintable)
+UCLASS(BlueprintType, Blueprintable)
 class TURNBASEDCOMBAT_API UCombatCalculator : public UObject
 {
 	GENERATED_BODY()
@@ -48,8 +48,9 @@ public:
 	void SetInstigatorTile(AGridTile* Tile);
 	void SetTargetTile(AGridTile* Tile);
 
-	void CalculateCombatOrder();
 	TQueue<AGridUnit*> CombatOrder;
+	void CalculateCombatOrder();
+	const AGridUnit* GetNextCombatant();
 	void InitiateCombat();
 	UFUNCTION()
 	void NextAttacker();
@@ -57,13 +58,14 @@ public:
 	bool bCombatLock = false;
 
 protected:
-	int32 CalculateAttackSpeed(AGridUnit* Unit) const;
-	int32 CalculateHitRate(AGridUnit* Unit) const;
+	static int32 GetMaxDamage() { return 60; }
+	int32 CalculateAttackSpeed(AGridUnit* Unit, FWeaponTraits& WeaponTraits) const;
+	int32 CalculateHitRate(AGridUnit* Unit, FWeaponTraits& WeaponTraits) const;
 	int32 CalculateAvoid(AGridUnit* Unit, AGridTile* Tile) const;
-	int32 CalculateCriticalRate(AGridUnit* Unit) const;
-	int32 CalculateCriticalAvoid(AGridUnit* Unit, AGridTile* Tile) const;	
-	void CalculateCombatSnapshot(AGridUnit* Unit, AGridTile* Tile, FUnitCombatSnapshot& Snapshot) const;
-
+	int32 CalculateCriticalRate(AGridUnit* Unit, FWeaponTraits& WeaponTraits) const;
+	int32 CalculateCriticalAvoid(AGridUnit* Unit, AGridTile* Tile) const;
+	void CalculateCombatSnapshot_Internal(FUnitCombatSnapshot& OutSnapshot, AGridUnit* Unit);
+	
 	UFUNCTION(BlueprintImplementableEvent)
 	void GetWeapon(FWeaponTraits& WeaponTraits, FGameplayTag Weapon) const;
 	
@@ -82,7 +84,28 @@ protected:
 	UPROPERTY()
 	FUnitCombatSnapshot TargetSnapshot;
 
-	
+public:
+	void SetGridManager(UGridManager* InGridManager) { GridManager = InGridManager; }
+	// for now... maybe later convert to tags???
+	UFUNCTION(BlueprintCallable, Category="CombatCalculator")
+	const FUnitCombatSnapshot& GetCombatSnapshotInstigator() const { return InstigatorSnapshot; }
+	UFUNCTION(BlueprintCallable, Category="CombatCalculator")
+	const FUnitCombatSnapshot& GetCombatSnapshotTarget() const { return TargetSnapshot; }
+
+
+	// now we need to be able to execute combat in the correct order, ensuring not to do extra calls, etc.
+	UFUNCTION(BlueprintCallable, Category="CombatCalculator")
+	bool PopCombatOutcome(FCombatOutcome& CombatOutcome);
+
+protected:
+	void CalculateCombatOutcome(
+		FCombatOutcome& CombatOutcome, const FUnitCombatSnapshot& Instigator, const FUnitCombatSnapshot& Target) const;
+
+
+
+	/////////////////////////////////////////////////////////////////////////////
+	// UFUNCTION(BlueprintCallable, Category="CombatCalculator")
+	// void GetInstigatorInfo(TMap<FGameplayTag, int32>& Attributes, TArray<FGameplayTag>& Traits);
 	// UPROPERTY()
 	// TMap<FGameplayTag, int32>& AttributesInstigator;
 	// UPROPERTY()

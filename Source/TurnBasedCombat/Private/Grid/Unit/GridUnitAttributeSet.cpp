@@ -121,13 +121,13 @@ void UGridUnitAttributeSet::InitializeAttributesFromStatsDataAsset(
 	InitHealthMax(StatsSnapshot.Health);
 	InitHealth(StatsSnapshot.Health);
 	InitStrength(StatsSnapshot.Strength);
-	// InitSkill(StatsSnapshot.)
+	InitSkill(StatsSnapshot.Skill);
 	InitSpeed(StatsSnapshot.Speed);
 	InitLuck(StatsSnapshot.Luck);
 	InitDefence(StatsSnapshot.Defence);
 	InitResistance(StatsSnapshot.Resistance);
 	InitMovement(StatsSnapshot.Movement);
-	// InitConstitution(StatsSnapshot.)
+	InitConstitution(StatsSnapshot.Constitution);
 }
 
 #pragma endregion 

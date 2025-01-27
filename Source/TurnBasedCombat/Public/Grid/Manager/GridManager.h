@@ -56,7 +56,7 @@ public:
 	void PostEvent_Attack(AGridUnit* GridUnit);
 
 	UFUNCTION()
-	void OnEndEvent();
+	void OnEndEvent() const;
 	
 	FGridManagerDelegate OnGridEventStart;
 	FGridManagerDelegate OnGridEventEnd;
@@ -91,6 +91,9 @@ protected:
 	UPROPERTY()
 	TMap<AGridUnit*, FGridPosition> GridUnitLocationMap;
 
+	void UpdateTileMapping(AGridTile* GridTile);
+	void UpdateUnitMapping(AGridUnit* GridUnit);
+	
 public:
 	AGridUnit* GetGridUnitOnTile(const AGridTile* GridTile) const
 	{
@@ -105,8 +108,9 @@ public:
 		return nullptr;
 	}
 	
-	AGridTile* GetGridTileOfUnit(const AGridUnit* GridUnit) const
+	AGridTile* GetGridTileOfUnit(AGridUnit* GridUnit)
 	{
+		UpdateUnitMapping(GridUnit);
 		if (GridUnitLocationMap.Contains(GridUnit))
 		{
 			if (LocationGridTileMap.Contains(GridUnitLocationMap[GridUnit]))

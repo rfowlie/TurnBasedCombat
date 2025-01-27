@@ -5,6 +5,7 @@
 #include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystemComponent.h"
 // #include "Grid/GridMovementNode.h"
+#include "Combat/CombatCalculator/CombatCalculator.h"
 #include "Combat/CombatCalculator/MoveAbility.h"
 #include "Combat/CombatCalculator/MoveAbilityPayload.h"
 #include "Grid/GridUtility.h"
@@ -15,6 +16,7 @@
 #include "Grid/Manager/GridRules.h"
 #include "TurnBasedCombat/Public/Grid/Tile/GridTile.h"
 #include "TurnBasedCombat/Public/Grid/Unit/GridUnit.h"
+#include "_Framework/TBC_InfoWorldSubsystem.h"
 
 
 UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Grid_Move, "Event.Grid.Move");
@@ -167,10 +169,10 @@ void UGridManager::CreateMoveEvent(UGridProxy* Instigator, UGridProxy* Location)
 	 * this can be helpful as you will have to cast the optional data an if the cast fails then it will
 	 * prevent abilities from firing with incorrect data...
 	 */
-	FGameplayEventData EventData;
-	EventData.Instigator = Instigator->GridUnit;
 	TArray<AGridTile*> Tiles;
 	Tiles.Add(Location->GridTile);
+	FGameplayEventData EventData;
+	EventData.Instigator = Instigator->GridUnit;	
 	EventData.OptionalObject = UMoveAbilityPayload::Create(Tiles);
 
 	// send gameplay event
@@ -188,20 +190,16 @@ void UGridManager::CreateMoveEvent(UGridProxy* Instigator, UGridProxy* Location)
 
 void UGridManager::PostEvent_Move(AGridUnit* GridUnit)
 {
-	if (!IsValid(GridUnit)) { return; }
+	if (!IsValid(GridUnit))
+	{
+		UE_LOG(LogTemp, Error, TEXT("PostEvent_Move: Grid Unit is null"))
+		return;
+	}
 
-	// update turn manager
-	TurnManager->UpdateGridUnitActionTaken(GridUnit);
+	UpdateUnitMapping(GridUnit);
 	
-	// update unit mappings
-	// remove mapping for grid unit (will be updated on complete)
-	LocationGridUnitMap.Remove(GridUnitLocationMap[GridUnit]);
-	GridUnitLocationMap.Remove(GridUnit);
-
-	// update the unit that has moved	
-	const FGridPosition GridPosition = UGridUtility::CalculateGridPosition(GridUnit);
-	LocationGridUnitMap.Add(GridPosition, GridUnit);
-	GridUnitLocationMap.Add(GridUnit, GridPosition);
+	// update turn manager
+	TurnManager->UsedTurn(GridUnit);
 		
 	if (OnGridEventEnd.IsBound())
 	{
@@ -234,7 +232,8 @@ void UGridManager::CreateAttackEvent(UGridProxy* Instigator, UGridProxy* Target,
 	{
 		OnGridEventStart.Broadcast();
 	}
-	
+
+	// IS THIS BETTER THAN WHAT WE ARE DOING IN ONREGISTER???
 	// subscribe to end event and notify grid unit to move
 	Instigator->GridUnit->OnEventAttackEnd.AddUniqueDynamic(this, &ThisClass::PostEvent_Attack);
 
@@ -246,12 +245,25 @@ void UGridManager::CreateAttackEvent(UGridProxy* Instigator, UGridProxy* Target,
 	// UAbilitySystemComponent* AbilitySystemComponent = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(Instigator->GridUnit);
 	// FGameplayAbilitySpecHandle AbilityHandle;
 	// FGameplayAbilityActorInfo ActorInfo = *AbilitySystemComponent->AbilityActorInfo.Get();
-	FGameplayEventData EventData;
-	EventData.Instigator = Instigator->GridUnit;
-	EventData.Target = Target->GridUnit;
-	UGridEventPayload_Move* GridEventPayload = UGridEventPayload_Move::CreatePayload(Location->GridTile->GetPlacementLocation());
-	EventData.OptionalObject = GridEventPayload;
+	// FGameplayEventData EventData;
+	// EventData.Instigator = Instigator->GridUnit;
+	// EventData.Target = Target->GridUnit;
+	// UGridEventPayload_Move* GridEventPayload = UGridEventPayload_Move::CreatePayload(Location->GridTile->GetPlacementLocation());
+	// EventData.OptionalObject = GridEventPayload;
 
+	TArray<AGridTile*> Tiles;
+	Tiles.Add(Location->GridTile);
+	FGameplayEventData EventData;
+	EventData.Instigator = Instigator->GridUnit;	
+	EventData.OptionalObject = UMoveAbilityPayload::Create(Tiles);
+	if (UTBC_InfoWorldSubsystem* Subsystem = GetWorld()->GetSubsystem<UTBC_InfoWorldSubsystem>())
+	{
+		// pass along combat calculator so that correct combat can occur
+		// if we allow anything to create a combat calculator with any units then things can get messy
+		// const UObject* CombatCalculator = Cast<UObject>(Subsystem->GetCombatCalculator());
+		// EventData.OptionalObject2 = UCombatCalculator::
+	}
+	
 	// send gameplay event
 	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(
 		Instigator->GridUnit, TAG_Event_Grid_Attack, EventData);
@@ -265,20 +277,16 @@ void UGridManager::CreateAttackEvent(UGridProxy* Instigator, UGridProxy* Target,
 
 void UGridManager::PostEvent_Attack(AGridUnit* GridUnit)
 {
-	if (!IsValid(GridUnit)) { return; }
+	if (!IsValid(GridUnit))
+	{
+		UE_LOG(LogTemp, Error, TEXT("PostEvent_Attack: Grid Unit is null"))
+		return;
+	}
 
-	// update turn manager
-	TurnManager->UpdateGridUnitActionTaken(GridUnit);
+	UpdateUnitMapping(GridUnit);
 	
-	// update unit mappings
-	// remove mapping for grid unit (will be updated on complete)
-	LocationGridUnitMap.Remove(GridUnitLocationMap[GridUnit]);
-	GridUnitLocationMap.Remove(GridUnit);
-
-	// update the unit that has moved	
-	const FGridPosition GridPosition = UGridUtility::CalculateGridPosition(GridUnit);
-	LocationGridUnitMap.Add(GridPosition, GridUnit);
-	GridUnitLocationMap.Add(GridUnit, GridPosition);
+	// update turn manager
+	TurnManager->UsedTurn(GridUnit);
 		
 	if (OnGridEventEnd.IsBound())
 	{
@@ -286,7 +294,7 @@ void UGridManager::PostEvent_Attack(AGridUnit* GridUnit)
 	}
 }
 
-void UGridManager::OnEndEvent()
+void UGridManager::OnEndEvent() const
 {
 	if (OnGridEventEnd.IsBound())
 	{
@@ -337,6 +345,25 @@ void UGridManager::OnBeginCursorOverGridTile(AActor* Actor)
 			}
 		}
 	}
+}
+
+void UGridManager::UpdateTileMapping(AGridTile* GridTile)
+{
+	// will this ever even happen???
+}
+
+void UGridManager::UpdateUnitMapping(AGridUnit* GridUnit)
+{
+	if (!IsValid(GridUnit)) { return; }
+	
+	// remove mapping for grid unit
+	LocationGridUnitMap.Remove(GridUnitLocationMap[GridUnit]);
+	GridUnitLocationMap.Remove(GridUnit);
+
+	// update the unit that has moved	
+	const FGridPosition GridPosition = UGridUtility::CalculateGridPosition(GridUnit);
+	LocationGridUnitMap.Add(GridPosition, GridUnit);
+	GridUnitLocationMap.Add(GridUnit, GridPosition);
 }
 
 void UGridManager::CalculateGridMovement(TArray<FGridMovement>& OutMovement, AGridUnit* GridUnit)

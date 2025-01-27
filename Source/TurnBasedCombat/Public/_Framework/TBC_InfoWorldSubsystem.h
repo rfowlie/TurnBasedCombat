@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
+#include "Combat/CombatCalculator/CombatCalculator.h"
 #include "Subsystems/WorldSubsystem.h"
 #include "TBC_InfoWorldSubsystem.generated.h"
 
@@ -12,6 +13,7 @@ class UCombatCalculator;
 class UDuelContainer;
 class AGridUnit;
 class AGridTile;
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FGridTileChanged, const AGridTile*, GridTile);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FGridUnitChanged, const AGridUnit*, GridUnit);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FPlayerControllerChanged, const FGameplayTag, State);
@@ -25,7 +27,7 @@ class TURNBASEDCOMBAT_API UTBC_InfoWorldSubsystem : public UWorldSubsystem
 {
 	GENERATED_BODY()
 	
-	// GRID ~
+	// GRID ~	
 public:
 	UPROPERTY(BlueprintAssignable, Category="Turn Based Combat | Event")
 	FInfoGameplayEvent OnMovementBegin;
@@ -104,8 +106,17 @@ public:
 	// FInfoGameplayEvent OnCombatEnd;
 	// UFUNCTION()
 	// void InitiateCombat();
+	void SetCombatCalculator(UCombatCalculator* InCombatCalculator) { CombatCalculator = InCombatCalculator; }
+	UFUNCTION(BlueprintCallable, Category="Combat Calculator")
+	UCombatCalculator* GetCombatCalculator() { return CombatCalculator; }
+
+protected:
 	UPROPERTY()
 	UCombatCalculator* CombatCalculator;
-	
+
+public:
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FFactionChangedDelegate, FGameplayTag, Faction);
+	UPROPERTY(BlueprintAssignable, Category="Turn Based Combat | Combat")
+	FFactionChangedDelegate OnFactionChanged;
 	// COMBAT ~ end
 };
