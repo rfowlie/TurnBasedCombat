@@ -91,11 +91,11 @@ struct FStatRange
 {
 	GENERATED_BODY()
 	
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta=(ClampMin = 1, ClampMax = 99, UIMin = 1, UIMax = 99))
-	int32 StatMin = 1;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta=(ClampMin = 0, ClampMax = 100, UIMin = 0, UIMax = 100))
+	int32 StatMin = 0;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta=(ClampMin = 1, ClampMax = 99, UIMin = 1, UIMax = 99))
-	int32 StatMax = 99;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta=(ClampMin = 0, ClampMax = 100, UIMin = 0, UIMax = 100))
+	int32 StatMax = 100;
 	
 	UPROPERTY(EditDefaultsOnly)
 	UCurveFloat* GrowthCurve = nullptr;

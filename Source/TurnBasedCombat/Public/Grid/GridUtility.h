@@ -36,7 +36,7 @@ public:
 	static int32 GetDistanceBetweenGridPositions(const FGridPosition& positionA, const FGridPosition& positionB);
 
 	UFUNCTION(BlueprintCallable)
-	static int32 GetGridSize() { return 100; }
+	static int32 GetGridSize() { return 200; }
 
 	UFUNCTION(BlueprintCallable)
 	static FGridPosition CalculateGridPosition(const AActor* Actor);

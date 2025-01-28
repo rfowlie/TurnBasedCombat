@@ -14,6 +14,8 @@ class UGridManager;
 class AGridTile;
 class AGridUnit;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FCombatCalculatorEvent);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FCombatCalculatorUnitEvent, AGridUnit*, GridUnit);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FCombatCalculatorTileEvent, AGridTile*, GridTile);
 
 /**
  * 
@@ -44,11 +46,21 @@ public:
 	void SetEnabled() const;
 	void SetDisabled() const;
 	void SetInstigator(AGridUnit* Unit);
+	UFUNCTION(BlueprintCallable)
+	const AGridUnit* GetInstigatorUnit() const { return InstigatorUnit; }
 	void SetTarget(AGridUnit* Unit);
+	UFUNCTION(BlueprintCallable)
+	const AGridUnit* GetTargetUnit() const { return TargetUnit; }
 	void SetInstigatorTile(AGridTile* Tile);
+	UFUNCTION(BlueprintCallable)
+	const AGridTile* GetInstigatorTile() const { return InstigatorTile; }
 	void SetTargetTile(AGridTile* Tile);
+	UFUNCTION(BlueprintCallable)
+	const AGridTile* GetTargetTile() const { return TargetTile; }
 
 	TQueue<AGridUnit*> CombatOrder;
+	UPROPERTY()
+	TArray<AGridUnit*> CombatOrderHelper;
 	void CalculateCombatOrder();
 	const AGridUnit* GetNextCombatant();
 	void InitiateCombat();
@@ -96,6 +108,9 @@ public:
 	// now we need to be able to execute combat in the correct order, ensuring not to do extra calls, etc.
 	UFUNCTION(BlueprintCallable, Category="CombatCalculator")
 	bool PopCombatOutcome(FCombatOutcome& CombatOutcome);
+
+	UFUNCTION(BlueprintCallable, Category="CombatCalculator")
+	void GetCombatOutcomes(TArray<FCombatOutcome>& CombatOutcomes);
 
 protected:
 	void CalculateCombatOutcome(

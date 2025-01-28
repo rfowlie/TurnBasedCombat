@@ -9,6 +9,7 @@
 #include "TurnBasedCombatGameMode.generated.h"
 
 
+class UCombatCalculator;
 class UTurnManager;
 class UGridProxy;
 class UEventSystem;
@@ -29,7 +30,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FTurnBasedCombat_UnitHovered, const 
  * and to listen to important delegates to help control the flow of combat
  * therefore there will be a lot of passing functions
  */
-UCLASS()
+UCLASS(Blueprintable, BlueprintType)
 class TURNBASEDCOMBAT_API ATurnBasedCombatGameMode : public AGameModeBase
 {
 	GENERATED_BODY()
@@ -73,6 +74,15 @@ public:
 	UFUNCTION()
 	void UpdateCursor(const AGridTile* GridTile);
 	// Cursor ~ end
+
+	// Combat Calculator ~ start
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat Calculator")
+	UCombatCalculator* CombatCalculator = nullptr;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat Calculator")
+	TSubclassOf<UCombatCalculator> CombatCalculatorClass = nullptr;
+	// Combat Calculator ~ end
+	
 
 protected:
 	// win condition ~ start

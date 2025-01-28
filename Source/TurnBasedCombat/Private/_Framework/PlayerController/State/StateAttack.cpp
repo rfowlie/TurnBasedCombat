@@ -101,12 +101,12 @@ void UStateAttack::OnEnter()
 	SetPhase(TAG_Encounter_Mode_Attack_Idle);
 
 	// TODO: for now...
-	if (UTBC_InfoWorldSubsystem* Subsystem = GetWorld()->GetSubsystem<UTBC_InfoWorldSubsystem>())
-	{
-		UCombatCalculator* CombatCalculator = NewObject<UCombatCalculator>(this);
-		CombatCalculator->SetGridManager(GridManager);
-		Subsystem->SetCombatCalculator(CombatCalculator);
-	}
+	// if (UTBC_InfoWorldSubsystem* Subsystem = GetWorld()->GetSubsystem<UTBC_InfoWorldSubsystem>())
+	// {
+	// 	UCombatCalculator* CombatCalculator = NewObject<UCombatCalculator>(this);
+	// 	CombatCalculator->SetGridManager(GridManager);
+	// 	Subsystem->SetCombatCalculator(CombatCalculator);
+	// }
 	
 }
 

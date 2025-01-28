@@ -8,6 +8,7 @@
 #include "TurnBasedCombat/Public/EventSystem/EventSystem.h"
 #include "TurnBasedCombat/Public/Grid/Manager/GridManager.h"
 #include "TurnBasedCombat/Public/_Framework/PlayerController/TurnBasedCombatPlayerController.h"
+#include "_Framework/TBC_InfoWorldSubsystem.h"
 #include "_Framework/GameMode/WinCondition_Abstract.h"
 #include "_Framework/HUD/TurnBasedCombatHUD.h"
 
@@ -57,6 +58,22 @@ ATurnBasedCombatGameMode::ATurnBasedCombatGameMode()
 void ATurnBasedCombatGameMode::BeginPlay()
 {
 	Super::BeginPlay();
+
+	// combat calculator setup
+	if (CombatCalculatorClass == nullptr)
+	{
+		UE_LOG(LogTemp, Error, TEXT("Game Mode: CombatCalculator class is null"));
+	}
+	else
+	{
+		CombatCalculator = NewObject<UCombatCalculator>(this, CombatCalculatorClass);
+		CombatCalculator->SetGridManager(GridManager);
+	}	
+	
+	if (UTBC_InfoWorldSubsystem* Subsystem = GetWorld()->GetSubsystem<UTBC_InfoWorldSubsystem>())
+	{
+		Subsystem->SetCombatCalculator(CombatCalculator);
+	}
 
 	// Win condition setup
 	if (WinCondition)

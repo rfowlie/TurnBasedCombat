@@ -142,10 +142,12 @@ public:
 	TArray<UWeaponDataAsset*> WeaponDataAssets;	
 
 public:
-	UPROPERTY(EditInstanceOnly, BlueprintReadOnly)
+	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, meta = (Categories = "Weapon.Type"))
 	FGameplayTagContainer WeaponsInventory;
 	FGameplayTag EquippedWeapon;
-	virtual void SetEquippedWeapon(FGameplayTag WeaponToEquip);
+	UFUNCTION(BlueprintCallable)
+	void SetEquippedWeapon(FGameplayTag WeaponToEquip);
+	UFUNCTION(BlueprintCallable)
 	virtual FGameplayTag GetEquippedWeapon();
 	TSet<int32> GetWeaponRanges() const;
 

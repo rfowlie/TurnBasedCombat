@@ -99,10 +99,19 @@ struct FCombatOutcome
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	AGridUnit* Target = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bHit = false;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int32 HealthChange = 0;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int32 MovementChange = 0;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int32 HitChance = 0;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int32 CriticalChance = 0;
 };

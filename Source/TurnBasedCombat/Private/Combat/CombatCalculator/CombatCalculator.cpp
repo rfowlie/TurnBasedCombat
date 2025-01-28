@@ -25,6 +25,7 @@ void UCombatCalculator::SetInstigator(AGridUnit* Unit)
 	{
 		InstigatorUnit = Unit;
 		CalculateCombatSnapshot_Internal(InstigatorSnapshot, InstigatorUnit);
+		CalculateCombatOrder();
 		if (OnInstigatorChanged.IsBound()) { OnInstigatorChanged.Broadcast(); }
 	}
 }
@@ -35,6 +36,7 @@ void UCombatCalculator::SetTarget(AGridUnit* Unit)
 	{
 		TargetUnit = Unit;
 		CalculateCombatSnapshot_Internal(TargetSnapshot, TargetUnit);
+		CalculateCombatOrder();
 		if (OnTargetChanged.IsBound()) { OnTargetChanged.Broadcast(); }
 	}
 }
@@ -45,6 +47,7 @@ void UCombatCalculator::SetInstigatorTile(AGridTile* Tile)
 	{
 		InstigatorTile = Tile;
 		CalculateCombatSnapshot_Internal(InstigatorSnapshot, InstigatorUnit);
+		CalculateCombatOrder();
 		if (OnInstigatorTileChanged.IsBound()) { OnInstigatorTileChanged.Broadcast(); }
 	}
 }
@@ -55,6 +58,7 @@ void UCombatCalculator::SetTargetTile(AGridTile* Tile)
 	{
 		TargetTile = Tile;
 		CalculateCombatSnapshot_Internal(TargetSnapshot, TargetUnit);
+		CalculateCombatOrder();
 		if (OnTargetTileChanged.IsBound()) { OnTargetTileChanged.Broadcast(); }
 	}
 }
@@ -63,17 +67,22 @@ void UCombatCalculator::CalculateCombatOrder()
 {
 	if (!IsValid(InstigatorUnit) || !IsValid(TargetUnit)) { return; }
 	CombatOrder.Empty();
+	CombatOrderHelper.Empty();
 
 	// TODO: account for skills that alter the order of combat
 	CombatOrder.Enqueue(InstigatorUnit);
+	CombatOrderHelper.Add(InstigatorUnit);
 	CombatOrder.Enqueue(TargetUnit);
+	CombatOrderHelper.Add(TargetUnit);
 	if (4 < InstigatorSnapshot.AttackSpeed - TargetSnapshot.AttackSpeed)
 	{
+		CombatOrder.Enqueue(InstigatorUnit);
 		CombatOrder.Enqueue(InstigatorUnit);
 	}
 	else if (4 < TargetSnapshot.AttackSpeed - InstigatorSnapshot.AttackSpeed)
 	{
 		CombatOrder.Enqueue(TargetUnit);
+		CombatOrderHelper.Add(TargetUnit);
 	}
 }
 
@@ -163,8 +172,6 @@ void UCombatCalculator::CalculateCombatSnapshot_Internal(
 	OutSnapshot.Avoid = CalculateAvoid(Unit, Tile);
 	OutSnapshot.CriticalRate = CalculateCriticalRate(Unit, OutSnapshot.WeaponTraits);
 	OutSnapshot.CriticalAvoid = CalculateCriticalAvoid(Unit, Tile);
-
-	CalculateCombatOrder();
 }
 
 bool UCombatCalculator::PopCombatOutcome(FCombatOutcome& CombatOutcome)
@@ -194,27 +201,86 @@ bool UCombatCalculator::PopCombatOutcome(FCombatOutcome& CombatOutcome)
 	return true;
 }
 
+void UCombatCalculator::GetCombatOutcomes(TArray<FCombatOutcome>& CombatOutcomes)
+{
+	for (const auto Combatant : CombatOrderHelper)
+	{
+		FUnitCombatSnapshot AttackerSnapshot;
+		CalculateCombatSnapshot_Internal(AttackerSnapshot, InstigatorUnit);
+		FUnitCombatSnapshot DefenderSnapshot;
+		CalculateCombatSnapshot_Internal(DefenderSnapshot, TargetUnit);
+
+		FCombatOutcome TempOutcome;
+		if (Combatant == InstigatorUnit)
+		{
+			TempOutcome.Instigator = InstigatorUnit;
+			TempOutcome.Target = TargetUnit;
+			CalculateCombatOutcome(TempOutcome, AttackerSnapshot, DefenderSnapshot);
+		}
+		else
+		{
+			TempOutcome.Instigator = TargetUnit;
+			TempOutcome.Target = InstigatorUnit;
+			CalculateCombatOutcome(TempOutcome, DefenderSnapshot, AttackerSnapshot);
+		}
+
+		CombatOutcomes.Add(TempOutcome);
+	}
+	
+	// TArray<AGridUnit*> BackInQueue;
+	// while(!CombatOrder.IsEmpty())
+	// {
+	// 	AGridUnit* NextCombatant;
+	// 	CombatOrder.Dequeue(NextCombatant);
+	// 	if (!NextCombatant) { continue; }
+	// 	
+	// 	BackInQueue.Add(NextCombatant);
+	//
+	// 	FUnitCombatSnapshot AttackerSnapshot;
+	// 	CalculateCombatSnapshot_Internal(AttackerSnapshot, InstigatorUnit);
+	// 	FUnitCombatSnapshot DefenderSnapshot;
+	// 	CalculateCombatSnapshot_Internal(DefenderSnapshot, TargetUnit);
+	//
+	// 	FCombatOutcome TempOutcome;
+	// 	if (NextCombatant == InstigatorUnit)
+	// 	{
+	// 		TempOutcome.Instigator = InstigatorUnit;
+	// 		TempOutcome.Target = TargetUnit;
+	// 		CalculateCombatOutcome(TempOutcome, AttackerSnapshot, DefenderSnapshot);
+	// 	}
+	// 	else
+	// 	{
+	// 		TempOutcome.Instigator = TargetUnit;
+	// 		TempOutcome.Target = InstigatorUnit;
+	// 		CalculateCombatOutcome(TempOutcome, DefenderSnapshot, AttackerSnapshot);
+	// 	}
+	//
+	// 	CombatOutcomes.Add(TempOutcome);
+	// }
+	//
+	// // replace the units removed from queue...
+	// for (auto Unit : BackInQueue)
+	// {
+	// 	CombatOrder.Enqueue(Unit);
+	// }
+}
+
 void UCombatCalculator::CalculateCombatOutcome(
 	FCombatOutcome& CombatOutcome, const FUnitCombatSnapshot& Instigator, const FUnitCombatSnapshot& Target) const
 {
-	// check if even hits, could also do partial hits...
-	int32 HealthChange = 0;
-	int32 MovementChange = 0;
+	// check if even hits, could also do partial hits...	
+	CombatOutcome.HitChance = FMath::Clamp(Instigator.HitRate - Target.Avoid, 0, 100);
+	UE_LOG(LogTemp, Log, TEXT("COMBAT CALCULATOR - Accuracy: %d"), CombatOutcome.HitChance);
+	CombatOutcome.bHit = FMath::RandRange(0, 100) < CombatOutcome.HitChance;
+	UE_LOG(LogTemp, Log, TEXT("COMBAT CALCULATOR - Hit: %d"), CombatOutcome.bHit);
 	
-	int32 Accuracy = FMath::Clamp(Instigator.HitRate - Target.Avoid, 0, 100);
-	UE_LOG(LogTemp, Log, TEXT("COMBAT CALCULATOR - Accuracy: %d"), Accuracy);
-	bool bHit = FMath::RandRange(0, 100) < Accuracy;
-	UE_LOG(LogTemp, Log, TEXT("COMBAT CALCULATOR - Hit: %d"), bHit);
-	if (bHit)
-	{
-		int32 AttackPower = Instigator.Strength + Instigator.WeaponTraits.Might;
-		int32 DefensePower = Target.Defence;
-		// GA do not let you subtract, so invert that value
-		HealthChange = FMath::Clamp(AttackPower - DefensePower, 0, GetMaxDamage()) * -1;
-	}
-
-	CombatOutcome.HealthChange = HealthChange;
-	UE_LOG(LogTemp, Log, TEXT("COMBAT CALCULATOR - HealthChange: %d"), HealthChange);
-	CombatOutcome.MovementChange = MovementChange;
-	UE_LOG(LogTemp, Log, TEXT("COMBAT CALCULATOR - MovementChange: %d"), MovementChange);
+	int32 AttackPower = Instigator.Strength + Instigator.WeaponTraits.Might;
+	int32 DefensePower = Target.Defence;
+	
+	CombatOutcome.HealthChange = FMath::Clamp(AttackPower - DefensePower, 0, GetMaxDamage());
+	UE_LOG(LogTemp, Log, TEXT("COMBAT CALCULATOR - HealthChange: %d"), CombatOutcome.HealthChange);
+	CombatOutcome.MovementChange = 0;
+	UE_LOG(LogTemp, Log, TEXT("COMBAT CALCULATOR - MovementChange: %d"), CombatOutcome.MovementChange);
+	
+	CombatOutcome.CriticalChance = 0;
 }

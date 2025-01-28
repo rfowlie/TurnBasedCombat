@@ -8,7 +8,6 @@
 
 
 class UGameplayAbility;
-struct FGridMovement;
 class UGridProxy;
 class UGridManager;
 class UInputAction;
@@ -17,6 +16,9 @@ class AGridUnit;
 
 
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Encounter_Mode_Move);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Encounter_Mode_Move_Idle);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Encounter_Mode_Move_SelectedMoveUnit);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Encounter_Mode_Move_SelectedMoveTile);
 
 /**
  * 
@@ -45,6 +47,9 @@ protected:
 	};
 	
 	EMovePhase Phase = EMovePhase::Idle;
+
+	FGameplayTag PhaseTag;
+	void SetPhase(FGameplayTag InPhaseTag);
 	
 	UPROPERTY()
 	UGridManager* GridManager = nullptr;
