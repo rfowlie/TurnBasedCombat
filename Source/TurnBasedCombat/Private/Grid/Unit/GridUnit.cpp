@@ -5,7 +5,6 @@
 
 #include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystemComponent.h"
-#include "Combat/CombatCalculator/MoveAbility.h"
 #include "Grid/Unit/GridUnitAttributeSet.h"
 #include "TurnBasedCombat/Public/Item/Weapon.h"
 #include "_Framework/GameMode/TurnBasedCombatGameMode.h"
@@ -66,14 +65,6 @@ void AGridUnit::BeginPlay()
 	// give attack ability
 	GameplayAbilitySpecHandle_Attack = AbilitySystemComponent->GiveAbility(
 		   FGameplayAbilitySpec(GameplayAbilityClass_Attack, 1, INDEX_NONE, this));
-
-	// NEW WAY ~ create gameplay ability subclasses?
-	// if (!MoveAbilityClass->IsChildOf(UMoveAbility::StaticClass()))
-	// {
-	// 	UE_LOG(LogTemp, Error, TEXT("Move Ability is not the correct class"));
-	// }
-	// MoveAbilitySpecHandle = AbilitySystemComponent->GiveAbility(
-	// 		FGameplayAbilitySpec(MoveAbilityClass, 1, INDEX_NONE, this));
 	
 	/////////////////////////////////////////////////////////////////////
 	// TESTING ability system shit
@@ -138,14 +129,6 @@ bool AGridUnit::AttackEvent(const FVector& Location, AGridUnit* Target)
 	// activate ability
 	return AbilitySystemComponent->TryActivateAbility(GameplayAbilitySpecHandle_Attack);
 }
-
-// FName AGridUnit::GetFaction() const
-// {
-// 	// TODO: for now...
-// 	// const FString F = "Faction_" + FString::FromInt(Faction);
-// 	// return "Faction_" + FString::FromInt(Faction);
-// 	return FName(FString::FromInt(Faction));
-// }
 
 void AGridUnit::SetEquippedWeapon(FGameplayTag WeaponToEquip)
 {

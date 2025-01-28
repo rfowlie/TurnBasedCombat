@@ -93,6 +93,8 @@ void ATurnBasedCombatGameMode::BeginPlay()
 	StaticMeshComponent->SetMobility(EComponentMobility::Movable);
 	StaticMeshComponent->SetAffectDistanceFieldLighting(false);
 	StaticMeshComponent->SetAffectDynamicIndirectLighting(false);
+	// TODO: better way to do this???
+	StaticMeshComponent->SetWorldScale3D(FVector(2.f, 2.f, 1.f));
 
 	// TODO: HACKYYY
 	// for now wait a few seconds then fire onstart

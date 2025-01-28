@@ -59,11 +59,6 @@ public:
 	TSubclassOf<UGameplayAbility> GameplayAbilityClass_Attack;
 	UPROPERTY(BlueprintReadOnly)
 	FGameplayAbilitySpecHandle GameplayAbilitySpecHandle_Attack;
-
-	// UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	// TSubclassOf<UMoveAbility> MoveAbilityClass;
-	// UPROPERTY(BlueprintReadOnly)
-	// FGameplayAbilitySpecHandle MoveAbilitySpecHandle;
 	
 	UFUNCTION(BlueprintCallable)
 	int32 GetHealth() const { return AttributeSet_GridUnit->GetHealth(); }
