@@ -13,6 +13,7 @@
 #include "GridUnit.generated.h"
 
 
+class UMoveAbility;
 class UAbilityAsync_WaitAttributeChanged;
 class UGridUnitAttributeSet;
 class UGameplayAbility;
@@ -55,10 +56,15 @@ public:
 	FGameplayAbilitySpecHandle GameplayAbilitySpecHandle_Move;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TSubclassOf<UGameplayAbility> GameplayAbilityClass_Attack;	
+	TSubclassOf<UGameplayAbility> GameplayAbilityClass_Attack;
 	UPROPERTY(BlueprintReadOnly)
 	FGameplayAbilitySpecHandle GameplayAbilitySpecHandle_Attack;
 
+	// UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	// TSubclassOf<UMoveAbility> MoveAbilityClass;
+	// UPROPERTY(BlueprintReadOnly)
+	// FGameplayAbilitySpecHandle MoveAbilitySpecHandle;
+	
 	UFUNCTION(BlueprintCallable)
 	int32 GetHealth() const { return AttributeSet_GridUnit->GetHealth(); }
 	UPROPERTY(BlueprintAssignable)
@@ -131,12 +137,18 @@ public:
 	bool MovementEvent(const FVector& Location);
 	bool AttackEvent(const FVector& Location, AGridUnit* Target);
 
-protected:	
 	// Just for setup, will then need to instance to keep track of changes
 	UPROPERTY(EditInstanceOnly, BlueprintReadOnly)
-	TArray<UWeaponDataAsset*> WeaponDataAssets;
+	TArray<UWeaponDataAsset*> WeaponDataAssets;	
 
 public:
+	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, meta = (Categories = "Weapon.Type"))
+	FGameplayTagContainer WeaponsInventory;
+	FGameplayTag EquippedWeapon;
+	UFUNCTION(BlueprintCallable)
+	void SetEquippedWeapon(FGameplayTag WeaponToEquip);
+	UFUNCTION(BlueprintCallable)
+	virtual FGameplayTag GetEquippedWeapon();
 	TSet<int32> GetWeaponRanges() const;
 
 private:

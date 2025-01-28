@@ -26,7 +26,7 @@ class TURNBASEDCOMBAT_API IGridUnit_Interface
 
 	// Add interface functions to this class. This is the class that will be inherited to implement this interface.
 public:
-	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
+	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable, meta = (Categories = "Faction"))
 	FGameplayTag GetFaction() const;
 	
 	UFUNCTION(BlueprintNativeEvent)

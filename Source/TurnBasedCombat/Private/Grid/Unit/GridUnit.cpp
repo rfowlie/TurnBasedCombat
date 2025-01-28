@@ -5,6 +5,7 @@
 
 #include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystemComponent.h"
+#include "Combat/CombatCalculator/MoveAbility.h"
 #include "Grid/Unit/GridUnitAttributeSet.h"
 #include "TurnBasedCombat/Public/Item/Weapon.h"
 #include "_Framework/GameMode/TurnBasedCombatGameMode.h"
@@ -32,13 +33,12 @@ void AGridUnit::BeginPlay()
 	{
 		GameMode->RegisterGridUnit(this);
 	}
-
-	// IS THIS BEING USED???
-	FGameplayAbilitySpec Spec = FGameplayAbilitySpec(GameplayAbilityClass_Move, 1, INDEX_NONE, this);
-	Spec.Ability->OnGameplayAbilityEnded.AddLambda([](UGameplayAbility* Ability)
-	{
-		UE_LOG(LogTemp, Error, TEXT("I don't understand..."));
-	});
+	
+	// FGameplayAbilitySpec Spec = FGameplayAbilitySpec(GameplayAbilityClass_Move, 1, INDEX_NONE, this);
+	// Spec.Ability->OnGameplayAbilityEnded.AddLambda([](UGameplayAbility* Ability)
+	// {
+	// 	UE_LOG(LogTemp, Error, TEXT("I don't understand..."));
+	// });
 
 	// give attribute set
 	AbilitySystemComponent->AddAttributeSetSubobject(AttributeSet_GridUnit);
@@ -59,30 +59,39 @@ void AGridUnit::BeginPlay()
 	AttributeSet_GridUnit->OnHealthZero.AddUObject(this, &ThisClass::NotifyHealthZero);
 	
 	// give move ability
-	GameplayAbilitySpecHandle_Move = AbilitySystemComponent->GiveAbility(Spec);
-	// GameplayAbilitySpecHandle_Move = AbilitySystemComponent->GiveAbility(
-	// 	   FGameplayAbilitySpec(GameplayAbilityClass_Move, 1, INDEX_NONE, this));
+	GameplayAbilitySpecHandle_Move = AbilitySystemComponent->GiveAbility(
+		   FGameplayAbilitySpec(GameplayAbilityClass_Move, 1, INDEX_NONE, this));
 	
 	
 	// give attack ability
 	GameplayAbilitySpecHandle_Attack = AbilitySystemComponent->GiveAbility(
 		   FGameplayAbilitySpec(GameplayAbilityClass_Attack, 1, INDEX_NONE, this));
 
+	// NEW WAY ~ create gameplay ability subclasses?
+	// if (!MoveAbilityClass->IsChildOf(UMoveAbility::StaticClass()))
+	// {
+	// 	UE_LOG(LogTemp, Error, TEXT("Move Ability is not the correct class"));
+	// }
+	// MoveAbilitySpecHandle = AbilitySystemComponent->GiveAbility(
+	// 		FGameplayAbilitySpec(MoveAbilityClass, 1, INDEX_NONE, this));
 	
 	/////////////////////////////////////////////////////////////////////
 	// TESTING ability system shit
 	// AbilitySystemComponent->OnAbilityEnded.AddUObject(this, &ThisClass::OnAbilityEnded);
 	AbilitySystemComponent->OnAbilityEnded.AddLambda([this](const FAbilityEndedData& Data)
 	{
-		if (Data.AbilitySpecHandle == GameplayAbilitySpecHandle_Move)
-		{
-			if (OnEventMoveEnd.IsBound()) { OnEventMoveEnd.Broadcast(this); }
-		}
+		// if (Data.AbilitySpecHandle == GameplayAbilitySpecHandle_Move)
+		// {
+		// 	if (OnEventMoveEnd.IsBound()) { OnEventMoveEnd.Broadcast(this); }
+		// }
 		if (Data.AbilitySpecHandle == GameplayAbilitySpecHandle_Attack)
 		{
 			if (OnEventAttackEnd.IsBound()) { OnEventAttackEnd.Broadcast(this); }
 		}
 	});
+
+	// weapons
+	SetEquippedWeapon(WeaponsInventory.First());
 }
 
 void AGridUnit::NotifyHealthZero()
@@ -99,38 +108,18 @@ int32 AGridUnit::GetAvailableMovement() const
 
 bool AGridUnit::MovementEvent(const FVector& Location)
 {
-	if (!AbilitySystemComponent) { return false; }
-	
-	FGameplayAbilitySpec* GameplayAbilitySpec = AbilitySystemComponent->FindAbilitySpecFromHandle(GameplayAbilitySpecHandle_Move);
-	if (GameplayAbilitySpec->Ability == nullptr) { return false; }
-
-	// set location as parameter on ability???
-	MoveAbilityLocation = Location;
-		
-	// bind to ability end
-
-	// // test 1
-	// TMulticastDelegate<void(UGameplayAbility*)>::FDelegate Ended;
-	// Ended.BindLambda([](UGameplayAbility* GameplayAbility)
-	// {
-	// 	UE_LOG(LogTemp, Display, TEXT("Ended Delegate"));
-	// });
-	// GameplayAbilitySpec->Ability->OnGameplayAbilityEnded.Add(Ended);
+	// if (!AbilitySystemComponent) { return false; }
 	//
-	// // test 2
-	// TMulticastDelegate<void(const FAbilityEndedData&)>::FDelegate EndedData;
-	// EndedData.BindLambda([](const FAbilityEndedData&)
-	// {
-	// 	UE_LOG(LogTemp, Error, TEXT("EndedData Delegate"));
-	// });	
-	// GameplayAbilitySpec->Ability->OnGameplayAbilityEndedWithData.Add(EndedData);
+	// FGameplayAbilitySpec* GameplayAbilitySpec = AbilitySystemComponent->FindAbilitySpecFromHandle(GameplayAbilitySpecHandle_Move);
+	// if (GameplayAbilitySpec->Ability == nullptr) { return false; }
+	//
+	// // set location as parameter on ability???
+	// MoveAbilityLocation = Location;
+	//
+	// // activate ability
+	// return AbilitySystemComponent->TryActivateAbility(GameplayAbilitySpecHandle_Move);
 
-	// normal
-	// GameplayAbilitySpec->Ability->OnGameplayAbilityEnded.Add(Callback);
-	// auto GameplayInstances = GameplayAbilitySpec->GetAbilityInstances();
-	
-	// activate ability
-	return AbilitySystemComponent->TryActivateAbility(GameplayAbilitySpecHandle_Move);
+	return false;
 }
 
 bool AGridUnit::AttackEvent(const FVector& Location, AGridUnit* Target)
@@ -157,6 +146,19 @@ bool AGridUnit::AttackEvent(const FVector& Location, AGridUnit* Target)
 // 	// return "Faction_" + FString::FromInt(Faction);
 // 	return FName(FString::FromInt(Faction));
 // }
+
+void AGridUnit::SetEquippedWeapon(FGameplayTag WeaponToEquip)
+{
+	if (WeaponsInventory.HasTagExact(WeaponToEquip))
+	{
+		EquippedWeapon = WeaponToEquip;
+	}
+}
+
+FGameplayTag AGridUnit::GetEquippedWeapon()
+{
+	return EquippedWeapon;
+}
 
 TSet<int32> AGridUnit::GetWeaponRanges() const
 {

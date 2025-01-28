@@ -7,6 +7,7 @@
 #include "Stats/StatsDataAsset.h"
 
 
+
 UGridUnitAttributeSet::UGridUnitAttributeSet()
 {
 }
@@ -69,14 +70,39 @@ void UGridUnitAttributeSet::OnRep_Strength(const FGameplayAttributeData& Previou
 	GAMEPLAYATTRIBUTE_REPNOTIFY(UGridUnitAttributeSet, Strength, PreviousValue);
 }
 
+void UGridUnitAttributeSet::OnRep_Skill(const FGameplayAttributeData& PreviousValue) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UGridUnitAttributeSet, Skill, PreviousValue);
+}
+
+void UGridUnitAttributeSet::OnRep_Speed(const FGameplayAttributeData& PreviousValue) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UGridUnitAttributeSet, Speed, PreviousValue);
+}
+
+void UGridUnitAttributeSet::OnRep_Luck(const FGameplayAttributeData& PreviousValue) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UGridUnitAttributeSet, Luck, PreviousValue);
+}
+
 void UGridUnitAttributeSet::OnRep_Defence(const FGameplayAttributeData& PreviousValue) const
 {
 	GAMEPLAYATTRIBUTE_REPNOTIFY(UGridUnitAttributeSet, Defence, PreviousValue);
 }
 
+void UGridUnitAttributeSet::OnRep_Resistance(const FGameplayAttributeData& PreviousValue) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UGridUnitAttributeSet, Resistance, PreviousValue);
+}
+
 void UGridUnitAttributeSet::OnRep_Movement(const FGameplayAttributeData& PreviousValue) const
 {
 	GAMEPLAYATTRIBUTE_REPNOTIFY(UGridUnitAttributeSet, Movement, PreviousValue);
+}
+
+void UGridUnitAttributeSet::OnRep_Constitution(const FGameplayAttributeData& PreviousValue) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UGridUnitAttributeSet, Constitution, PreviousValue);
 }
 
 void UGridUnitAttributeSet::InitializeAttributesFromStatsDataAsset(
@@ -95,9 +121,13 @@ void UGridUnitAttributeSet::InitializeAttributesFromStatsDataAsset(
 	InitHealthMax(StatsSnapshot.Health);
 	InitHealth(StatsSnapshot.Health);
 	InitStrength(StatsSnapshot.Strength);
+	InitSkill(StatsSnapshot.Skill);
+	InitSpeed(StatsSnapshot.Speed);
+	InitLuck(StatsSnapshot.Luck);
 	InitDefence(StatsSnapshot.Defence);
+	InitResistance(StatsSnapshot.Resistance);
 	InitMovement(StatsSnapshot.Movement);
-	
+	InitConstitution(StatsSnapshot.Constitution);
 }
 
 #pragma endregion 

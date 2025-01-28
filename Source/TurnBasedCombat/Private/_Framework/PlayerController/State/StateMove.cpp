@@ -8,10 +8,21 @@
 #include "InputAction.h"
 #include "InputMappingContext.h"
 #include "TurnBasedCombat/Public/Grid/Manager/GridManager.h"
+#include "_Framework/TBC_InfoWorldSubsystem.h"
 
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Encounter_Mode_Move, "Encounter.Mode.Move");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Encounter_Mode_Move_Idle, "Encounter.Mode.Move.Idle");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Encounter_Mode_Move_SelectedMoveUnit, "Encounter.Mode.Move.SelectedMoveUnit");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Encounter_Mode_Move_SelectedMoveTile, "Encounter.Mode.Move.SelectedMoveTile");
 
 UStateMove::UStateMove()
 {
+}
+
+FGameplayTag UStateMove::GetStateTag() const
+{
+	return TAG_Encounter_Mode_Move;
 }
 
 void UStateMove::Initialize(UGridManager* InGridManager)
@@ -19,6 +30,15 @@ void UStateMove::Initialize(UGridManager* InGridManager)
 	GridManager = InGridManager;
 	GridManager->OnGridEventStart.AddUObject(this, &ThisClass::Disable);
 	GridManager->OnGridEventEnd.AddUObject(this, &ThisClass::Enable);
+}
+
+void UStateMove::SetPhase(FGameplayTag InPhaseTag)
+{
+	PhaseTag = InPhaseTag;
+	if (UTBC_InfoWorldSubsystem* Subsystem = GetWorld()->GetSubsystem<UTBC_InfoWorldSubsystem>())
+	{
+		Subsystem->SetPlayerControllerPhase(PhaseTag);
+	}
 }
 
 UInputMappingContext* UStateMove::SetupInputMappingContext(APlayerController* PlayerController)
@@ -53,6 +73,7 @@ void UStateMove::OnEnter()
 	Super::OnEnter();	
 	UE_LOG(LogTemp, Warning, TEXT("EnterInternal - MOVE"));
 	Phase = EMovePhase::Idle;
+	SetPhase(TAG_Encounter_Mode_Move_Idle);
 }
 
 void UStateMove::OnExit()
@@ -63,8 +84,6 @@ void UStateMove::OnExit()
 
 void UStateMove::OnSelect()
 {
-	// UE_LOG(LogTemp, Error, TEXT("Mode: Move - On Select"))
-
 	if (Phase == EMovePhase::None)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Move - None"))
@@ -103,6 +122,7 @@ void UStateMove::OnSelect()
 		if (GridProxyCurrent->IsAlly())
 		{
 			Phase = EMovePhase::SelectedMoveUnit;
+			SetPhase(TAG_Encounter_Mode_Move_SelectedMoveUnit);
 		}
 		break;
 	case EMovePhase::SelectedMoveUnit:
@@ -123,6 +143,7 @@ void UStateMove::OnSelect()
 			GridProxyMoveTo->SetMoveToTile(true);
 			// GridProxyCurrent->SetState(TAG_Grid_State_MoveTo);
 			Phase = EMovePhase::SelectedMoveTile;
+			SetPhase(TAG_Encounter_Mode_Move_SelectedMoveTile);
 		}
 		break;
 	case EMovePhase::SelectedMoveUnitNotTeam:
@@ -130,7 +151,8 @@ void UStateMove::OnSelect()
 	case EMovePhase::SelectedMoveTile:
 		// check if tile selected again to confirm movement
 		UE_LOG(LogTemp, Warning, TEXT("Move - SelectedMoveTile"))
-		if (GridManager->IsMatch(GridProxyMoveTo ,GridProxy))
+		// if (GridManager->IsMatch(GridProxyMoveTo ,GridProxy))
+		if (GridManager->IsMatch(GridProxyMoveTo, GridProxy))
 		{
 			GridManager->CreateMoveEvent(GridProxyCurrent, GridProxyMoveTo);
 		}
@@ -142,6 +164,7 @@ void UStateMove::OnSelect()
 			GridProxyMoveTo->SetMoveToTile(true);
 			// GridProxyCurrent->SetState(TAG_Grid_State_MoveTo);
 			Phase = EMovePhase::SelectedMoveTile;
+			SetPhase(TAG_Encounter_Mode_Move_SelectedMoveTile);
 		}
 		// check if new player unit selected
 		else if (GridProxyCurrent != GridProxy && GridProxy->IsAlly())
@@ -151,6 +174,7 @@ void UStateMove::OnSelect()
 			GridProxyCurrent->SetMoveableTiles(true);
 			// GridProxyCurrent->SetState(TAG_Grid_State_Moveable);
 			Phase = EMovePhase::SelectedMoveUnit;
+			SetPhase(TAG_Encounter_Mode_Move_SelectedMoveUnit);
 		}		
 		break;
 	}
@@ -168,6 +192,7 @@ void UStateMove::OnDeselect()
 		{
 			GridProxyCurrent->SetMoveableTiles(false);
 			Phase = EMovePhase::Idle;
+			SetPhase(TAG_Encounter_Mode_Move_Idle);
 		}
 		break;
 	case EMovePhase::SelectedMoveUnitNotTeam:
@@ -178,6 +203,7 @@ void UStateMove::OnDeselect()
 		{
 			GridProxyCurrent->SetMoveToTile(false);
 			Phase = EMovePhase::SelectedMoveUnit;
+			SetPhase(TAG_Encounter_Mode_Move_SelectedMoveUnit);
 		}
 		break;
 	default:
@@ -187,14 +213,15 @@ void UStateMove::OnDeselect()
 
 void UStateMove::OnCycleUnit()
 {
-	if (GridProxyCurrent)
-	{
-		GridProxyCurrent->UndoAll();					
-	}
-	
-	GridProxyCurrent = GridManager->GetNextGridUnit(GridProxyCurrent);
-	GridProxyCurrent->SetMoveableTiles(true);
-	Phase = EMovePhase::SelectedMoveUnit;
+	// TODO: does not return anything at the moment
+	// if (GridProxyCurrent)
+	// {
+	// 	GridProxyCurrent->UndoAll();					
+	// }
+	//
+	// GridProxyCurrent = GridManager->GetNextGridUnit(GridProxyCurrent);
+	// GridProxyCurrent->SetMoveableTiles(true);
+	// Phase = EMovePhase::SelectedMoveUnit;
 }
 
 void UStateMove::Enable()
@@ -211,6 +238,7 @@ void UStateMove::Enable()
 	// }
 		
 	Phase = EMovePhase::Idle;
+	SetPhase(TAG_Encounter_Mode_Move_Idle);
 }
 
 void UStateMove::Disable()

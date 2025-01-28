@@ -9,10 +9,19 @@
 #include "InputActionValue.h"
 #include "InputMappingContext.h"
 #include "Grid/Manager/GridManager.h"
+#include "Grid/Tile/GridTile.h"
 #include "TurnBasedCombat/Public/_Framework/PlayerController/State/StateMove.h"
 #include "TurnBasedCombat/Public/_Framework/PlayerController/State/StateWait.h"
+#include "_Framework/TBC_InfoWorldSubsystem.h"
 #include "_Framework/GameMode/TurnBasedCombatGameMode.h"
+#include "_Framework/HUD/TurnBasedCombatHUD.h"
 #include "_Framework/PlayerController/State/StateAttack.h"
+
+
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Encounter_Mode, "Encounter.Mode");
+// UI
+UE_DEFINE_GAMEPLAY_TAG(TAG_UI_Combat_GridTileInfo, "UI.Combat.GridTileInfo");
 
 
 class UEnhancedInputLocalPlayerSubsystem;
@@ -31,17 +40,17 @@ ATurnBasedCombatPlayerController::ATurnBasedCombatPlayerController()
 void ATurnBasedCombatPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
-	
-	CreateStates();
-	DisableState();
-	CreateDefaultInputMapping();
-	AddInputMapping();
 
 	if (ATurnBasedCombatGameMode* GameMode = Cast<ATurnBasedCombatGameMode>(GetWorld()->GetAuthGameMode()))
 	{
 		GameMode->OnCombatEnable.AddDynamic(this, &ThisClass::EnableState);
 		GameMode->OnCombatDisable.AddDynamic(this, &ThisClass::DisableState);
 	}
+	
+	CreateStates();
+	DisableState();
+	CreateDefaultInputMapping();
+	AddInputMapping();
 }
 
 void ATurnBasedCombatPlayerController::Initialize(UGridManager* InGridManager)
@@ -54,7 +63,6 @@ void ATurnBasedCombatPlayerController::Initialize(UGridManager* InGridManager)
 void ATurnBasedCombatPlayerController::SetState(UAbstractPlayerControllerState* NewState)
 {
 	check(NewState);
-	// check(ControllerStateCurrent);
 	if (ControllerStateCurrent)
 	{
 		ControllerStateCurrent->Exit(this);
@@ -62,6 +70,12 @@ void ATurnBasedCombatPlayerController::SetState(UAbstractPlayerControllerState* 
 	
 	ControllerStateCurrent = NewState;
 	ControllerStateCurrent->Enter(this, 2);
+
+	// update information of facade
+	if (UTBC_InfoWorldSubsystem* Subsystem = GetWorld()->GetSubsystem<UTBC_InfoWorldSubsystem>())
+	{
+		Subsystem->SetPlayerControllerMode(ControllerStateCurrent->GetStateTag());
+	}
 }
 
 void ATurnBasedCombatPlayerController::CreateDefaultInputMapping()
@@ -147,14 +161,15 @@ void ATurnBasedCombatPlayerController::Controls()
 void ATurnBasedCombatPlayerController::CreateStates()
 {
 	StateWait = NewObject<UStateWait>(this);
+	SetState(StateWait);
 	
-	UStateMove* StateMove = NewObject<UStateMove>(this);
+	StateMove = NewObject<UStateMove>(this);
 	ControllerStates.Add(StateMove);
 	StateMove->Initialize(GridManager);
 	
-	UStateAttack* StateAttack = NewObject<UStateAttack>(this);
+	StateAttack = NewObject<UStateAttack>(this);
 	ControllerStates.Add(StateAttack);
-	StateAttack->Initialize(GridManager);
+	StateAttack->Initialize(GridManager, GetHUD());
 }
 
 void ATurnBasedCombatPlayerController::EnableState()

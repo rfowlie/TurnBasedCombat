@@ -28,7 +28,7 @@ struct FUnitStatsSnapshot
 	int32 Speed = 0;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	int32 Dexterity = 0;
+	int32 Skill = 0;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int32 Magic = 0;
@@ -44,6 +44,9 @@ struct FUnitStatsSnapshot
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int32 MovementRecovery = 0;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int32 Constitution = 0;
 
 	FUnitStatsSnapshot operator+(const FUnitStatsSnapshot& Other) const
 	{
@@ -51,12 +54,12 @@ struct FUnitStatsSnapshot
 		Temp.Health = Health + Other.Health;
 		Temp.Mana = Mana + Other.Mana;
 		Temp.Strength = Strength + Other.Strength;
-		Temp.Defence = Defence + Other.Defence;
-		Temp.Speed = Speed + Other.Speed;
-		Temp.Dexterity = Dexterity + Other.Dexterity;
 		Temp.Magic = Magic + Other.Magic;
-		Temp.Resistance = Resistance + Other.Resistance;
+		Temp.Speed = Speed + Other.Speed;
+		Temp.Skill = Skill + Other.Skill;
 		Temp.Luck = Luck + Other.Luck;
+		Temp.Defence = Defence + Other.Defence;
+		Temp.Resistance = Resistance + Other.Resistance;
 
 		// TODO: finalize and finish...
 
@@ -69,12 +72,12 @@ struct FUnitStatsSnapshot
 		Health += Other.Health;
 		Mana += Other.Mana;
 		Strength += Other.Strength;
-		Defence += Other.Defence;
-		Speed += Other.Speed;
-		Dexterity += Other.Dexterity;
 		Magic += Other.Magic;
-		Resistance += Other.Resistance;
+		Skill += Other.Skill;
+		Speed += Other.Speed;
 		Luck += Other.Luck;
+		Defence += Other.Defence;
+		Resistance += Other.Resistance;
 
 		// TODO: finalize and finish...
 
@@ -88,11 +91,11 @@ struct FStatRange
 {
 	GENERATED_BODY()
 	
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta=(ClampMin = 1, ClampMax = 99, UIMin = 1, UIMax = 99))
-	int32 StatMin = 1;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta=(ClampMin = 0, ClampMax = 100, UIMin = 0, UIMax = 100))
+	int32 StatMin = 0;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta=(ClampMin = 1, ClampMax = 99, UIMin = 1, UIMax = 99))
-	int32 StatMax = 99;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta=(ClampMin = 0, ClampMax = 100, UIMin = 0, UIMax = 100))
+	int32 StatMax = 100;
 	
 	UPROPERTY(EditDefaultsOnly)
 	UCurveFloat* GrowthCurve = nullptr;
@@ -121,10 +124,10 @@ public:
 	FStatRange Defence;
 
 	UPROPERTY(EditDefaultsOnly)
-	FStatRange Speed;
-
+	FStatRange Skill;
+	
 	UPROPERTY(EditDefaultsOnly)
-	FStatRange Dexterity;
+	FStatRange Speed;
 
 	UPROPERTY(EditDefaultsOnly)
 	FStatRange Magic;
@@ -139,7 +142,10 @@ public:
 	FStatRange Movement;
 
 	UPROPERTY(EditDefaultsOnly)
-	FStatRange MovementRecovery;	
+	FStatRange MovementRecovery;
+	
+	UPROPERTY(EditDefaultsOnly)
+	FStatRange Constitution;
 	
 	UFUNCTION(BlueprintCallable)
 	void GetStats(FUnitStatsSnapshot& UnitStats, const int32 Level) const;

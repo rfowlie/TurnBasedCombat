@@ -81,14 +81,17 @@ public:
 	FTurnEvent OnTurnBegin;
 	FTurnEvent OnTurnFinish;
 	DECLARE_DELEGATE_OneParam(FFactionEventDelegate, FGameplayTag)
-	FFactionEventDelegate OnFactionDefeated;	
-	
+	FFactionEventDelegate OnFactionDefeated;
+	// DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FFactionChangedDelegate, FGameplayTag, Faction);
+	// FFactionChangedDelegate OnFactionChanged;
+
 	void RegisterGridUnit(AGridUnit* GridUnit);
 	void UnregisterGridUnit(AGridUnit* GridUnit);
 
 	FGameplayTag GetCurrentFaction() const;
 	bool CanTakeTurn(AGridUnit* GridUnit);
-	void UpdateGridUnitActionTaken(AGridUnit* GridUnit);
+	void UsedTurn(const AGridUnit* GridUnit);
+	void CheckFactionTurnComplete();
 
 	void SetNextFaction();
 	void GetActiveFactions(TArray<FGameplayTag>& ActiveFactions);

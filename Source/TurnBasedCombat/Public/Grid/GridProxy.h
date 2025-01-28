@@ -3,13 +3,23 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "AbilitySystemBlueprintLibrary.h"
 #include "UObject/Object.h"
 #include "NativeGameplayTags.h"
 #include "GridProxy.generated.h"
 
 
+class UAbilitySystemComponent;
+class UWeaponDataAsset;
+class UTurnManager;
+class AGridUnit;
+class AGridTile;
+struct FCombatDisplayInfo;
 struct FGridPair;
-UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Encounter_Mode_Move);
+struct FGridPosition;
+struct FGridMovement;
+
+
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Grid_State_Idle);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Grid_State_Mover);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Grid_State_Moveable);
@@ -17,27 +27,29 @@ UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Grid_State_MoveTo);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Grid_State_CanAttack);
 
 
-
-struct FGridPosition;
-struct FGridMovement;
-class UTurnManager;
-class AGridUnit;
-class AGridTile;
-
 // TArray<FGridMovement> UGridManager::CalculateGridMovement(AGridUnit* GridUnit)
 DECLARE_DELEGATE_TwoParams(FCalculateGridMovement, TArray<FGridMovement>&, AGridUnit*);
 
 /**
  * 
  */
-UCLASS()
+UCLASS(BlueprintType)
 class TURNBASEDCOMBAT_API UGridProxy : public UObject
 {
 	GENERATED_BODY()
 
 	friend class UGridManager;
+	
+	// force factory method to create this class
+	UGridProxy();
 
 public:
+	// NOT WORKING???
+	// bool operator==(const UGridProxy& Other) const
+	// {
+	// 	return GridTile == Other.GridTile && GridUnit == Other.GridUnit;
+	// }
+
 	// Factory method
 	static UGridProxy* CreateGridProxy(
 		UObject* Outer,
@@ -48,7 +60,7 @@ public:
 		TArray<FGridMovement> InGridMovements,
 		TArray<FGridPair> InEnemyUnitsInRange);
 	
-	// void SetState(FGameplayTag State);
+	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const;
 	
 	void UndoAll();
 	void SetMoveableTiles(bool Activate);
@@ -66,18 +78,22 @@ public:
 	bool IsAlly() const;
 	bool IsMoveTile(UGridProxy* Other);
 	bool CanAttackFromTile(UGridProxy* Other) const;
+	bool GetValidWeaponsToAttackWith(UGridProxy* Other, TArray<UWeaponDataAsset*> ValidWeapons) const;
 	bool HasEnemiesToAttack() const;
 
 	FVector GetWorldLocation() const;
 	FGridPosition GetGridPosition() const;
 	FGameplayTag GetFaction() const;
+
+	// TODO: for now!!
+	UPROPERTY(BlueprintReadOnly)
+	AGridTile* GridTile = nullptr;	
+	UPROPERTY(BlueprintReadOnly)
+	AGridUnit* GridUnit = nullptr;
+	
 protected:
 	UPROPERTY()
 	UTurnManager* TurnManager = nullptr;	
-	UPROPERTY()
-	AGridTile* GridTile = nullptr;	
-	UPROPERTY()
-	AGridUnit* GridUnit = nullptr;
 
 	// TODO: do not do calculations in here
 	// pass all relevant/required information to the proxy and then create strict
@@ -89,17 +105,14 @@ protected:
 	UPROPERTY()
 	TArray<FGridMovement> CurrentCanAttackFromTiles;
 
-private:
-	// force factory method to create this class
-	UGridProxy();
-	
-	virtual void Init(
-		UTurnManager* InTurnManager,
-		AGridTile* InGridTile,
-		AGridUnit* InGridUnit,
-		const FCalculateGridMovement& InMovementDelegate,
-		TArray<FGridMovement> InGridMovements,
-		TArray<FGridPair> InEnemyUnitsInRange);
+private:	
+	// virtual void Init(
+	// 	UTurnManager* InTurnManager,
+	// 	AGridTile* InGridTile,
+	// 	AGridUnit* InGridUnit,
+	// 	const FCalculateGridMovement& InMovementDelegate,
+	// 	TArray<FGridMovement> InGridMovements,
+	// 	TArray<FGridPair> InEnemyUnitsInRange);
 	
 	FCalculateGridMovement CalculateGridMovementDelegate;
 };

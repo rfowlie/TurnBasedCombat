@@ -8,12 +8,17 @@
 
 
 class UGameplayAbility;
-struct FGridMovement;
 class UGridProxy;
 class UGridManager;
 class UInputAction;
 class AGridTile;
 class AGridUnit;
+
+
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Encounter_Mode_Move);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Encounter_Mode_Move_Idle);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Encounter_Mode_Move_SelectedMoveUnit);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Encounter_Mode_Move_SelectedMoveTile);
 
 /**
  * 
@@ -25,6 +30,8 @@ class TURNBASEDCOMBAT_API UStateMove : public UAbstractPlayerControllerState
 
 public:
 	UStateMove();
+
+	virtual FGameplayTag GetStateTag() const override;
 	
 	void Initialize(UGridManager* InGridManager);
 	
@@ -40,6 +47,9 @@ protected:
 	};
 	
 	EMovePhase Phase = EMovePhase::Idle;
+
+	FGameplayTag PhaseTag;
+	void SetPhase(FGameplayTag InPhaseTag);
 	
 	UPROPERTY()
 	UGridManager* GridManager = nullptr;

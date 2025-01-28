@@ -5,8 +5,15 @@
 #include "TurnBasedCombat/Public/_Framework/PlayerController/State/AbstractPlayerControllerState.h"
 
 
+UE_DEFINE_GAMEPLAY_TAG(TAG_Encounter_Mode_Abstract, "Encounter.Mode.Abstract");
+
 UAbstractPlayerControllerState::UAbstractPlayerControllerState()
 {
+}
+
+FGameplayTag UAbstractPlayerControllerState::GetStateTag() const
+{
+	return TAG_Encounter_Mode_Abstract;
 }
 
 void UAbstractPlayerControllerState::CreateInput()

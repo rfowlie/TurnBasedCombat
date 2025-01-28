@@ -2,22 +2,29 @@
 
 #include "TurnBasedCombat/Public/_Framework/GameMode/TurnBasedCombatGameMode.h"
 #include "Engine/StaticMeshActor.h"
+#include "Grid/Manager/GridRules.h"
 #include "Grid/Manager/TurnManager.h"
 #include "Grid/Tile/GridTile.h"
 #include "TurnBasedCombat/Public/EventSystem/EventSystem.h"
 #include "TurnBasedCombat/Public/Grid/Manager/GridManager.h"
 #include "TurnBasedCombat/Public/_Framework/PlayerController/TurnBasedCombatPlayerController.h"
+#include "_Framework/TBC_InfoWorldSubsystem.h"
 #include "_Framework/GameMode/WinCondition_Abstract.h"
+#include "_Framework/HUD/TurnBasedCombatHUD.h"
 
 
 ATurnBasedCombatGameMode::ATurnBasedCombatGameMode()
 {
+	// setup default classes???
 	PlayerControllerClass = ATurnBasedCombatPlayerController::StaticClass();
-	
+	HUDClass = ATurnBasedCombatHUD::StaticClass();
+
+	// create internal classes
 	EventSystem = CreateDefaultSubobject<UEventSystem>(TEXT("EventSystem"));
+	GridRules = CreateDefaultSubobject<UGridRules>(TEXT("GridRules"));
 	TurnManager = CreateDefaultSubobject<UTurnManager>(TEXT("TurnManager"));	
 	GridManager = CreateDefaultSubobject<UGridManager>(TEXT("GridManager"));
-	GridManager->Initialize(TurnManager);
+	GridManager->Initialize(GridRules, TurnManager);
 
 	// game mode will act as facade and hold blueprint assignable delegate for OnEventStart/End
 	// when game manger fires on event start, the game mode will do some stuff then broadcast to the rest of game
@@ -52,6 +59,22 @@ void ATurnBasedCombatGameMode::BeginPlay()
 {
 	Super::BeginPlay();
 
+	// combat calculator setup
+	if (CombatCalculatorClass == nullptr)
+	{
+		UE_LOG(LogTemp, Error, TEXT("Game Mode: CombatCalculator class is null"));
+	}
+	else
+	{
+		CombatCalculator = NewObject<UCombatCalculator>(this, CombatCalculatorClass);
+		CombatCalculator->SetGridManager(GridManager);
+	}	
+	
+	if (UTBC_InfoWorldSubsystem* Subsystem = GetWorld()->GetSubsystem<UTBC_InfoWorldSubsystem>())
+	{
+		Subsystem->SetCombatCalculator(CombatCalculator);
+	}
+
 	// Win condition setup
 	if (WinCondition)
 	{
@@ -68,6 +91,8 @@ void ATurnBasedCombatGameMode::BeginPlay()
 	UStaticMeshComponent* StaticMeshComponent = Cast<AStaticMeshActor>(Cursor)->GetStaticMeshComponent();
 	StaticMeshComponent->SetStaticMesh(CursorMesh);
 	StaticMeshComponent->SetMobility(EComponentMobility::Movable);
+	StaticMeshComponent->SetAffectDistanceFieldLighting(false);
+	StaticMeshComponent->SetAffectDynamicIndirectLighting(false);
 
 	// TODO: HACKYYY
 	// for now wait a few seconds then fire onstart

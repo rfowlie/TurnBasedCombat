@@ -9,24 +9,63 @@
 #include "InputAction.h"
 #include "Grid/Manager/GridManager.h"
 #include "Grid/GridProxy.h"
+#include "Combat/CombatCalculator/CombatCalculator.h"
+#include "_Framework/TBC_InfoWorldSubsystem.h"
+#include "_Framework/HUD/TurnBasedCombatHUD.h"
 
 
+// mode
 UE_DEFINE_GAMEPLAY_TAG(TAG_Encounter_Mode_Attack, "Encounter.Mode.Attack");
-UE_DEFINE_GAMEPLAY_TAG(TAG_Grid_State_Attacker, "Grid.State.Attacker");
-UE_DEFINE_GAMEPLAY_TAG(TAG_Grid_State_CanTargetFrom, "Grid.State.CanTargetFrom");
-UE_DEFINE_GAMEPLAY_TAG(TAG_Grid_State_Target, "Grid.State.Target");
-UE_DEFINE_GAMEPLAY_TAG(TAG_Grid_State_TargetFrom, "Grid.State.TargetFrom");
+// phase
+UE_DEFINE_GAMEPLAY_TAG(TAG_Encounter_Mode_Attack_None, "Encounter.Mode.Attack.None");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Encounter_Mode_Attack_Idle, "Encounter.Mode.Attack.Idle");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Encounter_Mode_Attack_SelectedAttacker, "Encounter.Mode.Attack.SelectedAttacker");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Encounter_Mode_Attack_SelectedTarget, "Encounter.Mode.Attack.SelectedTarget");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Encounter_Mode_Attack_SelectedAttackTile, "Encounter.Mode.Attack.SelectedAttackTile");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Encounter_Mode_Attack_Combat, "Encounter.Mode.Attack.Combat");
+
+// tile
+UE_DEFINE_GAMEPLAY_TAG(TAG_Tile_State_Attacker, "Tile.State.Attacker");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Tile_State_CanTargetFrom, "Tile.State.CanTargetFrom");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Tile_State_Target, "Tile.State.Target");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Tile_State_TargetFrom, "Tile.State.TargetFrom");
+
+// UI
+UE_DEFINE_GAMEPLAY_TAG(TAG_UI_Combat_DuelInfo, "UI.Combat.DuelInfo");
 
 
 UStateAttack::UStateAttack()
 {
 }
 
-void UStateAttack::Initialize(UGridManager* InGridManager)
+void UStateAttack::Initialize(UGridManager* InGridManager, AHUD* InTurnBasedCombatHUD)
 {
 	GridManager = InGridManager;
 	GridManager->OnGridEventStart.AddUObject(this, &ThisClass::Disable);
 	GridManager->OnGridEventEnd.AddUObject(this, &ThisClass::Enable);
+
+	if (ATurnBasedCombatHUD* TurnBasedCombatHUD = Cast<ATurnBasedCombatHUD>(InTurnBasedCombatHUD))
+	{
+		HUD = TurnBasedCombatHUD;
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("State Attack: HUD not of type ATurnBasedCombatHUD"));
+	}
+}
+
+FGameplayTag UStateAttack::GetStateTag() const
+{
+	return TAG_Encounter_Mode_Attack;
+}
+
+void UStateAttack::SetPhase(FGameplayTag InTagPhase)
+{
+	TagPhase = InTagPhase;
+	if (UTBC_InfoWorldSubsystem* Subsystem = GetWorld()->GetSubsystem<UTBC_InfoWorldSubsystem>())
+	{
+		Subsystem->SetPlayerControllerPhase(InTagPhase);
+	}
 }
 
 UInputMappingContext* UStateAttack::SetupInputMappingContext(APlayerController* PlayerController)
@@ -59,45 +98,61 @@ UInputMappingContext* UStateAttack::SetupInputMappingContext(APlayerController* 
 void UStateAttack::OnEnter()
 {	
 	UE_LOG(LogTemp, Warning, TEXT("OnEnter - ATTACK STATE"));
+	SetPhase(TAG_Encounter_Mode_Attack_Idle);
+
+	// TODO: for now...
+	// if (UTBC_InfoWorldSubsystem* Subsystem = GetWorld()->GetSubsystem<UTBC_InfoWorldSubsystem>())
+	// {
+	// 	UCombatCalculator* CombatCalculator = NewObject<UCombatCalculator>(this);
+	// 	CombatCalculator->SetGridManager(GridManager);
+	// 	Subsystem->SetCombatCalculator(CombatCalculator);
+	// }
 	
-	Phase = EAttackPhase::Idle;	
 }
 
 void UStateAttack::OnExit()
 {
 	Super::OnExit();
 
+	if (HUD)
+	{
+		// HUD->ToggleUI(TAG_UI_Combat_DuelInfo, false);
+	}
+
 	UndoAll();
 }
 
 void UStateAttack::OnSelect()
-{	
-	UGridProxy* GridProxy = GridManager->GetCurrentHoveredGridTile();
-	if (!GridProxy)
+{
+	UGridProxy* NewGridProxy = GridManager->GetCurrentHoveredGridTile();
+	if (!NewGridProxy)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("GridProxy is null"));
 		return;
 	}
-
-	switch(Phase)
+	
+	if (TagPhase == TAG_Encounter_Mode_Attack_Idle)
 	{
-	case EAttackPhase::None:
-		break;
-	case EAttackPhase::Idle:
 		// check if previous selection, and undo changes
-		if (GridProxyCurrent)
+		if (Instigator)
 		{
-			GridProxyCurrent->UndoAll();
+			Instigator->UndoAll();
 		}
 		// set new selection
-		GridProxyCurrent = GridProxy;
-		if (GridProxyCurrent->IsAlly() && GridProxyCurrent->HasEnemiesToAttack())
+		Instigator = NewGridProxy;
+		if (Instigator->IsAlly() && Instigator->HasEnemiesToAttack())
 		{
-			GridProxyCurrent->SetEnemiesInRange(true);
-			Phase = EAttackPhase::SelectedAttacker;
+			Instigator->SetEnemiesInRange(true);
+			SetPhase(TAG_Encounter_Mode_Attack_SelectedAttacker);
+			if (UTBC_InfoWorldSubsystem* Subsystem = GetWorld()->GetSubsystem<UTBC_InfoWorldSubsystem>())
+			{
+				Subsystem->SetGridUnitSelected(Instigator->GridUnit);
+				Subsystem->GetCombatCalculator()->SetInstigator(Instigator->GridUnit);
+			}
 		}
-		break;
-	case EAttackPhase::SelectedAttacker:
+	}
+	else if (TagPhase == TAG_Encounter_Mode_Attack_SelectedAttacker)
+	{
 		// check if new player unit selected
 		// if (GridProxyCurrent != GridProxy && GridProxy->IsAlly())
 		// {
@@ -106,13 +161,22 @@ void UStateAttack::OnSelect()
 		// 	GridProxyCurrent->SetEnemiesInRange(true);
 		// }
 		// check if target is enemy that can be attacked, move to next phase
-		if (GridProxyCurrent->CanAttack(GridProxy))
+		if (Instigator->CanAttack(NewGridProxy))
 		{
-			if (GridProxyTarget) { GridProxyTarget->UndoAll(); }
-			GridProxyCurrent->SetCanTargetFromTiles(GridProxyTarget, false);
-			GridProxyTarget = GridProxy;
-			GridProxyCurrent->SetCanTargetFromTiles(GridProxyTarget, true);
-			Phase = EAttackPhase::SelectedTarget;
+			if (Target) { Target->UndoAll(); }
+			// undo potential old targets...
+			Instigator->SetCanTargetFromTiles(Target, false);
+			
+			Target = NewGridProxy;
+			Instigator->SetCanTargetFromTiles(Target, true);
+			
+			if (UTBC_InfoWorldSubsystem* Subsystem = GetWorld()->GetSubsystem<UTBC_InfoWorldSubsystem>())
+			{
+				Subsystem->GetCombatCalculator()->SetTarget(Target->GridUnit);
+				Subsystem->GetCombatCalculator()->SetTargetTile(Target->GridTile);
+			}
+			
+			SetPhase(TAG_Encounter_Mode_Attack_SelectedTarget);
 		}
 		// check if new enemy target selected
 		// if (GridProxyTarget != GridProxy)
@@ -120,8 +184,9 @@ void UStateAttack::OnSelect()
 		// 	if (GridProxyTarget) { GridProxyTarget->UndoAll(); }
 		// 	GridProxyTarget = GridProxy;
 		// }		
-		break;
-	case EAttackPhase::SelectedTarget:
+	}
+	else if (TagPhase == TAG_Encounter_Mode_Attack_SelectedTarget)
+	{
 		// check if new player unit selected, return to previous phase
 		// if (GridProxyCurrent != GridProxy && GridProxy->IsAlly())
 		// {
@@ -139,15 +204,22 @@ void UStateAttack::OnSelect()
 		// 	GridProxyCurrent->SetCanTargetFromTiles(GridProxyTarget, true);
 		// }
 		// check if tile can attack from is selected
-		if (GridProxyCurrent->CanAttackFromTile(GridProxy))
+		if (Instigator->CanAttackFromTile(NewGridProxy))
 		{
-			if (GridProxyMoveTo) { GridProxyMoveTo->UndoAll(); }
-			GridProxyMoveTo = GridProxy;
-			GridProxyMoveTo->SetMoveToTile(true);
-			Phase = EAttackPhase::SelectedAttackTile;
+			if (MovingTo) { MovingTo->UndoAll(); }
+			MovingTo = NewGridProxy;
+			MovingTo->SetMoveToTile(true);
+
+			if (UTBC_InfoWorldSubsystem* Subsystem = GetWorld()->GetSubsystem<UTBC_InfoWorldSubsystem>())
+			{
+				Subsystem->GetCombatCalculator()->SetInstigatorTile(MovingTo->GridTile);
+			}
+			
+			SetPhase(TAG_Encounter_Mode_Attack_SelectedAttackTile);
 		}
-		break;
-	case EAttackPhase::SelectedAttackTile:
+	}
+	else if (TagPhase == TAG_Encounter_Mode_Attack_SelectedAttackTile)
+	{
 		// check if other tile can attack from is selected, stay on phase
 		// if (GridProxyMoveTo != GridProxy && GridProxyTarget->CanAttackFromTile(GridProxy))
 		// {
@@ -157,9 +229,11 @@ void UStateAttack::OnSelect()
 		// }
 		// TODO: for now hackyyy
 		// check if same tile is selected to confirm attack
-		if (GridManager->IsMatch(GridProxyMoveTo ,GridProxy))
+		// if (GridManager->IsMatch(MovingTo ,NewGridProxy))
+		if (GridManager->IsMatch(MovingTo, NewGridProxy))
 		{
-			GridManager->CreateAttackEvent(GridProxyCurrent, GridProxyMoveTo, GridProxyTarget);
+			SetPhase(TAG_Encounter_Mode_Attack_Combat);
+			GridManager->CreateAttackEvent(Instigator, Target, MovingTo);
 		}
 		// THIS IS THE OLD WAY USING CUSTOM MADE EVENT SYSTEM INSTEAD OF Gameplay Ability System
 		// {
@@ -170,33 +244,44 @@ void UStateAttack::OnSelect()
 		// 	Events.AddUnique(EventAttack);
 		// 	OnEventCreate.Execute(Events);
 		// }
-		break;
+	}
+	else if (TagPhase == TAG_Encounter_Mode_Attack_Combat)
+	{
+		// do nothing...
 	}
 
-	UE_LOG(LogTemp, Error, TEXT("Mode: Attack - On Select, Phase: %d"), Phase);
+	UE_LOG(LogTemp, Error, TEXT("Mode: Attack - On Select, Phase: %ls"), *TagPhase.ToString());
 }
 
 void UStateAttack::OnDeselect()
 {
 	UE_LOG(LogTemp, Warning, TEXT("OnDeselect - ATTACK"));
 	
-	switch (Phase) {
-	case EAttackPhase::None:
-		break;
-	case EAttackPhase::Idle:
-		break;
-	case EAttackPhase::SelectedAttacker:
+	if (TagPhase == TAG_Encounter_Mode_Attack_Idle)
+	{
+		if (UTBC_InfoWorldSubsystem* Subsystem = GetWorld()->GetSubsystem<UTBC_InfoWorldSubsystem>())
+		{
+			Subsystem->SetGridUnitSelected(nullptr);
+		}
+	}
+	else if (TagPhase == TAG_Encounter_Mode_Attack_SelectedAttacker)
+	{
 		UndoSelectedAttacker();
-		Phase = EAttackPhase::Idle;
-		break;
-	case EAttackPhase::SelectedTarget:
+		SetPhase(TAG_Encounter_Mode_Attack_Idle);
+	}
+	else if (TagPhase == TAG_Encounter_Mode_Attack_SelectedTarget)
+	{
 		UndoSelectedTarget();
-		Phase = EAttackPhase::SelectedAttacker;
-		break;
-	case EAttackPhase::SelectedAttackTile:
+		SetPhase(TAG_Encounter_Mode_Attack_SelectedAttacker);
+	}
+	else if (TagPhase == TAG_Encounter_Mode_Attack_SelectedAttackTile)
+	{
 		UndoSelectedAttackTile();
-		Phase = EAttackPhase::SelectedTarget;
-		break;
+		SetPhase(TAG_Encounter_Mode_Attack_SelectedTarget);
+	}
+	else if (TagPhase == TAG_Encounter_Mode_Attack_Combat)
+	{
+		// do nothing...
 	}
 }
 
@@ -204,9 +289,9 @@ void UStateAttack::OnCycleUnit()
 {
 	UndoAll();
 	
-	GridProxyCurrent = GridManager->GetNextGridUnit(GridProxyCurrent);
-	GridProxyCurrent->SetEnemiesInRange(true);
-	Phase = EAttackPhase::SelectedAttacker;
+	Instigator = GridManager->GetNextGridUnit(Instigator);
+	Instigator->SetEnemiesInRange(true);
+	SetPhase(TAG_Encounter_Mode_Attack_SelectedAttacker);
 }
 
 void UStateAttack::UndoAll()
@@ -215,51 +300,53 @@ void UStateAttack::UndoAll()
 	UndoSelectedTarget();
 	UndoSelectedAttacker();
 
-	Phase = EAttackPhase::Idle;
+	SetPhase(TAG_Encounter_Mode_Attack_Idle);
 }
 
 void UStateAttack::UndoSelectedAttacker()
 {
-	if (GridProxyCurrent) { GridProxyCurrent->SetEnemiesInRange(false); }
-	GridProxyCurrent = nullptr;
+	if (Instigator) { Instigator->SetEnemiesInRange(false); }
+	Instigator = nullptr;
 }
 
 void UStateAttack::UndoSelectedTarget()
 {
-	if (GridProxyTarget) { GridProxyTarget->SetEnemyTargetTile(false); }
-	GridProxyTarget = nullptr;
+	if (Target) { Target->SetEnemyTargetTile(false); }
+	Target = nullptr;
+
+	// HUD->ToggleUI(TAG_UI_Combat_DuelInfo.GetTag(), false);
 }
 
 void UStateAttack::UndoSelectedAttackTile()
 {
-	if (GridProxyMoveTo) { GridProxyMoveTo->SetMoveToTile(false); }
-	GridProxyMoveTo = nullptr;
+	if (MovingTo) { MovingTo->SetMoveToTile(false); }
+	MovingTo = nullptr;
 }
 
 void UStateAttack::Enable()
 {
 	UE_LOG(LogTemp, Warning, TEXT("UAttackState - Enable"));
-	if (GridProxyCurrent)
+	if (Instigator)
 	{
-		GridProxyCurrent->SetMoveableTiles(false);
-		GridProxyCurrent = nullptr;
+		Instigator->SetMoveableTiles(false);
+		Instigator = nullptr;
 	}
-	if (GridProxyTarget)
+	if (Target)
 	{
-		GridProxyTarget->UndoAll();
-		GridProxyTarget = nullptr;
+		Target->UndoAll();
+		Target = nullptr;
 	}
-	if (GridProxyMoveTo)
+	if (MovingTo)
 	{
-		GridProxyMoveTo->UndoAll();
-		GridProxyMoveTo = nullptr;
+		MovingTo->UndoAll();
+		MovingTo = nullptr;
 	}
 		
-	Phase = EAttackPhase::Idle;
+	SetPhase(TAG_Encounter_Mode_Attack_Idle);
 }
 
 void UStateAttack::Disable()
 {
 	UE_LOG(LogTemp, Warning, TEXT("UAttackState - Disable"));
-	Phase = EAttackPhase::None;
+	SetPhase(TAG_Encounter_Mode_Attack_None);
 }

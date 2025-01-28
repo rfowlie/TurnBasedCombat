@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "NativeGameplayTags.h"
 #include "UObject/Object.h"
 #include "AbstractPlayerControllerState.generated.h"
 
@@ -10,9 +11,8 @@
 class UInputMappingContext;
 class UAbstractEvent;
 
-/**
- * 
- */
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Encounter_Mode_Abstract);
+
 UCLASS(Abstract)
 class TURNBASEDCOMBAT_API UAbstractPlayerControllerState : public UObject
 {
@@ -20,6 +20,8 @@ class TURNBASEDCOMBAT_API UAbstractPlayerControllerState : public UObject
 
 public:
 	UAbstractPlayerControllerState();
+
+	virtual FGameplayTag GetStateTag() const;
 	
 	virtual void CreateInput();
 	virtual void EnableInput();

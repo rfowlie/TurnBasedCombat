@@ -13,6 +13,7 @@
 class UGameplayAbility;
 class UTurnManager;
 class AGridTile;
+class UGridRules;
 
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Event_Grid_Move);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Event_Grid_Attack);
@@ -34,7 +35,7 @@ class TURNBASEDCOMBAT_API UGridManager : public UObject
 public:
 	UGridManager();
 
-	void Initialize(UTurnManager* InurnManager);
+	void Initialize(UGridRules* InGridRules, UTurnManager* InTurnManager);
 
 	FGridTileHovered OnGridTileHovered;	
 	FGridUnitHovered OnGridUnitHovered;
@@ -55,7 +56,7 @@ public:
 	void PostEvent_Attack(AGridUnit* GridUnit);
 
 	UFUNCTION()
-	void OnEndEvent();
+	void OnEndEvent() const;
 	
 	FGridManagerDelegate OnGridEventStart;
 	FGridManagerDelegate OnGridEventEnd;
@@ -72,7 +73,8 @@ protected:
 	UPROPERTY()
 	AGridUnit* CurrentHoveredUnit = nullptr;
 
-private:
+	UPROPERTY()
+	UGridRules* GridRules = nullptr;
 	UPROPERTY()
 	UTurnManager* TurnManager = nullptr;
 	
@@ -81,20 +83,54 @@ private:
 	UPROPERTY()
 	TMap<FGridPosition, AGridTile*> LocationGridTileMap;
 	UPROPERTY()
+	TMap<AGridTile*, FGridPosition> GridTileLocationMap;
+	UPROPERTY()
 	TArray<AGridUnit*> GridUnitsAll;
 	UPROPERTY()
 	TMap<FGridPosition, AGridUnit*> LocationGridUnitMap;
 	UPROPERTY()
 	TMap<AGridUnit*, FGridPosition> GridUnitLocationMap;
 
-	TArray<FGridMovement> CalculateGridMovement(AGridUnit* GridUnit);
+	void UpdateTileMapping(AGridTile* GridTile);
+	void UpdateUnitMapping(AGridUnit* GridUnit);
+	
+public:
+	AGridUnit* GetGridUnitOnTile(const AGridTile* GridTile) const
+	{
+		if (GridTileLocationMap.Contains(GridTile))
+		{
+			if (LocationGridUnitMap.Contains(GridTileLocationMap[GridTile]))
+			{
+				return LocationGridUnitMap[GridTileLocationMap[GridTile]];
+			}
+		}
+
+		return nullptr;
+	}
+	
+	AGridTile* GetGridTileOfUnit(AGridUnit* GridUnit)
+	{
+		UpdateUnitMapping(GridUnit);
+		if (GridUnitLocationMap.Contains(GridUnit))
+		{
+			if (LocationGridTileMap.Contains(GridUnitLocationMap[GridUnit]))
+			{
+				return LocationGridTileMap[GridUnitLocationMap[GridUnit]];
+			}
+		}
+		
+		return nullptr;
+	}
+
+protected:
+	void CalculateGridMovement(TArray<FGridMovement>& OutMovement, AGridUnit* GridUnit);
 	void CalculateGridAttacks(TArray<const AGridUnit*> OutGridUnitsInRange, AGridUnit* GridUnit);
 	TArray<FGridPair> CalculateGridAttacks(AGridUnit* GridUnit);
 	TArray<FTargetingUnit> CalculateGridTargets(AGridUnit* GridUnit);
 	void GetEnemyUnits(TArray<AGridUnit*>& EnemyGridUnits, AGridUnit* GridUnit);
 	TArray<FGridPosition> GetEnemyPositions(const AGridUnit* GridUnit) const;
 	
-	// difference from utils is that this returns AGridTile instead of FGridPositio
+	// difference from utils is that this returns AGridTile instead of FGridPosition
 	TArray<AGridTile*> GetGridTilesAtRange(FGridPosition StartGridPosition, int32 Range);
 	
 	TArray<AGridTile*> GetGridTilesAtRanges(const FGridPosition StartGridPosition, TArray<int32> Ranges);

@@ -59,4 +59,10 @@ public:
 protected:
 	UFUNCTION(BlueprintCallable)
 	void CallWinCondition(EWinConditionType WinCondition);
+
+	// testing
+public:
+	UPROPERTY(EditDefaultsOnly)
+	int32 Number;
+	
 };

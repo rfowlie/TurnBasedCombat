@@ -3,14 +3,24 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameplayTagContainer.h"
+#include "NativeGameplayTags.h"
 #include "GameFramework/PlayerController.h"
 #include "TurnBasedCombatPlayerController.generated.h"
 
 
+class AGridTile;
+class UStateAttack;
+class UStateMove;
+class UCombatDisplayWidget;
 class UInputMappingContext;
 class UInputAction;
 class UAbstractPlayerControllerState;
 class UGridManager;
+
+
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Encounter_Mode);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_UI_Combat_GridTileInfo);
 
 /**
  * 
@@ -67,4 +77,11 @@ protected:
 	void EnableState();
 	UFUNCTION()
 	void DisableState();
+	
+private:
+	// FOR NOW
+	UPROPERTY()
+	UStateMove* StateMove = nullptr;
+	UPROPERTY()
+	UStateAttack* StateAttack = nullptr;
 };
