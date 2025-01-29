@@ -9,7 +9,7 @@
 struct FGameplayTag;
 class AGridUnit;
 
-UENUM()
+UENUM(BlueprintType)
 enum EWinConditionType
 {
 	None,

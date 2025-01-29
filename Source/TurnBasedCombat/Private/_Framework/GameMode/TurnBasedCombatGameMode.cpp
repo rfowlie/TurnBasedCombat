@@ -146,16 +146,9 @@ void ATurnBasedCombatGameMode::OnWinConditionReceived(EWinConditionType InWinCon
 	if (OnCombatDisable.IsBound()) { OnCombatDisable.Broadcast(); }
 	// notify everything that condition met
 	if (OnCombatOver.IsBound()) { OnCombatOver.Broadcast(InWinCondition); }
-	
-	// TODO: what other things will need to happen internally???
-	if (InWinCondition == Win)
-	{
-		UE_LOG(LogTemp, Error, TEXT("Win Condition: Win"));
-	}
-	else if (InWinCondition == Defeat)
-	{
-		UE_LOG(LogTemp, Error, TEXT("Win Condition: Defeat"));
-	}	
+
+	// allow BP logic to do things...
+	ExternalOnWinConditionRecieved(InWinCondition);
 }
 
 void ATurnBasedCombatGameMode::HandleStartingNewPlayer_Implementation(APlayerController* NewPlayer)

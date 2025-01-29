@@ -88,11 +88,17 @@ protected:
 	// win condition ~ start
 	UPROPERTY(Instanced, EditDefaultsOnly)
 	UWinCondition_Abstract* WinCondition;
+	
+	UFUNCTION(BlueprintImplementableEvent)
+	void ExternalOnWinConditionRecieved(EWinConditionType InWinCondition);
+	
+private:
 	UFUNCTION()
 	void OnWinConditionReceived(EWinConditionType InWinCondition);
 	
 public:
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FTurnBasedCombatOver, EWinConditionType, ConditionType);
+	UPROPERTY(BlueprintAssignable)
 	FTurnBasedCombatOver OnCombatOver;
 	// win condition ~ end
 
