@@ -10,9 +10,7 @@
 #include "Combat/CombatCalculator/MoveAbilityPayload.h"
 #include "Grid/GridUtility.h"
 #include "Grid/GridStructs.h"
-#include "Grid/Event/GridEventPayload_Move.h"
 #include "Grid/Manager/TurnManager.h"
-#include "Grid/Manager/GridEventPayload.h"
 #include "Grid/Manager/GridRules.h"
 #include "TurnBasedCombat/Public/Grid/Tile/GridTile.h"
 #include "TurnBasedCombat/Public/Grid/Unit/GridUnit.h"
@@ -21,6 +19,8 @@
 
 UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Grid_Move, "Event.Grid.Move");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Grid_Attack, "Event.Grid.Attack");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Grid_Damage, "Event.Grid.Damage");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Grid_Death, "Event.Grid.Death");
 
 
 UGridManager::UGridManager()
@@ -68,14 +68,32 @@ void UGridManager::RegisterGridUnit(AGridUnit* GridUnit)
 		
 		// add to turn manager
 		TurnManager->RegisterGridUnit(GridUnit);
+
+		// GridUnit->GetAbilitySystemComponent()->AbilityActivatedCallbacks.AddLambda([this, GridUnit](const FAbilityEndedData& Data)
+		// {
+		// 	if (Data.AbilitySpecHandle == GridUnit->GameplayAbilitySpecHandle_Move)
+		// 	{
+		// 		PostEvent_Move(GridUnit);
+		// 	}
+		// });
+
+		// whenever a unit does something, add it to the active units list
+		// GridUnit->GetAbilitySystemComponent()->AbilityActivatedCallbacks.AddUObject(
+		// 	this, &ThisClass::OnGridUnitAbilityActivated, GridUnit);
+		// GridUnit->GetAbilitySystemComponent()->AbilityEndedCallbacks.AddUObject(
+		// 	this, &ThisClass::OnGridUnitAbilityEnded, GridUnit);
+		GridUnit->GetAbilitySystemComponent()->AbilityActivatedCallbacks.AddUObject(
+			this, &ThisClass::OnGridUnitAbilityActivated);
+		GridUnit->GetAbilitySystemComponent()->AbilityEndedCallbacks.AddUObject(
+			this, &ThisClass::OnGridUnitAbilityEnded);
 		
-		GridUnit->GetAbilitySystemComponent()->OnAbilityEnded.AddLambda([this, GridUnit](const FAbilityEndedData& Data)
-		{
-			if (Data.AbilitySpecHandle == GridUnit->GameplayAbilitySpecHandle_Move)
-			{
-				PostEvent_Move(GridUnit);
-			}
-		});
+		// GridUnit->GetAbilitySystemComponent()->OnAbilityEnded.AddLambda([this, GridUnit](const FAbilityEndedData& Data)
+		// {
+		// 	if (Data.AbilitySpecHandle == GridUnit->GameplayAbilitySpecHandle_Move)
+		// 	{
+		// 		PostEvent_Move(GridUnit);
+		// 	}
+		// });
 	}
 }
 
@@ -228,17 +246,12 @@ void UGridManager::CreateAttackEvent(UGridProxy* Instigator, UGridProxy* Target,
 	}
 	
 	// broadcast event starting
-	if (OnGridEventStart.IsBound())
-	{
-		OnGridEventStart.Broadcast();
-	}
-
-	// IS THIS BETTER THAN WHAT WE ARE DOING IN ONREGISTER???
-	// subscribe to end event and notify grid unit to move
-	Instigator->GridUnit->OnEventAttackEnd.AddUniqueDynamic(this, &ThisClass::PostEvent_Attack);
-
-	// TODO: use a gameplay event instead
-	// Instigator->GridUnit->AttackEvent(Location->GridTile->GetPlacementLocation(), Target->GridUnit);
+	// if (OnGridEventStart.IsBound())
+	// {
+	// 	OnGridEventStart.Broadcast();
+	// }
+	//
+	// Instigator->GridUnit->OnEventAttackEnd.AddUniqueDynamic(this, &ThisClass::PostEvent_Attack);
 
 	// TODO: try and activate through gameplay event instead of this current way...
 	// create gameplay event information
@@ -254,7 +267,8 @@ void UGridManager::CreateAttackEvent(UGridProxy* Instigator, UGridProxy* Target,
 	TArray<AGridTile*> Tiles;
 	Tiles.Add(Location->GridTile);
 	FGameplayEventData EventData;
-	EventData.Instigator = Instigator->GridUnit;	
+	EventData.Instigator = Instigator->GridUnit;
+	EventData.Target = Target->GridUnit;
 	EventData.OptionalObject = UMoveAbilityPayload::Create(Tiles);
 	if (UTBC_InfoWorldSubsystem* Subsystem = GetWorld()->GetSubsystem<UTBC_InfoWorldSubsystem>())
 	{
@@ -301,6 +315,92 @@ void UGridManager::OnEndEvent() const
 		OnGridEventEnd.Broadcast();
 	}	
 }
+
+void UGridManager::OnGridUnitAbilityActivated(UGameplayAbility* InGameplayAbility)
+{
+	// not current actions being taken therefore fire event
+	if (GridUnitsTakingActions.IsEmpty())
+	{
+		if (OnGridEventStart.IsBound()) { OnGridEventStart.Broadcast(); }
+	}
+	
+	TPair<AActor*, UGameplayAbility*> AbilityPair;
+	AbilityPair.Key = InGameplayAbility->GetAvatarActorFromActorInfo();
+	AbilityPair.Value = InGameplayAbility;
+	GridUnitsTakingActions.Add(AbilityPair);
+
+	UE_LOG(LogTemp, Log, TEXT("On Grid Unit Ability Activated: %d"), GridUnitsTakingActions.Num());
+}
+
+void UGridManager::OnGridUnitAbilityEnded(UGameplayAbility* InGameplayAbility)
+{
+	TPair<AActor*, UGameplayAbility*> FoundPair;
+	for (TPair<AActor*, UGameplayAbility*> Pair : GridUnitsTakingActions)
+	{
+		if (Pair.Key == InGameplayAbility->GetAvatarActorFromActorInfo() && Pair.Value == InGameplayAbility)
+		{
+			FoundPair = Pair;
+			break;
+		}
+	}
+	
+	if (FoundPair.Key == InGameplayAbility->GetAvatarActorFromActorInfo() && FoundPair.Value == InGameplayAbility)
+	{
+		GridUnitsTakingActions.Remove(FoundPair);
+
+		// if this array is empty then no units are taking actions and it is safe to return PC control
+		if (GridUnitsTakingActions.IsEmpty())
+		{
+			UpdateUnitMappingsAll();
+			if (OnGridEventEnd.IsBound())
+			{
+				OnGridEventEnd.Broadcast();
+			}
+
+			UE_LOG(LogTemp, Log, TEXT("On Grid Unit Ability Ended: no more units taking actions"));
+		}
+	}
+	else
+	{
+		UE_LOG(LogTemp, Log, TEXT("On Grid Unit Ability Ended: %d"), GridUnitsTakingActions.Num());
+	}
+}
+// void UGridManager::OnGridUnitAbilityActivated(UGameplayAbility* InGameplayAbility, AGridUnit* InGridUnit)
+// {
+// 	TPair<AGridUnit*, UGameplayAbility*> AbilityPair;
+// 	AbilityPair.Key = InGridUnit;
+// 	AbilityPair.Value = InGameplayAbility;
+// 	GridUnitsTakingActions.Add(AbilityPair);
+// }
+//
+// void UGridManager::OnGridUnitAbilityEnded(UGameplayAbility* InGameplayAbility, AGridUnit* InGridUnit)
+// {
+// 	GetAvatarActorFromActorInfo
+// 	TPair<AGridUnit*, UGameplayAbility*> FoundPair;
+// 	for (TPair<AGridUnit*, UGameplayAbility*> Pair : GridUnitsTakingActions)
+// 	{
+// 		if (Pair.Key == InGridUnit && Pair.Value == InGameplayAbility) // Check for a specific key
+// 		{
+// 			FoundPair = Pair;
+// 			break;
+// 		}
+// 	}
+//
+// 	// extra check, for now...
+// 	if (FoundPair.Key == InGridUnit && FoundPair.Value == InGameplayAbility)
+// 	{
+// 		GridUnitsTakingActions.Remove(FoundPair);
+//
+// 		// if this array is empty then no units are taking actions and it is safe to return PC control
+// 		if (GridUnitsTakingActions.IsEmpty())
+// 		{
+// 			if (OnGridEventEnd.IsBound())
+// 			{
+// 				OnGridEventEnd.Broadcast();
+// 			}	
+// 		}
+// 	}
+// }
 
 bool UGridManager::IsMatch(const UGridProxy* GridProxy_A, const UGridProxy* GridProxy_B)
 {
@@ -364,6 +464,14 @@ void UGridManager::UpdateUnitMapping(AGridUnit* GridUnit)
 	const FGridPosition GridPosition = UGridUtility::CalculateGridPosition(GridUnit);
 	LocationGridUnitMap.Add(GridPosition, GridUnit);
 	GridUnitLocationMap.Add(GridUnit, GridPosition);
+}
+
+void UGridManager::UpdateUnitMappingsAll()
+{
+	for (AGridUnit* GridUnit : GridUnitsAll)
+	{
+		UpdateUnitMapping(GridUnit);
+	}
 }
 
 void UGridManager::CalculateGridMovement(TArray<FGridMovement>& OutMovement, AGridUnit* GridUnit)
