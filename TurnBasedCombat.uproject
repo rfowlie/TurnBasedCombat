@@ -33,6 +33,11 @@
 		{
 			"Name": "PCGGeometryScriptInterop",
 			"Enabled": true
+		},
+		{
+			"Name": "Joint",
+			"Enabled": true,
+			"MarketplaceURL": "com.epicgames.launcher://ue/marketplace/product/ec432b9261c94b70a4068507d42a4f5a"
 		}
 	]
 }
