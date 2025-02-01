@@ -29,7 +29,8 @@ TArray<UDialogueNodeBase*> UDF_Branch::SelectNextNodes_Implementation(const TSof
 		if(CastedCondition->bConditionResult)
 		{
 			return TrueNode;
-		}else
+		}
+		else
 		{
 			if(UDialogueFragment* ChildBranch = FindFragmentByClass(UDF_Branch::StaticClass()))
 			{
