@@ -9,7 +9,7 @@
 #include "InputActionValue.h"
 #include "InputMappingContext.h"
 #include "Grid/Manager/GridManager.h"
-#include "Grid/Tile/GridTile.h"
+#include "Tile/GridTile.h"
 #include "TurnBasedCombat/Public/_Framework/PlayerController/State/StateMove.h"
 #include "TurnBasedCombat/Public/_Framework/PlayerController/State/StateWait.h"
 #include "_Framework/TBC_InfoWorldSubsystem.h"

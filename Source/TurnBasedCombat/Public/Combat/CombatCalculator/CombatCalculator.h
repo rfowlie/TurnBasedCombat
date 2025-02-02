@@ -6,7 +6,7 @@
 #include "CombatCalculatorData.h"
 #include "GameplayTagContainer.h"
 #include "WeaponSolver.h"
-#include "Grid/Tile/GridTile.h"
+#include "Tile/GridTile.h"
 #include "UObject/Object.h"
 #include "CombatCalculator.generated.h"
 

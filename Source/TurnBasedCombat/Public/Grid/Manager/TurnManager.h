@@ -3,63 +3,63 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Grid/Unit/GridUnit.h"
+#include "GameplayTagContainer.h"
+#include "Grid/GridStructs.h"
 #include "UObject/Object.h"
 #include "TurnManager.generated.h"
 
-
 class AGridUnit;
 
-
-USTRUCT()
-struct FFactionInfo
-{
-	GENERATED_BODY()
-
-	UPROPERTY()
-	FGameplayTag Tag;
-	
-	UPROPERTY()
-	TMap<AGridUnit*, bool> GridUnits;
-
-	void ActivateUnits()
-	{
-		TArray<AGridUnit*> Units;
-		GridUnits.GetKeys(Units);
-		for (AGridUnit* GridUnit : Units)
-		{
-			if (GridUnit->GetHealth() > 0)
-			{
-				GridUnits[GridUnit] = true;
-			}
-		}
-	}
-	
-	bool IsFactionDefeated() const
-	{
-		TArray<AGridUnit*> Units;
-		GridUnits.GetKeys(Units);
-		for (AGridUnit* GridUnit : Units)
-		{
-			if (GridUnit->GetHealth() > 0)
-			{
-				return false;
-			}
-		}
-
-		return true;
-	}
-
-	bool CanUnitsMove()
-	{
-		for (auto Pair : GridUnits)
-		{
-			if (Pair.Value) { return true; }
-		}
-
-		return false;
-	}
-};
+//
+// USTRUCT()
+// struct FFactionInfo
+// {
+// 	GENERATED_BODY()
+//
+// 	UPROPERTY()
+// 	FGameplayTag Tag;
+// 	
+// 	UPROPERTY()
+// 	TMap<AGridUnit*, bool> GridUnits;
+//
+// 	void ActivateUnits()
+// 	{
+// 		TArray<AGridUnit*> Units;
+// 		GridUnits.GetKeys(Units);
+// 		for (AGridUnit* GridUnit : Units)
+// 		{
+// 			if (GridUnit->GetHealth() > 0)
+// 			{
+// 				GridUnits[GridUnit] = true;
+// 			}
+// 		}
+// 	}
+// 	
+// 	bool IsFactionDefeated() const
+// 	{
+// 		TArray<AGridUnit*> Units;
+// 		GridUnits.GetKeys(Units);
+// 		for (AGridUnit* GridUnit : Units)
+// 		{
+// 			if (GridUnit->GetHealth() > 0)
+// 			{
+// 				return false;
+// 			}
+// 		}
+//
+// 		return true;
+// 	}
+//
+// 	bool CanUnitsMove()
+// 	{
+// 		for (auto Pair : GridUnits)
+// 		{
+// 			if (Pair.Value) { return true; }
+// 		}
+//
+// 		return false;
+// 	}
+// };
 
 
 /**

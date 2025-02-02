@@ -2,8 +2,8 @@
 
 
 #include "Grid/Manager/GridRules.h"
-
 #include "Grid/Manager/GridManager.h"
+#include "Tile/GridTile.h"
 
 
 bool UGridRules::UnitCanMoveOnTile(UGridManager* GridManager, AGridUnit* InUnit, AGridTile* StartTile, AGridTile* TargetTile)

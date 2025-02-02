@@ -3,7 +3,6 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Grid/Tile/GridTile.h"
 #include "UObject/Object.h"
 #include "GridRules.generated.h"
 

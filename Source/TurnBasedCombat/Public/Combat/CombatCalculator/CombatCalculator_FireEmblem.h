@@ -3,10 +3,9 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "CombatCalculatorData.h"
 #include "GameplayTagContainer.h"
 #include "WeaponSolver.h"
-#include "Grid/Unit/GridUnit.h"
+#include "Unit/GridUnit.h"
 #include "UObject/Object.h"
 #include "CombatCalculator_FireEmblem.generated.h"
 

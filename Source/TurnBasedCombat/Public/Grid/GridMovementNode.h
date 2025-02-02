@@ -3,9 +3,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Grid/GridStructs.h"
 #include "UObject/Object.h"
-#include "GridStructs.h"
 #include "GridMovementNode.generated.h"
+
+class AGridTile;
 
 /**
  * 

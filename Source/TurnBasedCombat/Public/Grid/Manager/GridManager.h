@@ -6,13 +6,13 @@
 #include "UObject/Object.h"
 #include "Grid/GridProxy.h"
 #include "Grid/GridStructs.h"
-#include "Grid/Unit/GridUnit.h"
 #include "GridManager.generated.h"
 
 
 class UGameplayAbility;
 class UTurnManager;
 class AGridTile;
+class AGridUnit;
 class UGridRules;
 
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Event_Grid_Move);
@@ -139,7 +139,6 @@ protected:
 	void CalculateGridMovement(TArray<FGridMovement>& OutMovement, AGridUnit* GridUnit);
 	void CalculateGridAttacks(TArray<const AGridUnit*> OutGridUnitsInRange, AGridUnit* GridUnit);
 	TArray<FGridPair> CalculateGridAttacks(AGridUnit* GridUnit);
-	TArray<FTargetingUnit> CalculateGridTargets(AGridUnit* GridUnit);
 	void GetEnemyUnits(TArray<AGridUnit*>& EnemyGridUnits, AGridUnit* GridUnit);
 	TArray<FGridPosition> GetEnemyPositions(const AGridUnit* GridUnit) const;
 	

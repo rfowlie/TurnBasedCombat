@@ -2,7 +2,8 @@
 
 
 #include "Grid/Manager/TurnManager.h"
-#include "Grid/Unit/GridUnit.h"
+#include "Grid/GridStructs.h"
+#include "Unit/GridUnit.h"
 #include "_Framework/TBC_InfoWorldSubsystem.h"
 
 
@@ -90,6 +91,12 @@ void UTurnManager::CheckFactionTurnComplete()
 
 void UTurnManager::IncrementFaction()
 {
+	if (Factions.IsEmpty())
+	{
+		UE_LOG(LogTemp, Error, TEXT("Turn Manager: no factions!!"));
+		return;
+	}
+	
 	FactionIndex = (FactionIndex + 1 + Factions.Num()) % Factions.Num();
 }
 
@@ -111,6 +118,13 @@ void UTurnManager::CheckFactionDefeated(AGridUnit* GridUnit)
 void UTurnManager::SetNextFaction()
 {
 	IncrementFaction();
+
+	if (Factions.IsEmpty())
+	{
+		UE_LOG(LogTemp, Error, TEXT("Turn Manager: no factions!!"));
+		return;
+	}
+	
 	// check to see if all units of faction destroyed, skip turn???
 	while(Factions[FactionIndex].IsFactionDefeated()) { IncrementFaction(); }
 
