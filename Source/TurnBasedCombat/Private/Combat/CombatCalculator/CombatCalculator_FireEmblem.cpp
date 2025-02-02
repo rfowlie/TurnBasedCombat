@@ -3,11 +3,12 @@
 
 #include "Combat/CombatCalculator/CombatCalculator_FireEmblem.h"
 
+#include "Combat/CombatCalculator/CombatCalculatorData.h"
 #include "Combat/CombatCalculator/UnitSolver_FireEmblem.h"
 #include "Grid/Manager/GridManager.h"
-#include "Grid/Tile/GridTile.h"
-#include "Grid/Unit/GridUnit.h"
-#include "Grid/Unit/GridUnitAttributeSet.h"
+#include "Tile/GridTile.h"
+#include "Unit/GridUnit.h"
+#include "Unit/GridUnitAttributeSet.h"
 
 
 UCombatCalculator_FireEmblem::UCombatCalculator_FireEmblem()

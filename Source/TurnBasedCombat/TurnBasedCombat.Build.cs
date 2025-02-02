@@ -18,7 +18,8 @@ public class TurnBasedCombat : ModuleRules
 			"UMG",
 			"GameplayTags",
 			"GameplayAbilities",
-			"GameplayTasks"
+			"GameplayTasks",
+			"TurnBased_Core"
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[]

@@ -4,7 +4,7 @@
 #include "Combat/ModMagnitudeCalculation_Damage.h"
 
 #include "GameplayEffectExecutionCalculation.h"
-#include "Grid/Unit/GridUnitAttributeSet.h"
+#include "Unit/GridUnitAttributeSet.h"
 
 UModMagnitudeCalculation_Damage::UModMagnitudeCalculation_Damage()
 {

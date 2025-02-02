@@ -4,7 +4,7 @@
 #include "Engine/StaticMeshActor.h"
 #include "Grid/Manager/GridRules.h"
 #include "Grid/Manager/TurnManager.h"
-#include "Grid/Tile/GridTile.h"
+#include "Tile/GridTile.h"
 #include "TurnBasedCombat/Public/EventSystem/EventSystem.h"
 #include "TurnBasedCombat/Public/Grid/Manager/GridManager.h"
 #include "TurnBasedCombat/Public/_Framework/PlayerController/TurnBasedCombatPlayerController.h"

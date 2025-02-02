@@ -4,10 +4,10 @@
 #include "TurnBasedCombat/Public/Grid/GridProxy.h"
 
 #include "Grid/GridStructs.h"
-#include "Grid/GridUtility.h"
+#include "Grid/GridHelper.h"
 #include "Grid/Manager/TurnManager.h"
-#include "Grid/Tile/GridTile.h"
-#include "Grid/Unit/GridUnit.h"
+#include "Tile/GridTile.h"
+#include "Unit/GridUnit.h"
 #include "Item/WeaponDataAsset.h"
 #include "_Framework/PlayerController/State/StateAttack.h"
 
@@ -135,8 +135,8 @@ bool UGridProxy::SetCanTargetFromTiles(UGridProxy* Other, bool Activate)
 	{
 		for (const int32 WeaponRange : GridUnit->GetWeaponRanges())
 		{
-			if (UGridUtility::GetDistanceBetweenGridPositions(
-			UGridUtility::CalculateGridPosition(GridMovement.GridTile),
+			if (UGridHelper::GetDistanceBetweenGridPositions(
+			UGridHelper::CalculateGridPosition(GridMovement.GridTile),
 			Other->GetGridPosition()) == WeaponRange)
 			{
 				CurrentCanAttackFromTiles.AddUnique(GridMovement);
@@ -170,7 +170,7 @@ bool UGridProxy::CanMoveToo(UGridProxy* GridProxy)
 	FGridPosition ProxyGridPosition = GridProxy->GetGridPosition();
 	for (auto GridMovement : GridMovements)
 	{
-		if (UGridUtility::CalculateGridPosition(GridMovement.GridTile) == ProxyGridPosition)
+		if (UGridHelper::CalculateGridPosition(GridMovement.GridTile) == ProxyGridPosition)
 		{
 			return true;
 		}
@@ -184,7 +184,7 @@ bool UGridProxy::CanAttack(UGridProxy* Other)
 	FGridPosition OtherGridPosition = Other->GetGridPosition();
 	for (auto EnemyUnitInRange : EnemyGridUnitsInRange)
 	{
-		if (OtherGridPosition == UGridUtility::CalculateGridPosition(EnemyUnitInRange.GridUnit))
+		if (OtherGridPosition == UGridHelper::CalculateGridPosition(EnemyUnitInRange.GridUnit))
 		{
 			return true;
 		}
@@ -214,7 +214,7 @@ bool UGridProxy::CanAttackFromTile(UGridProxy* Other) const
 {
 	for (auto GridMovement : CurrentCanAttackFromTiles)
 	{
-		if (UGridUtility::CalculateGridPosition(GridMovement.GridTile) == Other->GetGridPosition())
+		if (UGridHelper::CalculateGridPosition(GridMovement.GridTile) == Other->GetGridPosition())
 		{
 			return true;
 		}
@@ -228,15 +228,15 @@ bool UGridProxy::GetValidWeaponsToAttackWith(UGridProxy* Other, TArray<UWeaponDa
 	if (!CanAttackFromTile(Other)) { return false; }
 
 	// find out what weapons can be used from other proxy positions
-	int32 Distance = UGridUtility::GetDistanceBetweenGridPositions(
+	int32 Distance = UGridHelper::GetDistanceBetweenGridPositions(
 		GetGridPosition(), Other->GetGridPosition());
-	for (auto Weapon : GridUnit->WeaponDataAssets)
-	{
-		if (Weapon->WeaponStats.Range == Distance)
-		{
-			ValidWeapons.Add(Weapon);
-		}
-	}
+	// for (auto Weapon : GridUnit->WeaponDataAssets)
+	// {
+	// 	if (Weapon->WeaponStats.Range == Distance)
+	// 	{
+	// 		ValidWeapons.Add(Weapon);
+	// 	}
+	// }
 
 	return true;
 }
@@ -254,7 +254,7 @@ FVector UGridProxy::GetWorldLocation() const
 
 FGridPosition UGridProxy::GetGridPosition() const
 {
-	return UGridUtility::CalculateGridPosition(GridTile);
+	return UGridHelper::CalculateGridPosition(GridTile);
 }
 
 FGameplayTag UGridProxy::GetFaction() const

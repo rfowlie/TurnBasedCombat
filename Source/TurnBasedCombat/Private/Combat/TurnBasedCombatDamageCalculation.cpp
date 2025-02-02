@@ -2,7 +2,7 @@
 
 
 #include "Combat/TurnBasedCombatDamageCalculation.h"
-#include "Grid/Unit/GridUnitAttributeSet.h"
+#include "Unit/GridUnitAttributeSet.h"
 
 
 UTurnBasedCombatDamageCalculation::UTurnBasedCombatDamageCalculation()
