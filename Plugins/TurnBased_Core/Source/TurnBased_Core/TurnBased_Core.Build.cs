@@ -26,10 +26,11 @@ public class TurnBased_Core : ModuleRules
 			new string[]
 			{
 				"Core",
+				"InputCore",
+				"EnhancedInput",
 				"GameplayTags",
 				"GameplayAbilities",
 				"GameplayTasks"
-				
 			}
 			);
 			

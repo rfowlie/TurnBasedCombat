@@ -7,12 +7,13 @@
 #include "GridStructs.h"
 #include "GridWorldSubsystem.generated.h"
 
+class UGridRules;
 class UGameplayAbility;
 class AGridUnit;
 class AGridTile;
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FGridTileDelegate, const AGridTile*, GridTile);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FGridUnitDelegate, const AGridUnit*, GridUnit);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FGridTileDelegate, AGridTile*, GridTile);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FGridUnitDelegate, AGridUnit*, GridUnit);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FGridUnitAbilityDelegate);
 
 /**
@@ -48,10 +49,6 @@ public:
 	FGridUnitDelegate OnGridUnitSelectedStop;
 	UPROPERTY(BlueprintAssignable, Category="Turn Based | Grid")
 	FGridUnitDelegate OnGridUnitChanged;
-	// UPROPERTY(BlueprintAssignable, Category="Turn Based | Grid")
-	// FGridUnitDelegate OnGridUnitMoveStart;
-	// UPROPERTY(BlueprintAssignable, Category="Turn Based | Grid")
-	// FGridUnitDelegate OnGridUnitMoveStop;
 
 	
 	// FUNCTIONS
@@ -72,8 +69,10 @@ public:
 	TMap<FGridPosition, AGridTile*> LocationGridTileMap;
 	UPROPERTY()
 	AGridTile* GridTileHovered = nullptr;
+	AGridTile* GetGridTileHovered() const { return GridTileHovered; }
 	UPROPERTY()
 	AGridTile* GridTileSelected = nullptr;
+	AGridTile* GetGridTileSelected() const { return GridTileSelected; }
 	
 	void UpdateTileMapping(AGridTile* GridTile);
 	void UpdateTileMappingsAll();
@@ -87,13 +86,24 @@ public:
 	TMap<FGridPosition, AGridUnit*> LocationGridUnitMap;
 	UPROPERTY()
 	AGridUnit* GridUnitHovered = nullptr;
+	AGridUnit* GetGridUnitHovered() const { return GridUnitHovered; }
 	UPROPERTY()
 	AGridUnit* GridUnitSelected = nullptr;
-
+	AGridUnit* GetGridUnitSelected() const { return GridUnitSelected; }
 	
 	void UpdateUnitMapping(AGridUnit* GridUnit);
 	void UpdateUnitMappingsAll();
+	AGridUnit* GetGridUnitOnTile(const AGridTile* GridTile) const;
+	AGridTile* GetGridTileOfUnit(const AGridUnit* GridUnit) const;
+
+	// calculations (could set a class that does all this so that we can swap out calculation types)
+	TArray<AGridTile*> GetGridTilesAtRange(FGridPosition StartGridPosition, int32 Range);
+	TArray<AGridTile*> GetGridTilesAtRanges(const FGridPosition StartGridPosition, TArray<int32> Ranges);
+	void CalculateGridMovement(TArray<FGridMovement>& OutMovement, const AGridUnit* GridUnit);
+
 	
+
+	///////////////////////////////////////////
 	// event system, could we move this a separate world subsystem?
 	UPROPERTY(BlueprintAssignable, Category="Turn Based | Grid")
 	FGridUnitAbilityDelegate OnGridUnitAbilityStart;

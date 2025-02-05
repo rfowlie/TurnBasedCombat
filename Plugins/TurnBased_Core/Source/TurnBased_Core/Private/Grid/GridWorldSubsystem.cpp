@@ -9,6 +9,7 @@
 #include "Unit/GridUnit.h"
 
 
+
 void UGridWorldSubsystem::RegisterGridTile(AGridTile* GridTile)
 {
 	if (IsValid(GridTile) && !GridTilesAll.Contains(GridTile))
@@ -142,6 +143,134 @@ void UGridWorldSubsystem::UpdateUnitMappingsAll()
 	{
 		UpdateUnitMapping(GridUnit);
 	}
+}
+
+AGridUnit* UGridWorldSubsystem::GetGridUnitOnTile(const AGridTile* GridTile) const
+{
+	if (GridTileLocationMap.Contains(GridTile))
+	{
+		if (LocationGridUnitMap.Contains(GridTileLocationMap[GridTile]))
+		{
+			return LocationGridUnitMap[GridTileLocationMap[GridTile]];
+		}
+	}
+
+	return nullptr;
+}
+
+AGridTile* UGridWorldSubsystem::GetGridTileOfUnit(const AGridUnit* GridUnit) const
+{
+	if (GridUnitLocationMap.Contains(GridUnit))
+	{
+		if (LocationGridTileMap.Contains(GridUnitLocationMap[GridUnit]))
+		{
+			return LocationGridTileMap[GridUnitLocationMap[GridUnit]];
+		}
+	}
+		
+	return nullptr;
+}
+
+TArray<AGridTile*> UGridWorldSubsystem::GetGridTilesAtRange(FGridPosition StartGridPosition, int32 Range)
+{
+	TArray<AGridTile*> Output;
+	TArray<FGridPosition> Temp;
+	UGridHelper::GetGridPositionsAtRange(StartGridPosition, Range, Temp);
+	for (FGridPosition GridLocation : Temp)
+	{
+		if (LocationGridTileMap.Contains(GridLocation))
+		{
+			Output.Add(LocationGridTileMap[GridLocation]);
+		}
+	}
+
+	return Output;
+}
+
+TArray<AGridTile*> UGridWorldSubsystem::GetGridTilesAtRanges(const FGridPosition StartGridPosition,
+	TArray<int32> Ranges)
+{
+	TSet UniqueRanges(Ranges);
+	for (const int32 Range : Ranges)
+	{
+		UniqueRanges.Add(FMath::Abs(Range));
+	}
+
+	TSet<AGridTile*> Output;
+	for (const int32 Range : UniqueRanges)
+	{
+		Output.Append(GetGridTilesAtRange(StartGridPosition, Range));
+	}
+
+	return Output.Array();
+}
+
+void UGridWorldSubsystem::CalculateGridMovement(TArray<FGridMovement>& OutMovement, const AGridUnit* GridUnit)
+{
+	if (!GridUnitLocationMap.Contains(GridUnit))
+	{
+		// GridUnit does not have a location...
+		UE_LOG(LogTemp, Error, TEXT("Grid unit does not have location!!"));
+		return;
+	}
+	
+	AGridTile* StartTile = LocationGridTileMap[GridUnitLocationMap[GridUnit]];    
+	if (!IsValid(StartTile))
+	{
+		// UE_LOG(LogTemp, Error, TEXT("Tile Actor At Location (X:%d, Y:%d) is null!!"), StartGridPosition.X, StartGridPosition.Y);
+		UE_LOG(LogTemp, Error, TEXT("No grid tile at unit location!!"));
+		return;
+	}
+
+	// for now just make sure it is clear, might want to add boolean to check to do this...
+	OutMovement.Empty();
+ 
+	// ALGORITHM
+	TSet<FGridMovement> Processed;
+	TQueue<FGridMovement> ProcessingQueue;
+	
+	FGridMovement StartNode;
+	StartNode.Cost = 0;
+	StartNode.GridTile = StartTile;    	
+	ProcessingQueue.Enqueue(StartNode);
+ 
+	FGridMovement Current;
+	while (!ProcessingQueue.IsEmpty())
+	{		
+		ProcessingQueue.Dequeue(Current);
+		Processed.Add(Current);
+    		
+		for (AGridTile* TargetTile : GetGridTilesAtRange(GridTileLocationMap[Current.GridTile], 1))
+		{
+			if (GetGridUnitOnTile(TargetTile)) { continue; }    	
+			const int32 CalculatedMovement = Current.Cost + TargetTile->GetMovementCost(); 
+			if (GridUnit->GetAvailableMovement() < CalculatedMovement)
+			{
+				continue;
+			}
+    			
+			FGridMovement Temp;
+			Temp.GridTile = TargetTile;
+			Temp.Cost = CalculatedMovement;
+			Temp.ParentTile = Current.GridTile;
+
+			if (!Processed.Contains(Temp))
+			{
+				ProcessingQueue.Enqueue(Temp);
+			}
+			else
+			{
+				FGridMovement* ProcessedCopy = Processed.Find(Temp);
+				if (Temp.Cost < ProcessedCopy->Cost)
+				{
+					Processed.Remove(*ProcessedCopy);
+					ProcessingQueue.Enqueue(Temp);
+				}
+			}	
+		}		
+	}
+	
+	OutMovement = Processed.Array();
 }
 
 void UGridWorldSubsystem::OnGridUnitAbilityActivated(UGameplayAbility* InGameplayAbility)

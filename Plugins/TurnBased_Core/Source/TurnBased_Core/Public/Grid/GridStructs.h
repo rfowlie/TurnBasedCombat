@@ -3,9 +3,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameplayTagContainer.h"
-#include "UObject/Object.h"
 #include "Unit/GridUnit.h"
+#include "UObject/Object.h"
 #include "GridStructs.generated.h"
 
 
@@ -76,13 +75,6 @@ struct TURNBASED_CORE_API FGridMovement
 	GENERATED_BODY()
 
 	FGridMovement() {}
-	// FGridMovement() : GridPosition(FGridPosition()), AvailableMovement(0) {}
-	// FGridMovement() : GridTile(nullptr), GridLocation(FGridPosition()), AvailableMovement(0) {}
-	// FGridMovement(const FGridPosition GridPositionVal, const int32 AvailableMovementVal) : GridTile(nullptr),
-	// 	GridLocation(GridPositionVal), AvailableMovement(AvailableMovementVal) {}
-	// FGridMovement(AATBGridTile* GridTileVal, const FGridPosition GridPositionVal, const int32 AvailableMovementVal) :
-	// 	GridTile(GridTileVal), GridLocation(GridPositionVal), AvailableMovement(AvailableMovementVal) {}
-	
 
 	UPROPERTY(BlueprintReadOnly)
 	TObjectPtr<AGridTile> GridTile = nullptr;
@@ -159,11 +151,7 @@ USTRUCT(BlueprintType)
 struct TURNBASED_CORE_API FGridPair
 {
 	GENERATED_BODY()
-
-	/*
-	 * LEARNING
-	 * Default constructors are mandatory for USTRUCTS???
-	 */
+	
 	FGridPair() {}
 	FGridPair(AGridTile* InGridTile, AGridUnit* InGridUnit) : GridTile(InGridTile), GridUnit(InGridUnit) {}
 	
@@ -174,7 +162,6 @@ struct TURNBASED_CORE_API FGridPair
 	AGridUnit* GridUnit = nullptr;
 	
 };
-
 
 USTRUCT(BlueprintType)
 struct TURNBASED_CORE_API FFactionInfo
@@ -234,5 +221,15 @@ struct TURNBASED_CORE_API FFactionInfo
 		}
 
 		return false;
+	}
+
+	AGridUnit* GetNextUnit(AGridUnit* InGridUnit) const
+	{
+		if (!GridUnits.Contains(InGridUnit)) { return InGridUnit; }
+		TArray<AGridUnit*> Keys;
+		GridUnits.GetKeys(Keys);
+		int32 Index = Keys.Find(InGridUnit);
+		Index = (Index + 1 + GridUnits.Num()) % GridUnits.Num();
+		return Keys[Index];
 	}
 };

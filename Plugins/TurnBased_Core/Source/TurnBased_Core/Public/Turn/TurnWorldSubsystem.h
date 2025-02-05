@@ -39,8 +39,12 @@ public:
 	int32 GetTurnNumber() const;
 
 	// faction
+	// UPROPERTY()
+	// TArray<FFactionInfo> Factions;
 	UPROPERTY()
-	TArray<FFactionInfo> Factions;
+	TMap<FGameplayTag, FFactionInfo> FactionMap;
+	UPROPERTY()
+	TArray<FGameplayTag> FactionOrder;	
 	UPROPERTY()
 	int32 FactionIndex = 0;
 	void IncrementFaction();
@@ -57,5 +61,6 @@ public:
 	bool RegisterGridUnit(AGridUnit* InGridUnit);
 	bool CanUnitTakeAction(const AGridUnit* InGridUnit);
 	int32 GetRemainingUnitActions();
+	AGridUnit* GetNextUnit(AGridUnit* InGridUnit);
 	
 };

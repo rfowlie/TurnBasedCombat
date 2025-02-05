@@ -21,7 +21,7 @@ class TURNBASEDCOMBAT_API UGridRules : public UObject
 
 public:
 	UFUNCTION()
-	bool UnitCanMoveOnTile(UGridManager* GridManager, AGridUnit* InUnit, AGridTile* StartTile, AGridTile* TargetTile);	
+	bool UnitCanMoveOnTile(UGridManager* GridManager, const AGridUnit* InUnit, const AGridTile* StartTile, const AGridTile* TargetTile);	
 
 	UFUNCTION()
 	int32 CalculateTerrainCost(UGridManager* GridManager, AGridUnit* InUnit, AGridTile* StartTile, AGridTile* TargetTile);

@@ -13,44 +13,44 @@ int32 UTurnWorldSubsystem::GetTurnNumber() const
 
 void UTurnWorldSubsystem::IncrementFaction()
 {
-	if (Factions.IsEmpty())
+	if (FactionMap.IsEmpty())
 	{
 		UE_LOG(LogTemp, Error, TEXT("Turn Manager - Increment Faction: no factions registered"));
 		return;
 	}
 	
-	if (FactionIndex + 1 < Factions.Num())
+	if (FactionIndex + 1 < FactionOrder.Num())
 	{
 		// not all factions finished for this turns
-		if (OnFactionEnd.IsBound()) { OnFactionEnd.Broadcast(Factions[FactionIndex].Tag); }
+		if (OnFactionEnd.IsBound()) { OnFactionEnd.Broadcast(FactionOrder[FactionIndex]); }
 		do {
 			FactionIndex++;
-		} while (Factions[FactionIndex].IsFactionDefeated());
-		if (OnFactionStart.IsBound()) { OnFactionStart.Broadcast(Factions[FactionIndex].Tag); }
-		Factions[FactionIndex].ActivateUnits();
+		} while (FactionMap[FactionOrder[FactionIndex]].IsFactionDefeated());
+		if (OnFactionStart.IsBound()) { OnFactionStart.Broadcast(FactionOrder[FactionIndex]); }
+		FactionMap[FactionOrder[FactionIndex]].ActivateUnits();
 	}
 	else
 	{
 		// all factions have finished for this turn, move to next turn
-		if (OnFactionEnd.IsBound()) { OnFactionEnd.Broadcast(Factions[FactionIndex].Tag); }
+		if (OnFactionEnd.IsBound()) { OnFactionEnd.Broadcast(FactionOrder[FactionIndex]); }
 		if (OnTurnEnd.IsBound()) { OnTurnEnd.Broadcast(TurnNumber); }
 		TurnNumber += 1;
 		if (OnTurnStart.IsBound()) { OnTurnStart.Broadcast(TurnNumber); }
 		FactionIndex = 0;
-		while (Factions[FactionIndex].IsFactionDefeated()) { FactionIndex++; }
-		if (OnFactionStart.IsBound()) { OnFactionStart.Broadcast(Factions[FactionIndex].Tag); }
-		Factions[FactionIndex].ActivateUnits();
+		while (FactionMap[FactionOrder[FactionIndex]].IsFactionDefeated()) { FactionIndex++; }
+		if (OnFactionStart.IsBound()) { OnFactionStart.Broadcast(FactionOrder[FactionIndex]); }
+		FactionMap[FactionOrder[FactionIndex]].ActivateUnits();
 	}
 }
 
 TArray<FGameplayTag> UTurnWorldSubsystem::GetAllFactions(const bool IncludeDefeated)
 {
 	TArray<FGameplayTag> OutFactions;
-	for (FFactionInfo FactionInfo : Factions)
+	for (auto Pair : FactionMap)
 	{
-		if (IncludeDefeated || !FactionInfo.IsFactionDefeated())
+		if (IncludeDefeated || !Pair.Value.IsFactionDefeated())
 		{
-			OutFactions.Add(FactionInfo.Tag);
+			OutFactions.Add(Pair.Key);
 		}
 	}
 
@@ -59,54 +59,32 @@ TArray<FGameplayTag> UTurnWorldSubsystem::GetAllFactions(const bool IncludeDefea
 
 bool UTurnWorldSubsystem::IsFactionValid(const FGameplayTag FactionTag) const
 {
-	for (FFactionInfo FactionInfo : Factions)
-	{
-		if (FactionInfo.Tag.MatchesTagExact(FactionTag))
-		{
-			return true;
-		}
-	}
-
-	return false;
+	return FactionMap.Contains(FactionTag);
 }
 
 FGameplayTag UTurnWorldSubsystem::GetActiveFaction()
 {
-	if (Factions.IsEmpty()) { return FGameplayTag(); }
-	return Factions[FactionIndex].Tag;
+	return FactionOrder[FactionIndex];
 }
 
 bool UTurnWorldSubsystem::IsFactionActive(const FGameplayTag FactionTag)
 {
-	if (Factions.IsEmpty()) { return false; }
-	return Factions[FactionIndex].Tag.MatchesTagExact(FactionTag);
+	return FactionOrder[FactionIndex].MatchesTagExact(FactionTag);
 }
 
 bool UTurnWorldSubsystem::IsFactionDefeated(const FGameplayTag FactionTag)
 {
-	for (FFactionInfo FactionInfo : Factions)
-	{
-		if (FactionInfo.Tag.MatchesTagExact(FactionTag))
-		{
-			return FactionInfo.IsFactionDefeated();
-		}
-	}
-
-	UE_LOG(LogTemp, Error, TEXT("Turn World Subsystem - Is Faction Defeated: faction not registered"));
-	return false;
+	return FactionMap[FactionTag].IsFactionDefeated();
 }
 
 void UTurnWorldSubsystem::CheckFactionDefeated(AGridUnit* GridUnit)
 {
-	for (FFactionInfo FactionInfo : Factions)
+	for (auto Pair : FactionMap)
 	{
-		if (FactionInfo.Tag.MatchesTagExact(GridUnit->Execute_GetFaction(GridUnit)))
+		if (Pair.Value.GridUnits.Contains(GridUnit))
 		{
-			if (FactionInfo.IsFactionDefeated())
-			{
-				if (OnFactionDefeated.IsBound()) { OnFactionDefeated.Broadcast(FactionInfo.Tag); }
-				break;
-			}
+			if (OnFactionDefeated.IsBound()) { OnFactionDefeated.Broadcast(Pair.Key); }
+			break;
 		}
 	}
 }
@@ -115,44 +93,49 @@ bool UTurnWorldSubsystem::RegisterGridUnit(AGridUnit* InGridUnit)
 {
 	if (!IsValid(InGridUnit)) { return false; }
 
-	FGameplayTag FactionTag = InGridUnit->Execute_GetFaction(InGridUnit);
-	bool FactionFound = false;
-	for (FFactionInfo& FactionInfo : Factions)
-	{
-		if (FactionInfo.Tag.MatchesTagExact(FactionTag))
-		{
-			FactionInfo.GridUnits.Add(InGridUnit);
-			FactionFound = true;
-			break;
-		}
-	}
-	if (!FactionFound)
-	{
-		FFactionInfo FactionInfo;
-		FactionInfo.Tag = FactionTag;
-		FactionInfo.GridUnits.Add(InGridUnit);
-		Factions.Add(FactionInfo);	
-	}
-
 	// check faction defeated when unit defeated
 	InGridUnit->OnDefeat.AddDynamic(this, &ThisClass::CheckFactionDefeated);
+	
+	FGameplayTag FactionTag = InGridUnit->Execute_GetFaction(InGridUnit);
+	if (FactionMap.Contains(FactionTag))
+	{
+		FactionMap[FactionTag].GridUnits.Add(InGridUnit);
+	}
+	else
+	{
+		FFactionInfo FactionInfo;
+		FactionInfo.GridUnits.Add(InGridUnit);
+		FactionMap.Add(FactionTag, FactionInfo);
+	}
+	
 	return true;
 }
 
 bool UTurnWorldSubsystem::CanUnitTakeAction(const AGridUnit* InGridUnit)
 {
 	// if not units factions turn, then should not be able to take action
-	FGameplayTag InGridUnitFaction = InGridUnit->Execute_GetFaction(InGridUnit);
-	if (!Factions[FactionIndex].Tag.MatchesTagExact(InGridUnitFaction)) { return false; }
-	if (!Factions[FactionIndex].GridUnits.Contains(InGridUnit))
-	{
-		UE_LOG(LogTemp, Error, TEXT("Turn World Subsystem - Can Unit Take Action: unit not registered"));
-		return false;
-	}
-	return Factions[FactionIndex].GridUnits[InGridUnit];
+	FGameplayTag FactionTag = InGridUnit->Execute_GetFaction(InGridUnit);
+	if (!FactionOrder[FactionIndex].MatchesTagExact(FactionTag)) { return false; }
+	return FactionMap[FactionTag].GridUnits[InGridUnit];
 }
 
 int32 UTurnWorldSubsystem::GetRemainingUnitActions()
 {
-	return Factions[FactionIndex].GetActiveUnitsCount();
+	return FactionMap[FactionOrder[FactionIndex]].GetActiveUnitsCount();
+}
+
+// this should be a generic next unit
+AGridUnit* UTurnWorldSubsystem::GetNextUnit(AGridUnit* InGridUnit)
+{
+	const FGameplayTag FactionTag = InGridUnit->Execute_GetFaction(InGridUnit);
+	return FactionMap[FactionTag].GetNextUnit(InGridUnit);
+	// // if unit that cannot take turn is passed in, return first unit of faction that is active
+	// if (!FactionOrder[FactionIndex].MatchesTagExact(FactionTag))
+	// {
+	// 	TArray<AGridUnit*> Keys;
+	// 	FactionMap[FactionOrder[FactionIndex]].GridUnits.GetKeys(Keys);
+	// 	return Keys[0];
+	// }
+	//
+	// return FactionMap[FactionOrder[FactionIndex]].GetNextUnit(InGridUnit);
 }

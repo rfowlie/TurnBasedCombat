@@ -6,7 +6,7 @@
 #include "Tile/GridTile.h"
 
 
-bool UGridRules::UnitCanMoveOnTile(UGridManager* GridManager, AGridUnit* InUnit, AGridTile* StartTile, AGridTile* TargetTile)
+bool UGridRules::UnitCanMoveOnTile(UGridManager* GridManager, const AGridUnit* InUnit, const AGridTile* StartTile, const AGridTile* TargetTile)
 {
 	// TODO: setup rules for what units can move on to what tiles, if units can move through tiles occupied by other units
 	return GridManager->GetGridUnitOnTile(TargetTile) == nullptr;
