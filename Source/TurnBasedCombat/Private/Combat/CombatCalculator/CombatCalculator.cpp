@@ -5,8 +5,8 @@
 
 #include "Combat/CombatCalculator/WeaponSolver.h"
 #include "Grid/Manager/GridManager.h"
-#include "Grid/Tile/GridTile.h"
-#include "Grid/Unit/GridUnit.h"
+#include "Tile/GridTile.h"
+#include "Unit/GridUnit.h"
 
 
 void UCombatCalculator::SetEnabled() const

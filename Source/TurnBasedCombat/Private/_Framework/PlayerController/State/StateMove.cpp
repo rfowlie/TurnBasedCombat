@@ -133,7 +133,6 @@ void UStateMove::OnSelect()
 			GridProxyCurrent->UndoAll();
 			GridProxyCurrent = GridProxy;
 			GridProxyCurrent->SetMoveableTiles(true);
-			// GridProxyCurrent->SetState(TAG_Grid_State_Moveable);
 		}
 		// check if moveable tile selected
 		else if (GridProxyCurrent != GridProxy && GridProxyCurrent->CanMoveToo(GridProxy))
@@ -141,7 +140,6 @@ void UStateMove::OnSelect()
 			if (GridProxyMoveTo) { GridProxyMoveTo->UndoAll(); }
 			GridProxyMoveTo = GridProxy;
 			GridProxyMoveTo->SetMoveToTile(true);
-			// GridProxyCurrent->SetState(TAG_Grid_State_MoveTo);
 			Phase = EMovePhase::SelectedMoveTile;
 			SetPhase(TAG_Encounter_Mode_Move_SelectedMoveTile);
 		}
@@ -245,4 +243,7 @@ void UStateMove::Disable()
 {
 	UE_LOG(LogTemp, Warning, TEXT("UStateMove - Disable"));
 	Phase = EMovePhase::None;
+	// SetPhase(TAG_Encounter_Mode_Move_Idle);
+	if (GridProxyCurrent) { GridProxyCurrent->UndoAll(); }
+	if (GridProxyMoveTo) { GridProxyMoveTo->UndoAll(); }
 }

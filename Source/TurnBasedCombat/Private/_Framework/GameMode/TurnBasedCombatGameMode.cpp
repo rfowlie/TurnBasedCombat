@@ -4,7 +4,7 @@
 #include "Engine/StaticMeshActor.h"
 #include "Grid/Manager/GridRules.h"
 #include "Grid/Manager/TurnManager.h"
-#include "Grid/Tile/GridTile.h"
+#include "Tile/GridTile.h"
 #include "TurnBasedCombat/Public/EventSystem/EventSystem.h"
 #include "TurnBasedCombat/Public/Grid/Manager/GridManager.h"
 #include "TurnBasedCombat/Public/_Framework/PlayerController/TurnBasedCombatPlayerController.h"
@@ -93,6 +93,8 @@ void ATurnBasedCombatGameMode::BeginPlay()
 	StaticMeshComponent->SetMobility(EComponentMobility::Movable);
 	StaticMeshComponent->SetAffectDistanceFieldLighting(false);
 	StaticMeshComponent->SetAffectDynamicIndirectLighting(false);
+	// TODO: better way to do this???
+	StaticMeshComponent->SetWorldScale3D(FVector(2.f, 2.f, 1.f));
 
 	// TODO: HACKYYY
 	// for now wait a few seconds then fire onstart
@@ -144,16 +146,9 @@ void ATurnBasedCombatGameMode::OnWinConditionReceived(EWinConditionType InWinCon
 	if (OnCombatDisable.IsBound()) { OnCombatDisable.Broadcast(); }
 	// notify everything that condition met
 	if (OnCombatOver.IsBound()) { OnCombatOver.Broadcast(InWinCondition); }
-	
-	// TODO: what other things will need to happen internally???
-	if (InWinCondition == Win)
-	{
-		UE_LOG(LogTemp, Error, TEXT("Win Condition: Win"));
-	}
-	else if (InWinCondition == Defeat)
-	{
-		UE_LOG(LogTemp, Error, TEXT("Win Condition: Defeat"));
-	}	
+
+	// allow BP logic to do things...
+	ExternalOnWinConditionRecieved(InWinCondition);
 }
 
 void ATurnBasedCombatGameMode::HandleStartingNewPlayer_Implementation(APlayerController* NewPlayer)

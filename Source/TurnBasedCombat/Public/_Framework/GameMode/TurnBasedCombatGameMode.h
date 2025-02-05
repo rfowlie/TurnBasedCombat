@@ -6,6 +6,7 @@
 #include "GameFramework/GameModeBase.h"
 #include "Grid/Manager/GridManager.h"
 #include "WinCondition_Abstract.h"
+#include "ConditionalOutcomes.h"
 #include "TurnBasedCombatGameMode.generated.h"
 
 
@@ -22,6 +23,7 @@ class UGridRules;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FTurnBasedCombat_Events);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FTurnBasedCombat_TileHovered, const AGridTile*, GridTile);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FTurnBasedCombat_UnitHovered, const AGridUnit*, GridUnit);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FGameModeComplete, bool, Success);
 // DECLARE_EVENT(ATurnBasedCombatGameMode, FGridEvent);
 
 /**
@@ -37,10 +39,20 @@ class TURNBASEDCOMBAT_API ATurnBasedCombatGameMode : public AGameModeBase
 	
 public:
 	ATurnBasedCombatGameMode();
-
 	virtual void BeginPlay() override;
-
+	
+	// IN USE???
 	UEventSystem* GetEventSystem();
+
+	// GameMode Level Conditions ~ start
+	// THIS IS HACK BUT MY BRAIN IS FRIED, JUST MAKE IT WORK
+	UFUNCTION(BlueprintCallable)
+	void SetGameModeComplete(const bool Success) const { if (OnGameModeComplete.IsBound()) { OnGameModeComplete.Broadcast(Success); } };
+	UPROPERTY(BlueprintAssignable)
+	FGameModeComplete OnGameModeComplete;
+	
+	// GameMode Level Conditions ~ end
+	
 
 	// GameMode Interface ~ start
 	UPROPERTY(BlueprintAssignable)
@@ -88,11 +100,17 @@ protected:
 	// win condition ~ start
 	UPROPERTY(Instanced, EditDefaultsOnly)
 	UWinCondition_Abstract* WinCondition;
+	
+	UFUNCTION(BlueprintImplementableEvent)
+	void ExternalOnWinConditionRecieved(EWinConditionType InWinCondition);
+	
+private:
 	UFUNCTION()
 	void OnWinConditionReceived(EWinConditionType InWinCondition);
 	
 public:
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FTurnBasedCombatOver, EWinConditionType, ConditionType);
+	UPROPERTY(BlueprintAssignable)
 	FTurnBasedCombatOver OnCombatOver;
 	// win condition ~ end
 

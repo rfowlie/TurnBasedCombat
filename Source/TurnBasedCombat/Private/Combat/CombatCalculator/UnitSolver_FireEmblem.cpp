@@ -6,8 +6,8 @@
 #include "Combat/CombatCalculator/CombatCalculatorData.h"
 #include "Combat/CombatCalculator/WeaponSolver.h"
 #include "Grid/Manager/GridManager.h"
-#include "Grid/Tile/GridTile.h"
-#include "Grid/Unit/GridUnit.h"
+#include "Tile/GridTile.h"
+#include "Unit/GridUnit.h"
 
 UUnitSolver_FireEmblem::UUnitSolver_FireEmblem()
 {

@@ -29,17 +29,6 @@ public:
 
 	DECLARE_DELEGATE_OneParam(FOnEventCreate, TArray<UAbstractEvent*> FWorldPartitionEvents);
 	FOnEventCreate OnEventCreate;
-
-	///////////////////////////////////////////////////////////////////
-	// UFUNCTION()
-	// virtual void OnSelect();
-	//
-	// UFUNCTION()
-	// virtual void OnDeselect();
-	//
-	// // determine when it makes sense to cycle through ally units when in this mode
-	// UFUNCTION()
-	// virtual void OnCycleUnit();
 	
 	UFUNCTION()
 	void Enter(APlayerController* PlayerController, const int32 InputMappingContextPriority);

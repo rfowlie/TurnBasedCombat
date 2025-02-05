@@ -6,17 +6,19 @@
 #include "UObject/Object.h"
 #include "Grid/GridProxy.h"
 #include "Grid/GridStructs.h"
-#include "Grid/Unit/GridUnit.h"
 #include "GridManager.generated.h"
 
 
 class UGameplayAbility;
 class UTurnManager;
 class AGridTile;
+class AGridUnit;
 class UGridRules;
 
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Event_Grid_Move);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Event_Grid_Attack);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Event_Grid_Damage);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Event_Grid_Death);
 
 // DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FDisplayTile, UTerrainDataAsset*, DataAsset, FTileStatsSnapshot, Snapshot, const FName, TerrainType);
 // TODO: do not pass GridProxy, create new class or interface to pass out
@@ -60,8 +62,18 @@ public:
 	
 	FGridManagerDelegate OnGridEventStart;
 	FGridManagerDelegate OnGridEventEnd;
+	// TArray<TPair<AGridUnit*, UGameplayAbility*>> GridUnitsTakingActions;
+	TArray<TPair<AActor*, UGameplayAbility*>> GridUnitsTakingActions;
+	UFUNCTION()
+	void OnGridUnitAbilityActivated(UGameplayAbility* InGameplayAbility);
+	UFUNCTION()
+	void OnGridUnitAbilityEnded(UGameplayAbility* InGameplayAbility);
+	// UFUNCTION()
+	// void OnGridUnitAbilityActivated(UGameplayAbility* InGameplayAbility, AGridUnit* InGridUnit);
+	// UFUNCTION()
+	// void OnGridUnitAbilityEnded(UGameplayAbility* InGameplayAbility, AGridUnit* InGridUnit);
 
-	// TODO: determine best way to do this
+	// this is hacky...
 	bool IsMatch(const UGridProxy* GridProxy_A, const UGridProxy* GridProxy_B);
 
 protected:
@@ -93,6 +105,7 @@ protected:
 
 	void UpdateTileMapping(AGridTile* GridTile);
 	void UpdateUnitMapping(AGridUnit* GridUnit);
+	void UpdateUnitMappingsAll();
 	
 public:
 	AGridUnit* GetGridUnitOnTile(const AGridTile* GridTile) const
@@ -126,7 +139,6 @@ protected:
 	void CalculateGridMovement(TArray<FGridMovement>& OutMovement, AGridUnit* GridUnit);
 	void CalculateGridAttacks(TArray<const AGridUnit*> OutGridUnitsInRange, AGridUnit* GridUnit);
 	TArray<FGridPair> CalculateGridAttacks(AGridUnit* GridUnit);
-	TArray<FTargetingUnit> CalculateGridTargets(AGridUnit* GridUnit);
 	void GetEnemyUnits(TArray<AGridUnit*>& EnemyGridUnits, AGridUnit* GridUnit);
 	TArray<FGridPosition> GetEnemyPositions(const AGridUnit* GridUnit) const;
 	

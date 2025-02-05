@@ -8,19 +8,19 @@
 #include "Combat/CombatCalculator/CombatCalculator.h"
 #include "Combat/CombatCalculator/MoveAbility.h"
 #include "Combat/CombatCalculator/MoveAbilityPayload.h"
-#include "Grid/GridUtility.h"
+#include "Grid/GridHelper.h"
 #include "Grid/GridStructs.h"
-#include "Grid/Event/GridEventPayload_Move.h"
 #include "Grid/Manager/TurnManager.h"
-#include "Grid/Manager/GridEventPayload.h"
 #include "Grid/Manager/GridRules.h"
-#include "TurnBasedCombat/Public/Grid/Tile/GridTile.h"
-#include "TurnBasedCombat/Public/Grid/Unit/GridUnit.h"
+#include "Tile/GridTile.h"
+#include "Unit/GridUnit.h"
 #include "_Framework/TBC_InfoWorldSubsystem.h"
 
 
 UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Grid_Move, "Event.Grid.Move");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Grid_Attack, "Event.Grid.Attack");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Grid_Damage, "Event.Grid.Damage");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Grid_Death, "Event.Grid.Death");
 
 
 UGridManager::UGridManager()
@@ -44,7 +44,7 @@ void UGridManager::RegisterGridTile(AGridTile* GridTile)
 		GridTilesAll.AddUnique(GridTile);
 		
 		// add to map
-		FGridPosition GridPosition = UGridUtility::CalculateGridPosition(GridTile);
+		FGridPosition GridPosition = UGridHelper::CalculateGridPosition(GridTile);
 		LocationGridTileMap.Add(GridPosition, GridTile);
 		GridTileLocationMap.Add(GridTile, GridPosition);
 		
@@ -60,7 +60,7 @@ void UGridManager::RegisterGridUnit(AGridUnit* GridUnit)
 		GridUnitsAll.AddUnique(GridUnit);
 		
 		// add to map
-		FGridPosition GridPosition = UGridUtility::CalculateGridPosition(GridUnit);
+		FGridPosition GridPosition = UGridHelper::CalculateGridPosition(GridUnit);
 		
 		// TODO: why the double map???
 		LocationGridUnitMap.Add(GridPosition, GridUnit);
@@ -68,14 +68,32 @@ void UGridManager::RegisterGridUnit(AGridUnit* GridUnit)
 		
 		// add to turn manager
 		TurnManager->RegisterGridUnit(GridUnit);
+
+		// GridUnit->GetAbilitySystemComponent()->AbilityActivatedCallbacks.AddLambda([this, GridUnit](const FAbilityEndedData& Data)
+		// {
+		// 	if (Data.AbilitySpecHandle == GridUnit->GameplayAbilitySpecHandle_Move)
+		// 	{
+		// 		PostEvent_Move(GridUnit);
+		// 	}
+		// });
+
+		// whenever a unit does something, add it to the active units list
+		// GridUnit->GetAbilitySystemComponent()->AbilityActivatedCallbacks.AddUObject(
+		// 	this, &ThisClass::OnGridUnitAbilityActivated, GridUnit);
+		// GridUnit->GetAbilitySystemComponent()->AbilityEndedCallbacks.AddUObject(
+		// 	this, &ThisClass::OnGridUnitAbilityEnded, GridUnit);
+		GridUnit->GetAbilitySystemComponent()->AbilityActivatedCallbacks.AddUObject(
+			this, &ThisClass::OnGridUnitAbilityActivated);
+		GridUnit->GetAbilitySystemComponent()->AbilityEndedCallbacks.AddUObject(
+			this, &ThisClass::OnGridUnitAbilityEnded);
 		
-		GridUnit->GetAbilitySystemComponent()->OnAbilityEnded.AddLambda([this, GridUnit](const FAbilityEndedData& Data)
-		{
-			if (Data.AbilitySpecHandle == GridUnit->GameplayAbilitySpecHandle_Move)
-			{
-				PostEvent_Move(GridUnit);
-			}
-		});
+		// GridUnit->GetAbilitySystemComponent()->OnAbilityEnded.AddLambda([this, GridUnit](const FAbilityEndedData& Data)
+		// {
+		// 	if (Data.AbilitySpecHandle == GridUnit->GameplayAbilitySpecHandle_Move)
+		// 	{
+		// 		PostEvent_Move(GridUnit);
+		// 	}
+		// });
 	}
 }
 
@@ -228,17 +246,12 @@ void UGridManager::CreateAttackEvent(UGridProxy* Instigator, UGridProxy* Target,
 	}
 	
 	// broadcast event starting
-	if (OnGridEventStart.IsBound())
-	{
-		OnGridEventStart.Broadcast();
-	}
-
-	// IS THIS BETTER THAN WHAT WE ARE DOING IN ONREGISTER???
-	// subscribe to end event and notify grid unit to move
-	Instigator->GridUnit->OnEventAttackEnd.AddUniqueDynamic(this, &ThisClass::PostEvent_Attack);
-
-	// TODO: use a gameplay event instead
-	// Instigator->GridUnit->AttackEvent(Location->GridTile->GetPlacementLocation(), Target->GridUnit);
+	// if (OnGridEventStart.IsBound())
+	// {
+	// 	OnGridEventStart.Broadcast();
+	// }
+	//
+	// Instigator->GridUnit->OnEventAttackEnd.AddUniqueDynamic(this, &ThisClass::PostEvent_Attack);
 
 	// TODO: try and activate through gameplay event instead of this current way...
 	// create gameplay event information
@@ -254,7 +267,8 @@ void UGridManager::CreateAttackEvent(UGridProxy* Instigator, UGridProxy* Target,
 	TArray<AGridTile*> Tiles;
 	Tiles.Add(Location->GridTile);
 	FGameplayEventData EventData;
-	EventData.Instigator = Instigator->GridUnit;	
+	EventData.Instigator = Instigator->GridUnit;
+	EventData.Target = Target->GridUnit;
 	EventData.OptionalObject = UMoveAbilityPayload::Create(Tiles);
 	if (UTBC_InfoWorldSubsystem* Subsystem = GetWorld()->GetSubsystem<UTBC_InfoWorldSubsystem>())
 	{
@@ -302,6 +316,92 @@ void UGridManager::OnEndEvent() const
 	}	
 }
 
+void UGridManager::OnGridUnitAbilityActivated(UGameplayAbility* InGameplayAbility)
+{
+	// not current actions being taken therefore fire event
+	if (GridUnitsTakingActions.IsEmpty())
+	{
+		if (OnGridEventStart.IsBound()) { OnGridEventStart.Broadcast(); }
+	}
+	
+	TPair<AActor*, UGameplayAbility*> AbilityPair;
+	AbilityPair.Key = InGameplayAbility->GetAvatarActorFromActorInfo();
+	AbilityPair.Value = InGameplayAbility;
+	GridUnitsTakingActions.Add(AbilityPair);
+
+	UE_LOG(LogTemp, Log, TEXT("On Grid Unit Ability Activated: %d"), GridUnitsTakingActions.Num());
+}
+
+void UGridManager::OnGridUnitAbilityEnded(UGameplayAbility* InGameplayAbility)
+{
+	TPair<AActor*, UGameplayAbility*> FoundPair;
+	for (TPair<AActor*, UGameplayAbility*> Pair : GridUnitsTakingActions)
+	{
+		if (Pair.Key == InGameplayAbility->GetAvatarActorFromActorInfo() && Pair.Value == InGameplayAbility)
+		{
+			FoundPair = Pair;
+			break;
+		}
+	}
+	
+	if (FoundPair.Key == InGameplayAbility->GetAvatarActorFromActorInfo() && FoundPair.Value == InGameplayAbility)
+	{
+		GridUnitsTakingActions.Remove(FoundPair);
+
+		// if this array is empty then no units are taking actions and it is safe to return PC control
+		if (GridUnitsTakingActions.IsEmpty())
+		{
+			UpdateUnitMappingsAll();
+			if (OnGridEventEnd.IsBound())
+			{
+				OnGridEventEnd.Broadcast();
+			}
+
+			UE_LOG(LogTemp, Log, TEXT("On Grid Unit Ability Ended: no more units taking actions"));
+		}
+	}
+	else
+	{
+		UE_LOG(LogTemp, Log, TEXT("On Grid Unit Ability Ended: %d"), GridUnitsTakingActions.Num());
+	}
+}
+// void UGridManager::OnGridUnitAbilityActivated(UGameplayAbility* InGameplayAbility, AGridUnit* InGridUnit)
+// {
+// 	TPair<AGridUnit*, UGameplayAbility*> AbilityPair;
+// 	AbilityPair.Key = InGridUnit;
+// 	AbilityPair.Value = InGameplayAbility;
+// 	GridUnitsTakingActions.Add(AbilityPair);
+// }
+//
+// void UGridManager::OnGridUnitAbilityEnded(UGameplayAbility* InGameplayAbility, AGridUnit* InGridUnit)
+// {
+// 	GetAvatarActorFromActorInfo
+// 	TPair<AGridUnit*, UGameplayAbility*> FoundPair;
+// 	for (TPair<AGridUnit*, UGameplayAbility*> Pair : GridUnitsTakingActions)
+// 	{
+// 		if (Pair.Key == InGridUnit && Pair.Value == InGameplayAbility) // Check for a specific key
+// 		{
+// 			FoundPair = Pair;
+// 			break;
+// 		}
+// 	}
+//
+// 	// extra check, for now...
+// 	if (FoundPair.Key == InGridUnit && FoundPair.Value == InGameplayAbility)
+// 	{
+// 		GridUnitsTakingActions.Remove(FoundPair);
+//
+// 		// if this array is empty then no units are taking actions and it is safe to return PC control
+// 		if (GridUnitsTakingActions.IsEmpty())
+// 		{
+// 			if (OnGridEventEnd.IsBound())
+// 			{
+// 				OnGridEventEnd.Broadcast();
+// 			}	
+// 		}
+// 	}
+// }
+
 bool UGridManager::IsMatch(const UGridProxy* GridProxy_A, const UGridProxy* GridProxy_B)
 {
 	bool bMatch_Tile = GridProxy_A->GridTile == GridProxy_B->GridTile;
@@ -334,7 +434,7 @@ void UGridManager::OnBeginCursorOverGridTile(AActor* Actor)
 		}
 
 		// TODO: simplify this with better tile/unit setup or grid proxy
-		const FGridPosition GridPosition = UGridUtility::CalculateGridPosition(CurrentHoveredTile);
+		const FGridPosition GridPosition = UGridHelper::CalculateGridPosition(CurrentHoveredTile);
 		if (LocationGridUnitMap.Contains(GridPosition))
 		{
 			CurrentHoveredUnit = LocationGridUnitMap[GridPosition];
@@ -361,9 +461,17 @@ void UGridManager::UpdateUnitMapping(AGridUnit* GridUnit)
 	GridUnitLocationMap.Remove(GridUnit);
 
 	// update the unit that has moved	
-	const FGridPosition GridPosition = UGridUtility::CalculateGridPosition(GridUnit);
+	const FGridPosition GridPosition = UGridHelper::CalculateGridPosition(GridUnit);
 	LocationGridUnitMap.Add(GridPosition, GridUnit);
 	GridUnitLocationMap.Add(GridUnit, GridPosition);
+}
+
+void UGridManager::UpdateUnitMappingsAll()
+{
+	for (AGridUnit* GridUnit : GridUnitsAll)
+	{
+		UpdateUnitMapping(GridUnit);
+	}
 }
 
 void UGridManager::CalculateGridMovement(TArray<FGridMovement>& OutMovement, AGridUnit* GridUnit)
@@ -588,8 +696,8 @@ void UGridManager::CalculateGridAttacks(TArray<const AGridUnit*> OutGridUnitsInR
 		for (const int32 WeaponRange : WeaponRanges)
 		{
 			TempPositions.Empty();
-			UGridUtility::GetGridPositionsAtRange(
-				UGridUtility::CalculateGridPosition(EnemyUnit), WeaponRange, TempPositions);
+			UGridHelper::GetGridPositionsAtRange(
+				UGridHelper::CalculateGridPosition(EnemyUnit), WeaponRange, TempPositions);
 			for (FGridPosition RangePosition : TempPositions)
 			{
 				if (MovementMap.Contains(RangePosition) && MovementMap[RangePosition] == false)
@@ -625,8 +733,8 @@ TArray<FGridPair> UGridManager::CalculateGridAttacks(AGridUnit* GridUnit)
 		for (const int32 WeaponRange : WeaponRanges)
 		{
 			TempPositions.Empty();
-			UGridUtility::GetGridPositionsAtRange(
-				UGridUtility::CalculateGridPosition(EnemyUnit), WeaponRange, TempPositions);
+			UGridHelper::GetGridPositionsAtRange(
+				UGridHelper::CalculateGridPosition(EnemyUnit), WeaponRange, TempPositions);
 			for (FGridPosition RangePosition : TempPositions)
 			{
 				if (MovementMap.Contains(RangePosition) && MovementMap[RangePosition] == false)
@@ -641,107 +749,6 @@ TArray<FGridPair> UGridManager::CalculateGridAttacks(AGridUnit* GridUnit)
 	}
 	
 	return OutGridPairs;
-}
-
-TArray<FTargetingUnit> UGridManager::CalculateGridTargets(AGridUnit* GridUnit)
-{
-	// first round filter
-		// find valid moveable tiles that can target enemies
-		// for each valid tile, 
-
-
-
-
-	//////////////////////////
-	TArray<FTargetingUnit> UnitsBeingTargeted;
-	
-	TMap<int32, TSet<AGridTile*>> RangeTileMap;
-	TSet<int32> WeaponRanges = GridUnit->GetWeaponRanges();
-	TArray<FGridPosition> EnemyPositions = GetEnemyPositions(GridUnit);
-	TArray<FGridMovement> GridMovements;
-	CalculateGridMovement(GridMovements, GridUnit);
-	TMap<FGridPosition, bool> MovementMap;
-	// TMap<FGridPosition, TArray<int32>> SuccessMap;
-	for (const auto GridMovement : GridMovements)
-	{
-		MovementMap.Add(GridTileLocationMap[GridMovement.GridTile], false);
-	}
-
-	TArray<FGridPosition> TempPositions;
-	for (const FGridPosition EnemyPosition : EnemyPositions)
-	{
-		for (const int32 WeaponRange : WeaponRanges)
-		{
-			UGridUtility::GetGridPositionsAtRange(EnemyPosition, WeaponRange, TempPositions);
-			for (FGridPosition RangePosition : TempPositions)
-			{
-				if (MovementMap.Contains(RangePosition))
-				{
-					MovementMap[RangePosition] = true;
-					// if (!SuccessMap.Contains(RangePosition))
-					// {
-					// 	SuccessMap.Add(RangePosition, TArray<int32>());						
-					// }
-					//
-					// SuccessMap[RangePosition].AddUnique(WeaponRange);
-				}
-			}
-		}
-		
-	}
-
-	return TArray<FTargetingUnit>();
-
-
-
-	///////////////////////////////////////////////////////////
-	// GWS->GetUnitGridMovement(ActiveUnit, SelectedUnitGridMovement);
-
-	// only test against tiles that have units not on the same team
-	// auto GridTilesWithUnits = GWS->GetGridTilesWithUnitsByTeam(ActiveUnit, false);
-
-	// for (auto GridTileWithUnit : GridTilesWithUnits)
-	// {
-	// 	FTargetingUnit TargetingUnit;
-	// 	TargetingUnit.GridTile = GridTileWithUnit;
-	// 	
-	// 	auto TempGridPosition = GWS->CalculateGridPosition(GridTileWithUnit);
-	// 	for (auto Range : WeaponRanges)
-	// 	{
-	// 		for (auto GridTileAtRange : GWS->GetGridTilesAtRange(TempGridPosition, Range))
-	// 		{
-	// 			for (auto UnitMovementTile : SelectedUnitGridMovement)
-	// 			{
-	// 				if (UnitMovementTile.GridTile == GridTileAtRange)
-	// 				{
-	// 					if (TargetingUnit.RangeMap.Contains(Range))
-	// 					{
-	// 						TargetingUnit.RangeMap[Range].AddUnique(UnitMovementTile.GridTile);
-	// 					}
-	// 					else
-	// 					{
-	// 						TargetingUnit.RangeMap.Add(Range, TArray<TSoftObjectPtr<AATBGridTile>>());
-	// 						TargetingUnit.RangeMap[Range].AddUnique(UnitMovementTile.GridTile);
-	// 					}
-	// 				}
-	// 			}
-	// 		}
-	// 	}
-	//
-	// 	// only add if there are tiles in range
-	// 	if (!TargetingUnit.RangeMap.IsEmpty())
-	// 	{
-	// 		UnitsBeingTargeted.Add(TargetingUnit);
-	// 	}
-	// }
-	//
-	// // highlight all attackable units
-	// for (auto TargetingUnit : UnitsBeingTargeted)
-	// {
-	// 	TargetingUnit.GridTile->SetGridTileTagState(TAG_Grid_State_Attackable);
-	// }
-	//
-	// return UnitsBeingTargeted;
 }
 
 void UGridManager::GetEnemyUnits(TArray<AGridUnit*>& EnemyGridUnits, AGridUnit* GridUnit)
@@ -763,7 +770,7 @@ TArray<FGridPosition> UGridManager::GetEnemyPositions(const AGridUnit* GridUnit)
 	{
 		if (GridUnit->Execute_GetFaction(GridUnit) != Unit->Execute_GetFaction(Unit))
 		{
-			Positions.AddUnique(UGridUtility::CalculateGridPosition(Unit));
+			Positions.AddUnique(UGridHelper::CalculateGridPosition(Unit));
 		}		
 	}
 	
@@ -774,7 +781,7 @@ TArray<AGridTile*> UGridManager::GetGridTilesAtRange(FGridPosition StartGridPosi
 {
 	TArray<AGridTile*> Output;
 	TArray<FGridPosition> Temp;
-	UGridUtility::GetGridPositionsAtRange(StartGridPosition, Range, Temp);
+	UGridHelper::GetGridPositionsAtRange(StartGridPosition, Range, Temp);
 	for (FGridPosition GridLocation : Temp)
 	{
 		if (LocationGridTileMap.Contains(GridLocation))
