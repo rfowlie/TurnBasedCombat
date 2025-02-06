@@ -29,53 +29,20 @@ UControllerState_UnitSelected* UControllerState_UnitSelected::Create(AGridUnit* 
 	return Object;
 }
 
-void UControllerState_UnitSelected::OnEnter(APlayerController* PlayerController, const int32 InInputMappingContextPriority)
+void UControllerState_UnitSelected::OnEnter(APlayerController* InPlayerController, const int32 InInputMappingContextPriority)
 {
-	Super::OnEnter(PlayerController, InInputMappingContextPriority);
+	Super::OnEnter(InPlayerController, InInputMappingContextPriority);
 
-	// get selected unit, calculate movement and set tiles to CanMove or CanAttack state
-	bool bSuccess = false;
-	if (UGridWorldSubsystem* Subsystem = GetWorld()->GetSubsystem<UGridWorldSubsystem>())
-	{
-		SelectedUnit = Subsystem->GetGridUnitSelected();
-		if (IsValid(SelectedUnit))
-		{
-			Subsystem->CalculateGridMovement(GridMovements, SelectedUnit);
-			for (auto GridMovement : GridMovements)
-			{
-				if (AGridUnit* GridUnit = Subsystem->GetGridUnitOnTile(GridMovement.GridTile))
-				{
-					GridUnit->SetState(TAG_TBCore_Grid_Tile_CanAttack);
-					GridMovement.GridTile.Get()->SetState(TAG_TBCore_Grid_Tile_CanAttack);
-				}
-				else
-				{
-					GridMovement.GridTile.Get()->SetState(TAG_TBCore_Grid_Tile_CanMove);
-				}
-			}
-
-			if (IsPlayerUnit)
-			{
-				// cache starting tile
-				SelectedUnitTile = Subsystem->GetGridTileOfUnit(SelectedUnit);
-
-				// bind to on tile hovered to enable moving the character around
-				Subsystem->OnGridTileHoveredStart.AddUniqueDynamic(this, &ThisClass::MoveSelectedTarget);				
-			}
-
-			bSuccess = true;
-		}
-	}
-
-	if (!bSuccess) { OnChangedDelegate.Execute(UControllerState_Idle::Create()); }
+	// if (!bSuccess) { OnChangedDelegate.Execute(UControllerState_Idle::Create()); }
+	if (!SetMovementTiles()) { PlayerController->PopState(); }
 }
 
-void UControllerState_UnitSelected::OnExit(const APlayerController* PlayerController)
+void UControllerState_UnitSelected::OnExit()
 {
-	Super::OnExit(PlayerController);
+	Super::OnExit();
 
 	// revert tiles back to
-	if (UGridWorldSubsystem* Subsystem = GetWorld()->GetSubsystem<UGridWorldSubsystem>())
+	if (UGridWorldSubsystem* Subsystem = PlayerController->GetWorld()->GetSubsystem<UGridWorldSubsystem>())
 	{
 		for (auto GridMovement : GridMovements)
 		{
@@ -86,16 +53,19 @@ void UControllerState_UnitSelected::OnExit(const APlayerController* PlayerContro
 			
 			GridMovement.GridTile.Get()->SetState(TAG_TBCore_Grid_State_Idle);
 		}
-	}
-
-	if (IsPlayerUnit)
-	{
-		// move selected target back to original location
-		SelectedUnit->SetActorLocation(SelectedUnitTile->GetPlacementLocation());
-	}	
+		
+		if (IsPlayerUnit)
+		{
+			// stop cursor follow
+			Subsystem->OnGridTileHoveredStart.RemoveDynamic(this, &ThisClass::MoveSelectedTarget);
+			
+			// move selected target back to original location
+			SelectedUnit->SetActorLocation(SelectedUnitTile->GetPlacementLocation());
+		}
+	}		
 }
 
-UInputMappingContext* UControllerState_UnitSelected::CreateInputMappingContext(APlayerController* PlayerController)
+UInputMappingContext* UControllerState_UnitSelected::CreateInputMappingContext()
 {
 	UEnhancedInputComponent* EIC = Cast<UEnhancedInputComponent>(PlayerController->InputComponent);
 	check(EIC)
@@ -125,7 +95,7 @@ UInputMappingContext* UControllerState_UnitSelected::CreateInputMappingContext(A
 // TODO: this is a mess right now
 void UControllerState_UnitSelected::OnSelect()
 {
-	if (UGridWorldSubsystem* GridSubsystem = GetWorld()->GetSubsystem<UGridWorldSubsystem>())
+	if (UGridWorldSubsystem* GridSubsystem = PlayerController->GetWorld()->GetSubsystem<UGridWorldSubsystem>())
 	{
 		AGridTile* SelectedGridTile = GridSubsystem->GetGridTileHovered();
 
@@ -145,11 +115,15 @@ void UControllerState_UnitSelected::OnSelect()
 			// check if a different unit is selected
 			if (AGridUnit* UnitOnTile = GridSubsystem->GetGridUnitOnTile(SelectedGridTile))
 			{
-				if (UTurnWorldSubsystem* TurnSubsystem = GetWorld()->GetSubsystem<UTurnWorldSubsystem>())
+				if (UTurnWorldSubsystem* TurnSubsystem = PlayerController->GetWorld()->GetSubsystem<UTurnWorldSubsystem>())
 				{
 					// TODO: need to decide how we want to handle selecting player/enemy unit
-					OnChangedDelegate.Execute(UControllerState_UnitSelected::Create(
-						UnitOnTile, TurnSubsystem->CanUnitTakeAction(UnitOnTile)));
+					// OnChangedDelegate.Execute(UControllerState_UnitSelected::Create(
+					// 	UnitOnTile, TurnSubsystem->CanUnitTakeAction(UnitOnTile)));
+
+					// this will ensure that the movement tiles are not removed when moving to next state
+					PlayerController->PushState(UControllerState_UnitSelected::Create(
+						UnitOnTile, TurnSubsystem->CanUnitTakeAction(UnitOnTile)), false);
 				
 				}
 			}
@@ -159,31 +133,77 @@ void UControllerState_UnitSelected::OnSelect()
 
 void UControllerState_UnitSelected::OnDeselect()
 {
-	OnChangedDelegate.Execute(UControllerState_Idle::Create());
+	PlayerController->PopState();
 }
 
 void UControllerState_UnitSelected::OnCycleUnit()
 {
 	// get next unit from turn manager
-	if (UTurnWorldSubsystem* Subsystem = GetWorld()->GetSubsystem<UTurnWorldSubsystem>())
+	if (UTurnWorldSubsystem* Subsystem = PlayerController->GetWorld()->GetSubsystem<UTurnWorldSubsystem>())
 	{
 		// if unit not the same then shift
 		AGridUnit* CycleUnit = Subsystem->GetNextUnit(SelectedUnit);
 		if (CycleUnit != SelectedUnit)
 		{			
-			OnChangedDelegate.Execute(UControllerState_UnitSelected::Create(CycleUnit, IsPlayerUnit));
+			// OnChangedDelegate.Execute(UControllerState_UnitSelected::Create(CycleUnit, IsPlayerUnit));
+
+			OnExit();
+			SelectedUnit = CycleUnit;
+			SetMovementTiles();
 		}
-		else
-		{
-			// TODO: have camera focus on selected unit
-		}
+		
+		// TODO: have camera focus on selected unit
 	}
+}
+
+bool UControllerState_UnitSelected::SetMovementTiles()
+{
+	bool bSuccess = false;
+	if (IsValid(SelectedUnit))
+	{
+		if (UGridWorldSubsystem* Subsystem = PlayerController->GetWorld()->GetSubsystem<UGridWorldSubsystem>())
+		{
+			Subsystem->CalculateGridMovement(GridMovements, SelectedUnit);
+			for (auto GridMovement : GridMovements)
+			{
+				if (AGridUnit* GridUnit = Subsystem->GetGridUnitOnTile(GridMovement.GridTile))
+				{
+					GridUnit->SetState(TAG_TBCore_Grid_Tile_CanAttack);
+					GridMovement.GridTile.Get()->SetState(TAG_TBCore_Grid_Tile_CanAttack);
+				}
+				else
+				{
+					GridMovement.GridTile.Get()->SetState(TAG_TBCore_Grid_Tile_CanMove);
+				}
+			}
+
+			if (IsPlayerUnit)
+			{
+				// cache starting tile
+				SelectedUnitTile = Subsystem->GetGridTileOfUnit(SelectedUnit);
+
+				// bind to on tile hovered to enable moving the character around
+				Subsystem->OnGridTileHoveredStart.AddUniqueDynamic(this, &ThisClass::MoveSelectedTarget);				
+			}
+
+			bSuccess = true;
+		}			
+	}
+
+	return bSuccess;
 }
 
 void UControllerState_UnitSelected::MoveSelectedTarget(AGridTile* InGridTile)
 {
 	if (IsValid(InGridTile))
 	{
-		SelectedUnit->SetActorLocation(InGridTile->GetPlacementLocation());
+		for (FGridMovement GridMovement : GridMovements)
+		{
+			if (GridMovement.GridTile == InGridTile)
+			{
+				SelectedUnit->SetActorLocation(InGridTile->GetPlacementLocation());
+				break;
+			}
+		}		
 	}
 }

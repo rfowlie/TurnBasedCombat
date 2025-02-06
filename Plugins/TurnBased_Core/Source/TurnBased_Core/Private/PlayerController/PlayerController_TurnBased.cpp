@@ -2,16 +2,28 @@
 
 
 #include "PlayerController/PlayerController_TurnBased.h"
+#include "Engine/StaticMeshActor.h"
+#include "Grid/GridWorldSubsystem.h"
 #include "PlayerController/ControllerState_Abstract.h"
 #include "PlayerController/ControllerState_Idle.h"
+#include "Tile/GridTile.h"
 
 
 void APlayerController_TurnBased::BeginPlay()
 {
 	Super::BeginPlay();
 
+	// create cursor
+	CreateCursor();
+	
+	// bind cursor update to grid tile hovered
+	if (UGridWorldSubsystem* Subsystem = GetWorld()->GetSubsystem<UGridWorldSubsystem>())
+	{
+		Subsystem->OnGridTileHoveredStart.AddUniqueDynamic(this, &ThisClass::UpdateCursor);
+	}
+
 	// create initial state idle
-	SetState(NewObject<UControllerState_Idle>());
+	PushState(NewObject<UControllerState_Idle>(), false);
 }
 
 APlayerController_TurnBased::APlayerController_TurnBased()
@@ -24,16 +36,78 @@ APlayerController_TurnBased::APlayerController_TurnBased()
 	bEnableTouchEvents = false;
 }
 
-void APlayerController_TurnBased::SetState(UControllerState_Abstract* InState)
+void APlayerController_TurnBased::CreateCursor()
 {
-	if (InState == nullptr) { return; }
-	if (State)
-	{
-		State->OnExit(this);
-		State->OnChangedDelegate.Unbind();
-	}
-	State = InState;
-	State->OnChangedDelegate.BindUObject(this, &ThisClass::SetState);
-	State->OnEnter(this, 2);
-	if (StateBroadcastDelegate.IsBound()) { StateBroadcastDelegate.Broadcast(State->GetStateTag()); }
+	const auto SpawnTransform = FTransform::Identity;
+	FActorSpawnParameters SpawnParameters;
+	SpawnParameters.Name = TEXT("FUCKING CURSOR");
+	SpawnParameters.Owner = this;
+	Cursor = GetWorld()->SpawnActor(AStaticMeshActor::StaticClass(), &SpawnTransform, SpawnParameters);
+	UStaticMeshComponent* StaticMeshComponent = Cast<AStaticMeshActor>(Cursor)->GetStaticMeshComponent();
+	StaticMeshComponent->SetStaticMesh(CursorMesh);
+	StaticMeshComponent->SetMobility(EComponentMobility::Movable);
+	StaticMeshComponent->SetAffectDistanceFieldLighting(false);
+	StaticMeshComponent->SetAffectDynamicIndirectLighting(false);
+	// TODO: better way to do this???
+	StaticMeshComponent->SetWorldScale3D(FVector(2.f, 2.f, 1.f));
 }
+
+void APlayerController_TurnBased::UpdateCursor(AGridTile* GridTile)
+{
+	Cursor->SetActorLocation(GridTile->GetActorLocation() + Cursor_ExtraHeight);
+}
+
+void APlayerController_TurnBased::SetBaseState(UControllerState_Abstract* InState)
+{
+	while(!StateStack.IsEmpty())
+	{
+		auto State = StateStack.Pop();
+		State->OnExit();
+	}
+
+	PushState(InState, false);
+}
+
+void APlayerController_TurnBased::PushState(UControllerState_Abstract* InState, bool bDoExit)
+{
+	// InState->OnNewState.BindUObject(this, &ThisClass::SetNewState);
+	// InState->OnPushState.BindUObject(this, &ThisClass::PushState);
+	// InState->OnPopState.BindUObject(this, &ThisClass::PopState);
+	if (bDoExit && !StateStack.IsEmpty())
+	{
+		StateStack.Top()->OnExit();
+	}
+	else
+	{
+		// disable input from this state
+		StateStack.Top()->OnDisable();
+	}
+	
+	InState->OnEnter(this, 2);
+	StateStack.Push(InState);
+}
+
+void APlayerController_TurnBased::PopState()
+{
+	auto State = StateStack.Pop();
+	// State->OnNewState.Unbind();
+	// State->OnPushState.Unbind();
+	// State->OnPopState.Unbind();
+	State->OnExit();
+	// restart the now top state
+	StateStack.Top()->OnEnter(this, 2);
+}
+
+// void APlayerController_TurnBased::SetState(UControllerState_Abstract* InState)
+// {
+// 	// if (InState == nullptr) { return; }
+// 	// if (State)
+// 	// {
+// 	// 	State->OnExit();
+// 	// 	State->OnChangedDelegate.Unbind();
+// 	// }
+// 	// State = InState;
+// 	// State->OnChangedDelegate.BindUObject(this, &ThisClass::SetState);
+// 	// State->OnEnter(this, 2);
+// 	// if (StateBroadcastDelegate.IsBound()) { StateBroadcastDelegate.Broadcast(State->GetStateTag()); }
+// }

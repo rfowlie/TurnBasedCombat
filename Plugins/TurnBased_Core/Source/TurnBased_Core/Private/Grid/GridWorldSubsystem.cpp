@@ -23,6 +23,8 @@ void UGridWorldSubsystem::RegisterGridTile(AGridTile* GridTile)
 		
 		// bind to events
 		GridTile->OnBeginCursorOver.AddDynamic(this, &ThisClass::OnBeginCursorOverGridTile);
+
+		UE_LOG(LogTemp, Log, TEXT("GridWorldSubsystem - RegisterGridTile: %s"), *GridTile->GetName());
 	}
 }
 

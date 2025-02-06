@@ -20,7 +20,20 @@ class TURNBASED_CORE_API UTurnWorldSubsystem : public UWorldSubsystem
 {
 	GENERATED_BODY()
 
+	UPROPERTY()
+	bool TurnsActive = false;
+	
 public:
+	// flow control
+	UFUNCTION(BlueprintCallable)
+	void BeginTurns();
+	
+	UFUNCTION(BlueprintCallable)
+	void EnableTurns();
+	
+	UFUNCTION(BlueprintCallable)
+	void DisableTurns();
+	
 	// events
 	UPROPERTY(BlueprintAssignable, Category="Turn Based | Turn")
 	FTurnChangedDelegate OnTurnStart;

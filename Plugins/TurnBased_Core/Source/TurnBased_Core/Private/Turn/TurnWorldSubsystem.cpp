@@ -2,9 +2,41 @@
 
 
 #include "Turn/TurnWorldSubsystem.h"
-
 #include "Grid/GridStructs.h"
 
+
+void UTurnWorldSubsystem::BeginTurns()
+{
+	if (TurnNumber == 0)
+	{
+		TurnNumber += 1;
+		if (OnTurnStart.IsBound()) { OnTurnStart.Broadcast(TurnNumber); }
+
+		FactionIndex = 0;
+		if (OnFactionStart.IsBound()) { OnFactionStart.Broadcast(FactionOrder[FactionIndex]); }
+		FactionMap[FactionOrder[FactionIndex]].ActivateUnits();
+	}
+}
+
+void UTurnWorldSubsystem::EnableTurns()
+{
+	if (TurnNumber == 0)
+	{
+		TurnNumber += 1;
+		if (OnTurnStart.IsBound()) { OnTurnStart.Broadcast(TurnNumber); }
+
+		FactionIndex = 0;
+		if (OnFactionStart.IsBound()) { OnFactionStart.Broadcast(FactionOrder[FactionIndex]); }
+		FactionMap[FactionOrder[FactionIndex]].ActivateUnits();
+	}
+	
+	TurnsActive = true;
+}
+
+void UTurnWorldSubsystem::DisableTurns()
+{
+	TurnsActive = false;
+}
 
 int32 UTurnWorldSubsystem::GetTurnNumber() const
 {
@@ -18,6 +50,9 @@ void UTurnWorldSubsystem::IncrementFaction()
 		UE_LOG(LogTemp, Error, TEXT("Turn Manager - Increment Faction: no factions registered"));
 		return;
 	}
+
+	// do not allow changes if paused...
+	if (!TurnsActive) { return; }
 	
 	if (FactionIndex + 1 < FactionOrder.Num())
 	{
@@ -106,6 +141,7 @@ bool UTurnWorldSubsystem::RegisterGridUnit(AGridUnit* InGridUnit)
 		FFactionInfo FactionInfo;
 		FactionInfo.GridUnits.Add(InGridUnit);
 		FactionMap.Add(FactionTag, FactionInfo);
+		FactionOrder.Add(FactionTag);
 	}
 	
 	return true;

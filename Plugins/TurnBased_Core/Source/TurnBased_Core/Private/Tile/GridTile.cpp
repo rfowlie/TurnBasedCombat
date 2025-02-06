@@ -52,10 +52,7 @@ void AGridTile::BeginPlay()
 	Super::BeginPlay();
 
 	UGridTileUtility::RegisterGridTile(this);
-	// if (ATurnBasedCombatGameMode* GameMode = Cast<ATurnBasedCombatGameMode>(GetWorld()->GetAuthGameMode()))
-	// {
-	// 	GameMode->RegisterGridTile(this);
-	// }
+	
 }
 
 void AGridTile::NotifyActorBeginCursorOver()

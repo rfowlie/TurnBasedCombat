@@ -28,11 +28,11 @@ public:
 		AGridUnit* InSelectedUnit,
 		bool IsPlayerUnit);
 
-	virtual void OnEnter(APlayerController* PlayerController, const int32 InInputMappingContextPriority) override;
-	virtual void OnExit(const APlayerController* PlayerController) override;
+	virtual void OnEnter(APlayerController* InPlayerController, const int32 InInputMappingContextPriority) override;
+	virtual void OnExit() override;
 
 protected:
-	virtual UInputMappingContext* CreateInputMappingContext(APlayerController* PlayerController) override;
+	virtual UInputMappingContext* CreateInputMappingContext() override;
 
 	UPROPERTY()
 	UInputAction* InputAction_Select = nullptr;
@@ -58,6 +58,9 @@ protected:
 	UPROPERTY()
 	TArray<FGridMovement> GridMovements;
 
+	UFUNCTION()
+	bool SetMovementTiles();
+	
 	UFUNCTION()
 	void MoveSelectedTarget(AGridTile* InGridTile);
 	

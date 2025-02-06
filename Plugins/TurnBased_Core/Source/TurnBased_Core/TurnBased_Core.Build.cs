@@ -30,7 +30,8 @@ public class TurnBased_Core : ModuleRules
 				"EnhancedInput",
 				"GameplayTags",
 				"GameplayAbilities",
-				"GameplayTasks"
+				"GameplayTasks",
+				"UMG"
 			}
 			);
 			

@@ -69,10 +69,11 @@ public:
 	TMap<FGridPosition, AGridTile*> LocationGridTileMap;
 	UPROPERTY()
 	AGridTile* GridTileHovered = nullptr;
+	UFUNCTION(BlueprintCallable)
 	AGridTile* GetGridTileHovered() const { return GridTileHovered; }
 	UPROPERTY()
 	AGridTile* GridTileSelected = nullptr;
-	AGridTile* GetGridTileSelected() const { return GridTileSelected; }
+	// AGridTile* GetGridTileSelected() const { return GridTileSelected; }
 	
 	void UpdateTileMapping(AGridTile* GridTile);
 	void UpdateTileMappingsAll();
@@ -86,10 +87,11 @@ public:
 	TMap<FGridPosition, AGridUnit*> LocationGridUnitMap;
 	UPROPERTY()
 	AGridUnit* GridUnitHovered = nullptr;
+	UFUNCTION(BlueprintCallable)
 	AGridUnit* GetGridUnitHovered() const { return GridUnitHovered; }
 	UPROPERTY()
 	AGridUnit* GridUnitSelected = nullptr;
-	AGridUnit* GetGridUnitSelected() const { return GridUnitSelected; }
+	// AGridUnit* GetGridUnitSelected() const { return GridUnitSelected; }
 	
 	void UpdateUnitMapping(AGridUnit* GridUnit);
 	void UpdateUnitMappingsAll();
