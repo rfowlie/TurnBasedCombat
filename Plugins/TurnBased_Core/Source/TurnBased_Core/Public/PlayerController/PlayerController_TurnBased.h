@@ -29,17 +29,17 @@ protected:
 public:
 	APlayerController_TurnBased();
 
-	UPROPERTY(BlueprintAssignable, Category="TurnBased | PlayerController")
+	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category="TurnBased | PlayerController")
 	FControllerStateBroadcastDelegate StateBroadcastDelegate;
 
 	// Cursor ~ start
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Cursor")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "TurnBased | Cursor")
 	TObjectPtr<UStaticMesh> CursorMesh;
 	
-	UPROPERTY()
+	UPROPERTY(BlueprintReadOnly, Category = "TurnBased | Cursor")
 	TObjectPtr<AActor> Cursor;
 	
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Cursor")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "TurnBased | Cursor")
 	FVector Cursor_ExtraHeight = FVector(0.f, 0.f, 5.f);
 
 protected:
@@ -51,24 +51,18 @@ protected:
 public:
 	// State ~ start
 	// walk backwards through array and do exit for each state, then push new state
-	UFUNCTION()
+	UFUNCTION(BlueprintCallable, Category="TurnBased | State")
 	void SetBaseState(UControllerState_Abstract* InState);
 	
-	UFUNCTION()
+	UFUNCTION(BlueprintCallable, Category="TurnBased | State")
 	void PushState(UControllerState_Abstract* InState, bool bDoExit);
 
-	UFUNCTION()
+	UFUNCTION(BlueprintCallable, Category="TurnBased | State")
 	void PopState();
 	
 protected:
 	UPROPERTY()
 	TArray<UControllerState_Abstract*> StateStack;
 	// State ~ end
-
-public:
-	// Widget ~ start
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom UI")
-	TSubclassOf<UWidget_ActionOptions> ActionWidgetClass;
-	// Widget ~ end
 	
 };

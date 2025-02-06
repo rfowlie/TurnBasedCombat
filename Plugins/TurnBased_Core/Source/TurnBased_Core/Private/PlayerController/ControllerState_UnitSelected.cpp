@@ -9,6 +9,7 @@
 #include "TurnBased_Core_Tags.h"
 #include "Grid/GridWorldSubsystem.h"
 #include "PlayerController/ControllerState_Idle.h"
+#include "PlayerController/ControllerState_UnitChooseAction.h"
 #include "Tile/GridTile.h"
 #include "Turn/TurnWorldSubsystem.h"
 #include "Unit/GridUnit.h"
@@ -105,8 +106,9 @@ void UControllerState_UnitSelected::OnSelect()
 			{
 				if (GridMovement.GridTile.Get() == SelectedGridTile)
 				{
-					// TODO: show some sort of UI to allow move confirmation
-					// should this go to another state???
+					// stop cursor follow
+					GridSubsystem->OnGridTileHoveredStart.RemoveDynamic(this, &ThisClass::MoveSelectedTarget);
+					PlayerController->PushState(UControllerState_UnitChooseAction::Create(SelectedUnit), false);
 				}
 			}
 		}
@@ -123,8 +125,7 @@ void UControllerState_UnitSelected::OnSelect()
 
 					// this will ensure that the movement tiles are not removed when moving to next state
 					PlayerController->PushState(UControllerState_UnitSelected::Create(
-						UnitOnTile, TurnSubsystem->CanUnitTakeAction(UnitOnTile)), false);
-				
+						UnitOnTile, TurnSubsystem->CanUnitTakeAction(UnitOnTile)), true);
 				}
 			}
 		}		

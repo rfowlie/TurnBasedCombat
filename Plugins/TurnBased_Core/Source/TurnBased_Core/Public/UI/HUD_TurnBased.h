@@ -19,12 +19,13 @@ class TURNBASED_CORE_API AHUD_TurnBased : public AHUD
 {
 	GENERATED_BODY()
 
-public:	
-	// UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
-	// UWidget_ActionOptions* ActivateActionOptions(AGridUnit* TargetUnit, TArray<FGameplayTag> ActionTags);
+public:
+	AHUD_TurnBased();
 	
 	UFUNCTION(BlueprintImplementableEvent)
-	UWidget_ActionOptions* ActivateAction(AGridUnit* TargetUnit, TArray<FGameplayTag> ActionTags);
+	UWidget_ActionOptions* ActivateActionOptionsWidget(AGridUnit* TargetUnit, const TArray<FGameplayTag>& ActionTags);
+	UFUNCTION(BlueprintImplementableEvent)
+	UWidget_ActionOptions* RemoveActionOptionsWidget();
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = UI)

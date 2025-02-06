@@ -70,17 +70,17 @@ void APlayerController_TurnBased::SetBaseState(UControllerState_Abstract* InStat
 
 void APlayerController_TurnBased::PushState(UControllerState_Abstract* InState, bool bDoExit)
 {
-	// InState->OnNewState.BindUObject(this, &ThisClass::SetNewState);
-	// InState->OnPushState.BindUObject(this, &ThisClass::PushState);
-	// InState->OnPopState.BindUObject(this, &ThisClass::PopState);
-	if (bDoExit && !StateStack.IsEmpty())
+	if (!StateStack.IsEmpty())
 	{
-		StateStack.Top()->OnExit();
-	}
-	else
-	{
-		// disable input from this state
-		StateStack.Top()->OnDisable();
+		if (bDoExit)
+		{
+			StateStack.Top()->OnExit();
+		}
+		else
+		{
+			// disable input from this state
+			StateStack.Top()->OnDisable();
+		}
 	}
 	
 	InState->OnEnter(this, 2);
@@ -90,24 +90,8 @@ void APlayerController_TurnBased::PushState(UControllerState_Abstract* InState, 
 void APlayerController_TurnBased::PopState()
 {
 	auto State = StateStack.Pop();
-	// State->OnNewState.Unbind();
-	// State->OnPushState.Unbind();
-	// State->OnPopState.Unbind();
 	State->OnExit();
+	
 	// restart the now top state
 	StateStack.Top()->OnEnter(this, 2);
 }
-
-// void APlayerController_TurnBased::SetState(UControllerState_Abstract* InState)
-// {
-// 	// if (InState == nullptr) { return; }
-// 	// if (State)
-// 	// {
-// 	// 	State->OnExit();
-// 	// 	State->OnChangedDelegate.Unbind();
-// 	// }
-// 	// State = InState;
-// 	// State->OnChangedDelegate.BindUObject(this, &ThisClass::SetState);
-// 	// State->OnEnter(this, 2);
-// 	// if (StateBroadcastDelegate.IsBound()) { StateBroadcastDelegate.Broadcast(State->GetStateTag()); }
-// }

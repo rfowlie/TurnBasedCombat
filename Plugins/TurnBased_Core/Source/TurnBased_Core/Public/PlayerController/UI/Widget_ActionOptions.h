@@ -20,14 +20,14 @@ class TURNBASED_CORE_API UWidget_ActionOptions : public UUserWidget
 	GENERATED_BODY()
 
 public:	
-	UPROPERTY(BlueprintAssignable)
+	UPROPERTY(BlueprintAssignable, BlueprintCallable)
 	FWidgetActionOptionDelegate OnInitiate;
 	
-	UPROPERTY(BlueprintAssignable)
+	UPROPERTY(BlueprintAssignable, BlueprintCallable)
 	FWidgetActionOptionDelegate OnComplete;
 
 	// actions
-	UPROPERTY(BlueprintAssignable)
+	UPROPERTY(BlueprintAssignable, BlueprintCallable)
 	FWidgetActionSelectedDelegate OnActionSelected;
 	
 	// UPROPERTY(BlueprintAssignable)

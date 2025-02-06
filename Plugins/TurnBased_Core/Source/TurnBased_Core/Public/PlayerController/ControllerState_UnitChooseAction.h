@@ -8,6 +8,7 @@
 #include "ControllerState_UnitChooseAction.generated.h"
 
 
+class UInputAction;
 class AGridUnit;
 class UWidget_ActionOptions;
 
@@ -38,14 +39,11 @@ protected:
 	UFUNCTION()
 	void OnActionSelected(FGameplayTag ActionTag);
 
-private:
-	TArray<FGameplayTag> GetActionTags() {
-		TArray<FGameplayTag> OutTags;
-		// OutTags.Add(TAG_TBCore_Action_Move);
-		OutTags.Add(TAG_TBCore_Action_Attack);
-		OutTags.Add(TAG_TBCore_Action_Skill);
-		OutTags.Add(TAG_TBCore_Action_Item);
-		return OutTags;
-	};
+	virtual UInputMappingContext* CreateInputMappingContext() override;
 
+	UPROPERTY()
+	UInputAction* InputAction_Deselect = nullptr;
+	UFUNCTION()
+	void OnDeselect();
+	
 };

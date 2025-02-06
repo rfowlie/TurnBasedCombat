@@ -103,7 +103,7 @@ public:
 	UStatsDataAsset* StatsDataAsset;	
 
 	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
-	void SetState(FGameplayTag State);
+	void SetState(const FGameplayTag& State);
 	
 	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
 	bool SetHovered(bool IsHovered);

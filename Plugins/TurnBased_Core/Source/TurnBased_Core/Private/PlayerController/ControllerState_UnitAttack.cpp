@@ -2,6 +2,8 @@
 
 
 #include "PlayerController/ControllerState_UnitAttack.h"
+
+#include "TurnBased_Core_Tags.h"
 #include "Unit/GridUnit.h"
 
 
@@ -20,6 +22,9 @@ void UControllerState_UnitAttack::OnEnter(APlayerController* InPlayerController,
 	const int32 InInputMappingContextPriority)
 {
 	Super::OnEnter(InPlayerController, InInputMappingContextPriority);
+
+	// testing
+	ActiveUnit->SetState(TAG_TBCore_Grid_Tile_CanAttack);
 
 	// show selected units half of combat UI
 	// show all tiles that can be attacked with equipped weapon
