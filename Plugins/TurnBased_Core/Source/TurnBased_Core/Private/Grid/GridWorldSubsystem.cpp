@@ -6,6 +6,7 @@
 #include "GameFramework/Actor.h"
 #include "Grid/GridHelper.h"
 #include "Tile/GridTile.h"
+#include "Turn/TurnWorldSubsystem.h"
 #include "Unit/GridUnit.h"
 
 
@@ -189,8 +190,8 @@ TArray<AGridTile*> UGridWorldSubsystem::GetGridTilesAtRange(FGridPosition StartG
 	return Output;
 }
 
-TArray<AGridTile*> UGridWorldSubsystem::GetGridTilesAtRanges(const FGridPosition StartGridPosition,
-	TArray<int32> Ranges)
+TArray<AGridTile*> UGridWorldSubsystem::GetGridTilesAtRanges(
+	const FGridPosition StartGridPosition, TArray<int32> Ranges)
 {
 	TSet UniqueRanges(Ranges);
 	for (const int32 Range : Ranges)
@@ -274,6 +275,81 @@ void UGridWorldSubsystem::CalculateGridMovement(TArray<FGridMovement>& OutMoveme
 	
 	OutMovement = Processed.Array();
 }
+
+void UGridWorldSubsystem::CalculateGridAttacks(
+	TArray<FGridPair>& OutGridPairs, AGridUnit* GridUnit, const TArray<FGridMovement>& InGridMovements)
+{
+	if (!IsValid(GridUnit)) { return; }
+
+	// get enemy info
+	TArray<AGridUnit*> EnemyGridUnits;
+	if (UTurnWorldSubsystem* TurnSubsystem = GetWorld()->GetSubsystem<UTurnWorldSubsystem>())
+	{
+		TurnSubsystem->GetFactionEnemies(GridUnit, EnemyGridUnits);
+	}
+	TArray<FGridPosition> EnemyPositions;
+	for (auto Unit : EnemyGridUnits)
+	{
+		EnemyPositions.Add(UGridHelper::CalculateGridPosition(Unit));
+	}
+
+	// unit info
+	TMap<int32, TSet<AGridTile*>> RangeTileMap;
+	TSet<int32> WeaponRanges = GridUnit->GetWeaponRanges();
+	TMap<FGridPosition, bool> MovementMap;
+	for (const auto GridMovement : InGridMovements)
+	{
+		MovementMap.Add(GridTileLocationMap[GridMovement.GridTile], false);
+	}
+
+	TArray<FGridPosition> TempPositions;
+	for (AGridUnit* EnemyUnit : EnemyGridUnits)
+	{
+		for (const int32 WeaponRange : WeaponRanges)
+		{
+			TempPositions.Empty();
+			UGridHelper::GetGridPositionsAtRange(
+				UGridHelper::CalculateGridPosition(EnemyUnit), WeaponRange, TempPositions);
+			for (FGridPosition RangePosition : TempPositions)
+			{
+				if (MovementMap.Contains(RangePosition) && MovementMap[RangePosition] == false)
+				{
+					MovementMap[RangePosition] = true;
+					// find the tile that matches with this unit					
+					OutGridPairs.Add(
+						FGridPair(LocationGridTileMap[GridUnitLocationMap[EnemyUnit]], EnemyUnit));
+				}
+			}
+		}		
+	}
+}
+
+// calculate attack tiles for a single enemy unit
+// TODO: we could make this more robust and have specific rules around weapon types and ranges, etc.
+void UGridWorldSubsystem::CalculateGridAttackTiles(TMap<AGridTile*, int32>& OutWeaponPositions,
+	const TArray<FGridMovement>& InGridMovements, const AGridUnit* InstigatorUnit, const AGridUnit* TargetUnit)
+{
+	if (!IsValid(InstigatorUnit) || !IsValid(TargetUnit)) { return; }
+
+	AGridTile* TargetTile = GetGridTileOfUnit(TargetUnit);
+	for (auto WeaponRange : InstigatorUnit->GetWeaponRanges())
+	{
+		TArray<FGridPosition> OutWeaponRangePositions;
+		UGridHelper::GetGridPositionsAtRange(UGridHelper::CalculateGridPosition(InstigatorUnit), WeaponRange, OutWeaponRangePositions);
+		for (const FGridPosition GridPosition : OutWeaponRangePositions)
+		{
+			for (auto GridMovement : InGridMovements)
+			{
+				if (GridTileLocationMap[GridMovement.GridTile] == GridPosition)
+				{
+					OutWeaponPositions.Add(LocationGridTileMap[GridPosition], WeaponRange);
+				}
+			}
+		}
+	}
+	
+}
+
 
 void UGridWorldSubsystem::OnGridUnitAbilityActivated(UGameplayAbility* InGameplayAbility)
 {

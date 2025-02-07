@@ -3,9 +3,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "CombatCalculatorData.h"
 #include "GameplayTagContainer.h"
-#include "WeaponSolver.h"
+#include "Combat/CombatData.h"
 #include "Tile/GridTile.h"
 #include "UObject/Object.h"
 #include "CombatCalculator.generated.h"
@@ -76,7 +75,7 @@ protected:
 	int32 CalculateAvoid(AGridUnit* Unit, AGridTile* Tile) const;
 	int32 CalculateCriticalRate(AGridUnit* Unit, FWeaponTraits& WeaponTraits) const;
 	int32 CalculateCriticalAvoid(AGridUnit* Unit, AGridTile* Tile) const;
-	void CalculateCombatSnapshot_Internal(FUnitCombatSnapshot& OutSnapshot, AGridUnit* Unit);
+	void CalculateCombatSnapshot_Internal(FCombatSnapshot_Basic& OutSnapshot, AGridUnit* Unit);
 	
 	UFUNCTION(BlueprintImplementableEvent)
 	void GetWeapon(FWeaponTraits& WeaponTraits, FGameplayTag Weapon) const;
@@ -92,29 +91,29 @@ protected:
 	UPROPERTY()
 	AGridTile* TargetTile;
 	UPROPERTY()
-	FUnitCombatSnapshot InstigatorSnapshot;
+	FCombatSnapshot_Basic InstigatorSnapshot;
 	UPROPERTY()
-	FUnitCombatSnapshot TargetSnapshot;
+	FCombatSnapshot_Basic TargetSnapshot;
 
 public:
 	void SetGridManager(UGridManager* InGridManager) { GridManager = InGridManager; }
 	// for now... maybe later convert to tags???
 	UFUNCTION(BlueprintCallable, Category="CombatCalculator")
-	const FUnitCombatSnapshot& GetCombatSnapshotInstigator() const { return InstigatorSnapshot; }
+	const FCombatSnapshot_Basic& GetCombatSnapshotInstigator() const { return InstigatorSnapshot; }
 	UFUNCTION(BlueprintCallable, Category="CombatCalculator")
-	const FUnitCombatSnapshot& GetCombatSnapshotTarget() const { return TargetSnapshot; }
+	const FCombatSnapshot_Basic& GetCombatSnapshotTarget() const { return TargetSnapshot; }
 
 
 	// now we need to be able to execute combat in the correct order, ensuring not to do extra calls, etc.
 	UFUNCTION(BlueprintCallable, Category="CombatCalculator")
-	bool PopCombatOutcome(FCombatOutcome& CombatOutcome);
+	bool PopCombatOutcome(FCombatSnapshot_Advanced& CombatOutcome);
 
 	UFUNCTION(BlueprintCallable, Category="CombatCalculator")
-	void GetCombatOutcomes(TArray<FCombatOutcome>& CombatOutcomes);
+	void GetCombatOutcomes(TArray<FCombatSnapshot_Advanced>& CombatOutcomes);
 
 protected:
 	void CalculateCombatOutcome(
-		FCombatOutcome& CombatOutcome, const FUnitCombatSnapshot& Instigator, const FUnitCombatSnapshot& Target) const;
+		FCombatSnapshot_Advanced& CombatOutcome, const FCombatSnapshot_Basic& Instigator, const FCombatSnapshot_Basic& Target) const;
 
 
 

@@ -7,7 +7,7 @@
 #include "GameFramework/PlayerController.h"
 #include "PlayerController_TurnBased.generated.h"
 
-class UWidget_ActionOptions;
+class UUserWidget_ActionOptions;
 class UControllerState_Abstract;
 class AGridTile;
 
@@ -59,6 +59,11 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category="TurnBased | State")
 	void PopState();
+
+	// useful for 'resetting' state
+	// (attack state might want to reset itself but does not want to do a bunch of state saving, resetting logic)
+	UFUNCTION(BlueprintCallable, Category="TurnBased | State")
+	void PopPushState(UControllerState_Abstract* InState, bool bDoExit);
 	
 protected:
 	UPROPERTY()

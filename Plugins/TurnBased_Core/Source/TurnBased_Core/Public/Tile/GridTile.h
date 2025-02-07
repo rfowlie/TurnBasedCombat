@@ -24,6 +24,9 @@ public:
 	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
 	bool SetHovered(bool IsHovered);
 
+	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
+	FGameplayTag GetState();
+	
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	bool SetState(const FGameplayTag State);
 

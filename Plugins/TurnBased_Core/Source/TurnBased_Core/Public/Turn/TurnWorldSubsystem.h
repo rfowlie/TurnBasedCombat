@@ -75,5 +75,6 @@ public:
 	bool CanUnitTakeAction(const AGridUnit* InGridUnit);
 	int32 GetRemainingUnitActions();
 	AGridUnit* GetNextUnit(AGridUnit* InGridUnit);
+	void GetFactionEnemies(AGridUnit* InGridUnit, TArray<AGridUnit*>& EnemyGridUnits);
 	
 };

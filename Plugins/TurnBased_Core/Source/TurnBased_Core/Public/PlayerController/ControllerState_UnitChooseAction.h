@@ -10,7 +10,7 @@
 
 class UInputAction;
 class AGridUnit;
-class UWidget_ActionOptions;
+class UUserWidget_ActionOptions;
 
 /**
  * 
@@ -34,7 +34,7 @@ protected:
 	AGridUnit* ActiveUnit = nullptr;
 	
 	UPROPERTY()
-	UWidget_ActionOptions* Widget_ActionOptions = nullptr;
+	UUserWidget_ActionOptions* Widget_ActionOptions = nullptr;
 
 	UFUNCTION()
 	void OnActionSelected(FGameplayTag ActionTag);

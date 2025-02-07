@@ -1,15 +1,8 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Combat/CombatCalculator/WeaponSolver.h"
-
-
-UE_DEFINE_GAMEPLAY_TAG(TAG_Weapon_Trait_Might, "Weapon.Trait.Might");
-UE_DEFINE_GAMEPLAY_TAG(TAG_Weapon_Trait_Weight, "Weapon.Trait.Weight");
-UE_DEFINE_GAMEPLAY_TAG(TAG_Weapon_Trait_Hit, "Weapon.Trait.Hit");
-UE_DEFINE_GAMEPLAY_TAG(TAG_Weapon_Trait_Range, "Weapon.Trait.Range");
-
-UE_DEFINE_GAMEPLAY_TAG(TAG_Weapon_Trait_Special_Light, "Weapon.Trait.Special.Light");
+#include "Combat/Weapon/WeaponSolver.h"
+#include "Combat/Weapon/WeaponData.h"
 
 
 void UWeaponSolver::GetWeaponTraits(FWeaponTraits& WeaponTraits, const FGameplayTag InWeapon) const
@@ -21,15 +14,15 @@ void UWeaponSolver::GetWeaponTraits(FWeaponTraits& WeaponTraits, const FGameplay
 	}
 }
 
-void UWeaponSolver::Solve(TMap<FGameplayTag, int32>& Attributes, TArray<FGameplayTag> Traits,
-	const FCombatCalculatorPayload_FireEmblem& Payload)
-{
-}
+// void UWeaponSolver::Solve(TMap<FGameplayTag, int32>& Attributes, TArray<FGameplayTag> Traits,
+// 	const FCombatCalculatorPayload_FireEmblem& Payload)
+// {
+// }
 
-void UWeaponSolver::Solve(TMap<FGameplayTag, int32>& Attributes, TArray<FGameplayTag> Traits,
-	const UGridManager* InGridManager, const AGridUnit* InInstigator, const AGridUnit* InTarget)
-{
-}
+// void UWeaponSolver::Solve(TMap<FGameplayTag, int32>& Attributes, TArray<FGameplayTag> Traits,
+// 	const UGridManager* InGridManager, const AGridUnit* InInstigator, const AGridUnit* InTarget)
+// {
+// }
 
 
 // int32 UWeaponSolver::GetWeaponTrait(

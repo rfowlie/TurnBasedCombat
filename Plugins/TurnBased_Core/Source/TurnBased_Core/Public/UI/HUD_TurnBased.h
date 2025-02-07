@@ -5,16 +5,19 @@
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
 #include "GameFramework/HUD.h"
+#include "Unit/GridUnit.h"
 #include "HUD_TurnBased.generated.h"
 
 
 class AGridUnit;
-class UWidget_ActionOptions;
+class UUserWidget_TurnBased;
+class UUserWidget_ActionOptions;
+class UCombatCalculator_Basic;
 
 /**
  * 
  */
-UCLASS(Blueprintable, BlueprintType)
+UCLASS(Abstract, Blueprintable, BlueprintType)
 class TURNBASED_CORE_API AHUD_TurnBased : public AHUD
 {
 	GENERATED_BODY()
@@ -22,16 +25,17 @@ class TURNBASED_CORE_API AHUD_TurnBased : public AHUD
 public:
 	AHUD_TurnBased();
 	
-	UFUNCTION(BlueprintImplementableEvent)
-	UWidget_ActionOptions* ActivateActionOptionsWidget(AGridUnit* TargetUnit, const TArray<FGameplayTag>& ActionTags);
-	UFUNCTION(BlueprintImplementableEvent)
-	UWidget_ActionOptions* RemoveActionOptionsWidget();
-
-protected:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = UI)
-	TSubclassOf<UWidget_ActionOptions> ActionOptionsClass;
+	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
+	UUserWidget_ActionOptions* ActivateActionOptionsWidget(AGridUnit* TargetUnit, const TArray<FGameplayTag>& ActionTags);
+	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
+	UUserWidget_ActionOptions* RemoveActionOptionsWidget();
+	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
+	UUserWidget_TurnBased* ActivateCombatPredictionWidget(AGridUnit* InInstigator, AGridUnit* InTarget);
 	
-	UPROPERTY(BlueprintReadOnly, Category = UI)
-	UWidget_ActionOptions* ActionOptionInstance = nullptr;
+protected:
+	// FOR NOW
+	// things will be a lot smoother if HUD has a copy of the combat calculator...
+	UPROPERTY(BlueprintReadOnly, Category = "Combat")
+	UCombatCalculator_Basic* CombatCalculator = nullptr;
 	
 };

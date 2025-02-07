@@ -2,8 +2,8 @@
 
 
 #include "Combat/CombatCalculator/CombatCalculator.h"
-
-#include "Combat/CombatCalculator/WeaponSolver.h"
+#include "Combat/CombatData.h"
+#include "Combat/Weapon/WeaponData.h"
 #include "Grid/Manager/GridManager.h"
 #include "Tile/GridTile.h"
 #include "Unit/GridUnit.h"
@@ -153,7 +153,7 @@ int32 UCombatCalculator::CalculateCriticalAvoid(AGridUnit* Unit, AGridTile* Tile
 }
 
 void UCombatCalculator::CalculateCombatSnapshot_Internal(
-	FUnitCombatSnapshot& OutSnapshot, AGridUnit* Unit)
+	FCombatSnapshot_Basic& OutSnapshot, AGridUnit* Unit)
 {
 	// should always reference the tile of the unit through grid manager?
 	AGridTile* Tile = GridManager->GetGridTileOfUnit(Unit);
@@ -174,57 +174,57 @@ void UCombatCalculator::CalculateCombatSnapshot_Internal(
 	OutSnapshot.CriticalAvoid = CalculateCriticalAvoid(Unit, Tile);
 }
 
-bool UCombatCalculator::PopCombatOutcome(FCombatOutcome& CombatOutcome)
+bool UCombatCalculator::PopCombatOutcome(FCombatSnapshot_Advanced& CombatOutcome)
 {
 	AGridUnit* NextCombatant;
 	CombatOrder.Dequeue(NextCombatant);
 	if (!NextCombatant) { return false; }
 
-	FUnitCombatSnapshot AttackerSnapshot;
+	FCombatSnapshot_Basic AttackerSnapshot;
 	CalculateCombatSnapshot_Internal(AttackerSnapshot, InstigatorUnit);
-	FUnitCombatSnapshot DefenderSnapshot;
+	FCombatSnapshot_Basic DefenderSnapshot;
 	CalculateCombatSnapshot_Internal(DefenderSnapshot, TargetUnit);
 	
-	if (NextCombatant == InstigatorUnit)
-	{
-		CombatOutcome.Instigator = InstigatorUnit;
-		CombatOutcome.Target = TargetUnit;
-		CalculateCombatOutcome(CombatOutcome, AttackerSnapshot, DefenderSnapshot);
-	}
-	else
-	{
-		CombatOutcome.Instigator = TargetUnit;
-		CombatOutcome.Target = InstigatorUnit;
-		CalculateCombatOutcome(CombatOutcome, DefenderSnapshot, AttackerSnapshot);
-	}
+	// if (NextCombatant == InstigatorUnit)
+	// {
+	// 	CombatOutcome.Instigator = InstigatorUnit;
+	// 	CombatOutcome.Target = TargetUnit;
+	// 	CalculateCombatOutcome(CombatOutcome, AttackerSnapshot, DefenderSnapshot);
+	// }
+	// else
+	// {
+	// 	CombatOutcome.Instigator = TargetUnit;
+	// 	CombatOutcome.Target = InstigatorUnit;
+	// 	CalculateCombatOutcome(CombatOutcome, DefenderSnapshot, AttackerSnapshot);
+	// }
 
 	return true;
 }
 
-void UCombatCalculator::GetCombatOutcomes(TArray<FCombatOutcome>& CombatOutcomes)
+void UCombatCalculator::GetCombatOutcomes(TArray<FCombatSnapshot_Advanced>& CombatOutcomes)
 {
 	for (const auto Combatant : CombatOrderHelper)
 	{
-		FUnitCombatSnapshot AttackerSnapshot;
+		FCombatSnapshot_Basic AttackerSnapshot;
 		CalculateCombatSnapshot_Internal(AttackerSnapshot, InstigatorUnit);
-		FUnitCombatSnapshot DefenderSnapshot;
+		FCombatSnapshot_Basic DefenderSnapshot;
 		CalculateCombatSnapshot_Internal(DefenderSnapshot, TargetUnit);
 
-		FCombatOutcome TempOutcome;
-		if (Combatant == InstigatorUnit)
-		{
-			TempOutcome.Instigator = InstigatorUnit;
-			TempOutcome.Target = TargetUnit;
-			CalculateCombatOutcome(TempOutcome, AttackerSnapshot, DefenderSnapshot);
-		}
-		else
-		{
-			TempOutcome.Instigator = TargetUnit;
-			TempOutcome.Target = InstigatorUnit;
-			CalculateCombatOutcome(TempOutcome, DefenderSnapshot, AttackerSnapshot);
-		}
+		// FCombatSnapshot_Advanced TempOutcome;
+		// if (Combatant == InstigatorUnit)
+		// {
+		// 	TempOutcome.Instigator = InstigatorUnit;
+		// 	TempOutcome.Target = TargetUnit;
+		// 	CalculateCombatOutcome(TempOutcome, AttackerSnapshot, DefenderSnapshot);
+		// }
+		// else
+		// {
+		// 	TempOutcome.Instigator = TargetUnit;
+		// 	TempOutcome.Target = InstigatorUnit;
+		// 	CalculateCombatOutcome(TempOutcome, DefenderSnapshot, AttackerSnapshot);
+		// }
 
-		CombatOutcomes.Add(TempOutcome);
+		// CombatOutcomes.Add(TempOutcome);
 	}
 	
 	// TArray<AGridUnit*> BackInQueue;
@@ -266,7 +266,7 @@ void UCombatCalculator::GetCombatOutcomes(TArray<FCombatOutcome>& CombatOutcomes
 }
 
 void UCombatCalculator::CalculateCombatOutcome(
-	FCombatOutcome& CombatOutcome, const FUnitCombatSnapshot& Instigator, const FUnitCombatSnapshot& Target) const
+	FCombatSnapshot_Advanced& CombatOutcome, const FCombatSnapshot_Basic& Instigator, const FCombatSnapshot_Basic& Target) const
 {
 	// check if even hits, could also do partial hits...	
 	CombatOutcome.HitChance = FMath::Clamp(Instigator.HitRate - Target.Avoid, 0, 100);
@@ -279,8 +279,6 @@ void UCombatCalculator::CalculateCombatOutcome(
 	
 	CombatOutcome.HealthChange = FMath::Clamp(AttackPower - DefensePower, 0, GetMaxDamage());
 	UE_LOG(LogTemp, Log, TEXT("COMBAT CALCULATOR - HealthChange: %d"), CombatOutcome.HealthChange);
-	CombatOutcome.MovementChange = 0;
-	UE_LOG(LogTemp, Log, TEXT("COMBAT CALCULATOR - MovementChange: %d"), CombatOutcome.MovementChange);
 	
 	CombatOutcome.CriticalChance = 0;
 }

@@ -102,7 +102,8 @@ public:
 	TArray<AGridTile*> GetGridTilesAtRange(FGridPosition StartGridPosition, int32 Range);
 	TArray<AGridTile*> GetGridTilesAtRanges(const FGridPosition StartGridPosition, TArray<int32> Ranges);
 	void CalculateGridMovement(TArray<FGridMovement>& OutMovement, const AGridUnit* GridUnit);
-
+	void CalculateGridAttacks(TArray<FGridPair>& OutGridPairs, AGridUnit* GridUnit, const TArray<FGridMovement>& InGridMovements);
+	void CalculateGridAttackTiles(TMap<AGridTile*, int32>& OutWeaponPositions, const TArray<FGridMovement>& InGridMovements, const AGridUnit* InstigatorUnit, const AGridUnit* TargetUnit);
 	
 
 	///////////////////////////////////////////

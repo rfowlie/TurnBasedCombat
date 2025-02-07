@@ -6,8 +6,8 @@
 #include "EnhancedActionKeyMapping.h"
 #include "EnhancedInputComponent.h"
 #include "InputMappingContext.h"
-#include "PlayerController/ControllerState_UnitAttack.h"
-#include "PlayerController/UI/Widget_ActionOptions.h"
+#include "PlayerController/ControllerState_Attack_TargetSelected.h"
+#include "UI/UserWidget_ActionOptions.h"
 #include "TurnBased_Core_Tags.h"
 #include "UI/HUD_TurnBased.h"
 
@@ -70,14 +70,12 @@ void UControllerState_UnitChooseAction::OnActionSelected(FGameplayTag ActionTag)
 {
 	if (ActionTag.MatchesTagExact(TAG_TBCore_Action_Attack))
 	{
-		PlayerController->PushState(UControllerState_UnitAttack::Create(ActiveUnit), true);
+		
 	}	
 }
 
 UInputMappingContext* UControllerState_UnitChooseAction::CreateInputMappingContext()
 {
-	Super::CreateInputMappingContext();
-
 	UEnhancedInputComponent* EIC = Cast<UEnhancedInputComponent>(PlayerController->InputComponent);
 	check(EIC)
 	

@@ -175,3 +175,26 @@ AGridUnit* UTurnWorldSubsystem::GetNextUnit(AGridUnit* InGridUnit)
 	//
 	// return FactionMap[FactionOrder[FactionIndex]].GetNextUnit(InGridUnit);
 }
+
+void UTurnWorldSubsystem::GetFactionEnemies(AGridUnit* InGridUnit, TArray<AGridUnit*>& EnemyGridUnits)
+{
+	if (!IsValid(InGridUnit)) { return; }
+	FGameplayTag FactionTag = InGridUnit->Execute_GetFaction(InGridUnit);
+	if (!FactionOrder.Contains(FactionTag))
+	{
+		UE_LOG(LogTemp, Error, TEXT("Turn World Subsystem - Get Faction Enemies: faction not registered"));
+		return;
+	}
+
+	// FOR NOW
+	EnemyGridUnits.Empty();
+	for (auto Pair : FactionMap)
+	{
+		if (Pair.Key != FactionTag)
+		{
+			TArray<AGridUnit*> OutUnits;
+			Pair.Value.GetGridUnits(OutUnits);
+			EnemyGridUnits.Append(OutUnits);
+		}
+	}	
+}

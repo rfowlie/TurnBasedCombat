@@ -5,8 +5,8 @@
 #include "CoreMinimal.h"
 #include "UObject/Object.h"
 #include "NativeGameplayTags.h"
-#include "WeaponSolver.h"
-#include "CombatCalculatorData.generated.h"
+#include "Weapon/WeaponData.h"
+#include "CombatData.generated.h"
 
 
 class AGridUnit;
@@ -38,9 +38,11 @@ UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Combat_Stat_CriticalChance);
 
 
 USTRUCT(BlueprintType)
-struct FUnitCombatSnapshot
+struct FCombatSnapshot_Basic
 {
 	GENERATED_BODY()
+
+	FCombatSnapshot_Basic() {}
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int32 Health = 0;
@@ -90,28 +92,43 @@ struct FUnitCombatSnapshot
 };
 
 USTRUCT(BlueprintType)
-struct FCombatOutcome
+struct FCombatSnapshot_Advanced
 {
 	GENERATED_BODY()
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	AGridUnit* Instigator = nullptr;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	AGridUnit* Target = nullptr;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	bool bHit = false;
-	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int32 HealthChange = 0;
-
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	int32 MovementChange = 0;
+	bool bHit = false;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int32 HitChance = 0;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int32 CriticalChance = 0;
+};
+
+USTRUCT(BlueprintType)
+struct FCombatSnapshot_Outcome
+{
+	GENERATED_BODY()
+	
+	FCombatSnapshot_Outcome(): InstigatorAttacks(0), TargetAttacks(0)
+	{
+	}
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FCombatSnapshot_Advanced InstigatorSnapshot;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int32 InstigatorAttacks;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FCombatSnapshot_Advanced TargetSnapshot;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int32 TargetAttacks;
+	
+	
 };

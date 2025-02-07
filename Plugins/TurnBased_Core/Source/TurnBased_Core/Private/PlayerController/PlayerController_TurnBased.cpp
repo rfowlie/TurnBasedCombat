@@ -95,3 +95,9 @@ void APlayerController_TurnBased::PopState()
 	// restart the now top state
 	StateStack.Top()->OnEnter(this, 2);
 }
+
+void APlayerController_TurnBased::PopPushState(UControllerState_Abstract* InState, bool bDoExit)
+{
+	// TODO: pop current state then apply new state on top
+	// call OnEnter on bottom state?
+}
