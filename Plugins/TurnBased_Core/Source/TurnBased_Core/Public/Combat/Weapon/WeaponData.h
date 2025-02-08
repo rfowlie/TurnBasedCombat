@@ -71,3 +71,15 @@ struct FWeaponTraits : public FTableRowBase
 	// TArray<FUniqueTrait> UniqueTraits;
 	
 };
+
+USTRUCT()
+struct FWeaponContainer : public FTableRowBase
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	TSoftObjectPtr<UStaticMesh> StaticMesh = nullptr;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	FWeaponTraits WeaponTraits = FWeaponTraits();
+};

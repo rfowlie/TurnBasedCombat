@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "ControllerState_Abstract.h"
 #include "InputActionValue.h"
+#include "UI/UserWidget_TurnBased.h"
 #include "ControllerState_Attack_TileSelected.generated.h"
 
 class UInputAction;
@@ -72,5 +73,8 @@ private:
 	
 	UPROPERTY()
 	TArray<AGridTile*> AttackTileOrder;
+
+	UPROPERTY()
+	UUserWidget_TurnBased* Widget;
 
 };

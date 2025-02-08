@@ -28,7 +28,7 @@ public:
 	// UFUNCTION(BlueprintCallable)
 	// void DisableCombat() const { if (OnCombatStartDelegate.IsBound()) OnCombatStartDelegate.Broadcast(false); }
 	
-	UFUNCTION(BlueprintImplementableEvent, Category = "CombatCalculator")
+	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable, Category = "CombatCalculator")
 	const UCombatCalculator_Basic* GetCombatCalculator();
 	
 protected:

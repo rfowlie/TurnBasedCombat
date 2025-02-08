@@ -49,13 +49,21 @@ void UControllerState_Attack_TileSelected::OnEnter(APlayerController* InPlayerCo
 	
 	// move instigator to selected tile
 	InstigatorUnit->SetActorLocation(TileSelected->GetPlacementLocation());
+	
+	// rotate to face
+	FRotator LookAtRotation = UKismetMathLibrary::FindLookAtRotation(
+		TileSelected->GetActorLocation(), TargetUnit->GetActorLocation());
+	LookAtRotation.Pitch = 0.f;
+	LookAtRotation.Roll = 0.f;
+	InstigatorUnit->SetActorRotation(LookAtRotation);
+	
 	// set state of instigator and selected tile
 	InstigatorUnit->SetState(TAG_TBCore_Grid_Tile_Combat);
 	TileSelected->SetState(TAG_TBCore_Grid_Tile_Combat);
 	// pass units to combat UI, OR to combat subsystem (which will then take on passing all the relevant info?)
 	if (AHUD_TurnBased* HUD = Cast<AHUD_TurnBased>(PlayerController->GetHUD()))
 	{
-		UUserWidget_TurnBased* Widget = HUD->ActivateCombatPredictionWidget(InstigatorUnit, TargetUnit);
+		Widget = HUD->ActivateCombatPredictionWidget(InstigatorUnit, TargetUnit);
 		if (Widget)
 		{
 			Widget->OnComplete.AddUniqueDynamic(this, &ThisClass::CombatInitiated);
@@ -71,6 +79,11 @@ void UControllerState_Attack_TileSelected::OnExit()
 	// NOTE: reverting state should not be handled most of the time, should rely on
 	// other controller states to set state in OnEnter!!
 	// revert state of instigator and selected tile?
+
+	if (Widget)
+	{
+		Widget->OnComplete.RemoveDynamic(this, &ThisClass::CombatInitiated);
+	}
 	
 }
 

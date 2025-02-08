@@ -8,7 +8,7 @@
 #include "Grid/Manager/TurnManager.h"
 #include "Tile/GridTile.h"
 #include "Unit/GridUnit.h"
-#include "Item/WeaponDataAsset.h"
+#include "Item/WeaponDataAsset_OLD.h"
 #include "_Framework/PlayerController/State/StateAttack.h"
 
 
@@ -223,7 +223,7 @@ bool UGridProxy::CanAttackFromTile(UGridProxy* Other) const
 	return false;
 }
 
-bool UGridProxy::GetValidWeaponsToAttackWith(UGridProxy* Other, TArray<UWeaponDataAsset*> ValidWeapons) const
+bool UGridProxy::GetValidWeaponsToAttackWith(UGridProxy* Other, TArray<UWeaponDataAsset_OLD*> ValidWeapons) const
 {
 	if (!CanAttackFromTile(Other)) { return false; }
 

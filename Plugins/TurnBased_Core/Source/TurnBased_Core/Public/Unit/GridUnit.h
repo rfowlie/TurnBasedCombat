@@ -12,13 +12,14 @@
 #include "GridUnit.generated.h"
 
 
+class UWeaponDataAsset;
 class UMoveAbility;
 class UAbilityAsync_WaitAttributeChanged;
 class UGridUnitAttributeSet;
 class UGameplayAbility;
 class UAttributeSet;
 class UStatsDataAsset;
-class UWeaponDataAsset;
+class UWeaponDataAsset_OLD;
 class UWeapon;
 class UItemBase;
 
@@ -64,6 +65,7 @@ public:
 	int32 GetHealth() const { return AttributeSet_GridUnit->GetHealth(); }
 	UPROPERTY(BlueprintAssignable)
 	FGridUnitEventDelegate OnDefeat;
+	
 protected:
 	UFUNCTION(BlueprintImplementableEvent)
 	void EventOnDefeat();
@@ -137,6 +139,7 @@ public:
 	// TArray<UWeaponDataAsset*> WeaponDataAssets;	
 
 public:
+	// DEPRECATED - do not delete for now, until we can find any useful things in the project that use it
 	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, meta = (Categories = "Weapon.Type"))
 	FGameplayTagContainer WeaponsInventory;
 	FGameplayTag EquippedWeapon;
@@ -145,6 +148,35 @@ public:
 	UFUNCTION(BlueprintCallable)
 	virtual FGameplayTag GetEquippedWeapon();
 	TSet<int32> GetWeaponRanges() const;
+
+	// TODO: WHAT IS THE BEST WAY TO GO ABOUT THISSSS
+	// weapon - dataasset
+	UPROPERTY(EditInstanceOnly, BlueprintReadOnly)
+	TArray<UWeaponDataAsset*> Weapons;
+	UPROPERTY(BlueprintReadOnly)
+	UWeaponDataAsset* WeaponEquipped;
+	UFUNCTION(BlueprintCallable)
+	void SetWeaponEquipped(UWeaponDataAsset* InWeaponDataAsset);
+	UFUNCTION(BlueprintCallable)
+	virtual UWeaponDataAsset* GetWeaponEquipped();
+	UFUNCTION(BlueprintCallable)
+	TArray<int32> GetAllWeaponRanges() const;
+
+	// weapon - FNAME (data table)
+	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, meta=(GetKeyOptions="GetWeaponNameOptions"))
+	TMap<FName, bool> WeaponInventoryMap;
+	// TODO: currently could have a different equipped weapon than in map, might cause problems
+	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, meta=(GetKeyOptions="GetWeaponNameOptions"))
+	FName EquippedWeaponName;
+	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
+	TArray<FName> GetWeaponNameOptions();
+
+	UFUNCTION(BlueprintCallable)
+	void SetEquippedWeaponName(const FName InName) { if (WeaponInventoryMap.Contains(InName)) { EquippedWeaponName = InName; }}
+	UFUNCTION(BlueprintCallable)
+	FName GetEquippedWeaponName() const { return EquippedWeaponName; }
+	UFUNCTION(BlueprintCallable)
+	TArray<FName> GetWeaponsInMap() const;
 
 private:
 	UFUNCTION()

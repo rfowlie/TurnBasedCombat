@@ -114,13 +114,10 @@ bool UTurnWorldSubsystem::IsFactionDefeated(const FGameplayTag FactionTag)
 
 void UTurnWorldSubsystem::CheckFactionDefeated(AGridUnit* GridUnit)
 {
-	for (auto Pair : FactionMap)
+	FGameplayTag FactionTag = GridUnit->Execute_GetFaction(GridUnit);
+	if (FactionMap[FactionTag].IsFactionDefeated())
 	{
-		if (Pair.Value.GridUnits.Contains(GridUnit))
-		{
-			if (OnFactionDefeated.IsBound()) { OnFactionDefeated.Broadcast(Pair.Key); }
-			break;
-		}
+		if (OnFactionDefeated.IsBound()) { OnFactionDefeated.Broadcast(FactionTag); }
 	}
 }
 

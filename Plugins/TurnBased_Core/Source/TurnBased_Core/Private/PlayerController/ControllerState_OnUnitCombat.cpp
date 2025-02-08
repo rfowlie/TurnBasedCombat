@@ -35,7 +35,7 @@ void UControllerState_OnUnitCombat::OnEnter(APlayerController* InPlayerControlle
 	if (!TurnWorldSubsystem) { return; }
 	if (!TurnWorldSubsystem->CanUnitTakeAction(InstigatorUnit)) { return; }
 
-	InstigatorUnit->GetAbilitySystemComponent()->AbilityEndedCallbacks.AddUObject(this, &ThisClass::OnGridUnitAbilityActivated);
+	DelegateHandle = InstigatorUnit->GetAbilitySystemComponent()->AbilityEndedCallbacks.AddUObject(this, &ThisClass::OnGridUnitAbilityActivated);
 	
 	FGameplayEventData EventData;
 	EventData.Instigator = InstigatorUnit;
@@ -45,11 +45,18 @@ void UControllerState_OnUnitCombat::OnEnter(APlayerController* InPlayerControlle
 	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(InstigatorUnit, TAG_Event_Grid_Attack, EventData);
 }
 
+void UControllerState_OnUnitCombat::OnExit()
+{
+	Super::OnExit();
+
+	InstigatorUnit->GetAbilitySystemComponent()->AbilityEndedCallbacks.Remove(DelegateHandle);
+}
+
 void UControllerState_OnUnitCombat::OnGridUnitAbilityActivated(UGameplayAbility* InGameplayAbility)
 {
 	// only end when active unit finished ability...
 	if (InGameplayAbility->GetAvatarActorFromActorInfo() == InstigatorUnit)
 	{
 		PlayerController->SetBaseState(UControllerState_Idle::Create());
-	}	
+	}
 }

@@ -3,6 +3,7 @@
 
 #include "Unit/GridUnit.h"
 #include "AbilitySystemComponent.h"
+#include "Combat/Weapon/WeaponDataAsset.h"
 #include "Grid/GridHelper.h"
 #include "Unit/GridUnitAttributeSet.h"
 #include "Unit/GridUnitUtility.h"
@@ -81,12 +82,17 @@ void AGridUnit::BeginPlay()
 	});
 
 	// weapons
-	SetEquippedWeapon(WeaponsInventory.First());
+	// SetEquippedWeapon(WeaponsInventory.First());
+	// SetWeaponEquipped(Weapons[0]);
+	// SetEquippedWeaponName(WeaponNames[0]);
+	TArray<FName> Keys;
+	WeaponInventoryMap.GetKeys(Keys);
+	SetEquippedWeaponName(Keys[0]);
 }
 
 void AGridUnit::NotifyHealthZero()
 {
-	UE_LOG(LogTemp, Log, TEXT("On Health Zero"));
+	UE_LOG(LogTemp, Error, TEXT("On Health Zero"));
 	EventOnDefeat();
 	if (OnDefeat.IsBound()) { OnDefeat.Broadcast(this); }
 }
@@ -151,6 +157,34 @@ TSet<int32> AGridUnit::GetWeaponRanges() const
 	// }
 
 	return OutValues;
+}
+
+void AGridUnit::SetWeaponEquipped(UWeaponDataAsset* InWeaponDataAsset)
+{
+	if (Weapons.Contains(InWeaponDataAsset)) { WeaponEquipped = InWeaponDataAsset; }
+}
+
+UWeaponDataAsset* AGridUnit::GetWeaponEquipped()
+{
+	return WeaponEquipped;
+}
+
+TArray<int32> AGridUnit::GetAllWeaponRanges() const
+{
+	TSet<int32> OutValues;
+	for (auto Weapon : Weapons)
+	{
+		OutValues.Add(Weapon->WeaponTraits.Range);
+	}
+	return OutValues.Array();
+}
+
+
+TArray<FName> AGridUnit::GetWeaponsInMap() const
+{
+	TArray<FName> Keys;
+	WeaponInventoryMap.GetKeys(Keys);
+	return Keys;
 }
 
 /*

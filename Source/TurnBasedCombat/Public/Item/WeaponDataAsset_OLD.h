@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Engine/DataAsset.h"
-#include "WeaponDataAsset.generated.h"
+#include "WeaponDataAsset_OLD.generated.h"
 
 
 UENUM()
@@ -48,7 +48,7 @@ struct FWeaponStats
  * 
  */
 UCLASS(Blueprintable, BlueprintType)
-class TURNBASEDCOMBAT_API UWeaponDataAsset : public UDataAsset
+class TURNBASEDCOMBAT_API UWeaponDataAsset_OLD : public UDataAsset
 {
 	GENERATED_BODY()
 

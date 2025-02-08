@@ -10,7 +10,7 @@
 
 
 class UAbilitySystemComponent;
-class UWeaponDataAsset;
+class UWeaponDataAsset_OLD;
 class UTurnManager;
 class AGridUnit;
 class AGridTile;
@@ -78,7 +78,7 @@ public:
 	bool IsAlly() const;
 	bool IsMoveTile(UGridProxy* Other);
 	bool CanAttackFromTile(UGridProxy* Other) const;
-	bool GetValidWeaponsToAttackWith(UGridProxy* Other, TArray<UWeaponDataAsset*> ValidWeapons) const;
+	bool GetValidWeaponsToAttackWith(UGridProxy* Other, TArray<UWeaponDataAsset_OLD*> ValidWeapons) const;
 	bool HasEnemiesToAttack() const;
 
 	FVector GetWorldLocation() const;

@@ -22,6 +22,7 @@ class TURNBASED_CORE_API UControllerState_OnUnitCombat : public UControllerState
 	public:
 	static UControllerState_OnUnitCombat* Create(AGridUnit* InInstigatorUnit, AGridUnit* InTargetUnit);	
 	virtual void OnEnter(APlayerController* InPlayerController, const int32 InInputMappingContextPriority) override;
+	virtual void OnExit() override;
 
 protected:
 	UPROPERTY()
@@ -32,4 +33,6 @@ protected:
 
 	UFUNCTION()
 	void OnGridUnitAbilityActivated(UGameplayAbility* InGameplayAbility);
+	
+	FDelegateHandle DelegateHandle;
 };

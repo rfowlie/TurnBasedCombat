@@ -158,7 +158,8 @@ void UCombatCalculator::CalculateCombatSnapshot_Internal(
 	// should always reference the tile of the unit through grid manager?
 	AGridTile* Tile = GridManager->GetGridTileOfUnit(Unit);
 	
-	GetWeapon(OutSnapshot.WeaponTraits, Unit->GetEquippedWeapon());
+	// GetWeapon(OutSnapshot.WeaponTraits, Unit->GetEquippedWeapon());
+	
 	OutSnapshot.Strength = Unit->GetAbilitySystemComponent()->GetNumericAttribute(UGridUnitAttributeSet::GetStrengthAttribute());
 	OutSnapshot.Skill = Unit->GetAbilitySystemComponent()->GetNumericAttribute(UGridUnitAttributeSet::GetSkillAttribute());
 	OutSnapshot.Speed = Unit->GetAbilitySystemComponent()->GetNumericAttribute(UGridUnitAttributeSet::GetSpeedAttribute());

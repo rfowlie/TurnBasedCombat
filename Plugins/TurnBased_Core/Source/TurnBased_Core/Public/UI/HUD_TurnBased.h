@@ -24,7 +24,9 @@ class TURNBASED_CORE_API AHUD_TurnBased : public AHUD
 
 public:
 	AHUD_TurnBased();
-	
+
+	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
+	UUserWidget_TurnBased* ActivateWinLevelWidget();
 	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
 	UUserWidget_ActionOptions* ActivateActionOptionsWidget(AGridUnit* TargetUnit, const TArray<FGameplayTag>& ActionTags);
 	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)

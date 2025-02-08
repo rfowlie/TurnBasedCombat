@@ -40,7 +40,7 @@ int32 UWeapon::GetEffort() const
 }
 
 // TODO: ensures stats set only one time, is this what we want???
-bool UWeapon::SetWeaponStats(const UWeaponDataAsset* WeaponDataAsset)
+bool UWeapon::SetWeaponStats(const UWeaponDataAsset_OLD* WeaponDataAsset)
 {
 	if (!IsValid(WeaponDataAsset) || bWeaponsStatsSet) { return false; }
 

@@ -299,24 +299,21 @@ void UGridWorldSubsystem::CalculateGridAttacks(
 
 	// unit info
 	TMap<int32, TSet<AGridTile*>> RangeTileMap;
-	TSet<int32> WeaponRanges;
-	// TODO: FOR NOW
-	AGameMode_TurnBased_Combat* GameMode = Cast<AGameMode_TurnBased_Combat>(GetWorld()->GetAuthGameMode());
-	if (!GameMode) { return; }
-	for (auto Weapon : GridUnit->WeaponsInventory)
-	{
-		WeaponRanges.Add(GameMode->GetCombatCalculator()->GetWeaponRange(Weapon));
-	}
+	
 	TMap<FGridPosition, bool> MovementMap;
 	for (const auto GridMovement : InGridMovements)
 	{
 		MovementMap.Add(GridTileLocationMap[GridMovement.GridTile], false);
 	}
 
+	// TODO: for now... need to figure out better way to gain access ot weapon information
+	AGameMode_TurnBased_Combat* GameMode = Cast<AGameMode_TurnBased_Combat>(GetWorld()->GetAuthGameMode());
+	if (!GameMode) { return; }
+	
 	TArray<FGridPosition> TempPositions;
 	for (AGridUnit* EnemyUnit : EnemyGridUnits)
 	{
-		for (const int32 WeaponRange : WeaponRanges)
+		for (const int32 WeaponRange : GameMode->GetCombatCalculator()->GetWeaponRangesByName(GridUnit->GetWeaponsInMap()))
 		{
 			TempPositions.Empty();
 			UGridHelper::GetGridPositionsAtRange(
@@ -342,26 +339,22 @@ void UGridWorldSubsystem::CalculateGridAttackTiles(TMap<AGridTile*, int32>& OutW
 {
 	if (!IsValid(InstigatorUnit) || !IsValid(TargetUnit)) { return; }
 
+	// TODO: this is a bit hacky...
 	AGameMode_TurnBased_Combat* GameMode = Cast<AGameMode_TurnBased_Combat>(GetWorld()->GetAuthGameMode());
 	if (!GameMode) { return; }
-	const UCombatCalculator_Basic* CombatCalculator = GameMode->GetCombatCalculator();
-	TSet<int32> WeaponRanges;
-	for (auto Weapon : InstigatorUnit->WeaponsInventory)
+	
+	for (auto WeaponRange : GameMode->GetCombatCalculator()->GetWeaponRangesByName(InstigatorUnit->GetWeaponsInMap()))
 	{
-		WeaponRanges.Add(CombatCalculator->GetWeaponRange(Weapon));
-	}
-	// AGridTile* TargetTile = GetGridTileOfUnit(TargetUnit);
-	for (auto WeaponRange : WeaponRanges)
-	{
+		if (WeaponRange == 0) { continue; }
 		TArray<FGridPosition> OutWeaponRangePositions;
 		UGridHelper::GetGridPositionsAtRange(UGridHelper::CalculateGridPosition(TargetUnit), WeaponRange, OutWeaponRangePositions);
 		for (const FGridPosition GridPosition : OutWeaponRangePositions)
 		{
-			// don't add tile of instigator
-			if (GridPosition == UGridHelper::CalculateGridPosition(GetGridTileOfUnit(InstigatorUnit)))
-			{
-				continue;
-			}
+			// // don't add tile of instigator
+			// if (GridPosition == UGridHelper::CalculateGridPosition(GetGridTileOfUnit(InstigatorUnit)))
+			// {
+			// 	continue;
+			// }
 			
 			for (auto GridMovement : InGridMovements)
 			{

@@ -3,6 +3,7 @@
 
 #include "Combat/CombatCalculator_Basic.h"
 #include "Combat/CombatData.h"
+#include "Combat/Weapon/WeaponDataAsset.h"
 #include "Grid/GridHelper.h"
 #include "Grid/GridWorldSubsystem.h"
 #include "Tile/GridTile.h"
@@ -15,9 +16,9 @@ void UCombatCalculator_Basic::GetCombatOutcome(
 	if (!IsValid(InstigatorUnit) || !IsValid(TargetUnit)) { return; }
 
 	FCombatSnapshot_Basic InstigatorSnapshot;
-	GetUnitSnapshot(InstigatorSnapshot, InstigatorUnit);
+	GetUnitSnapshotBasic(InstigatorSnapshot, InstigatorUnit);
 	FCombatSnapshot_Basic TargetSnapshot;
-	GetUnitSnapshot(TargetSnapshot, TargetUnit);
+	GetUnitSnapshotBasic(TargetSnapshot, TargetUnit);
 
 	// THE HARD WAY
 	// check if target can attack first (special attributes or skills, etc.)
@@ -30,9 +31,9 @@ void UCombatCalculator_Basic::GetCombatOutcome(
 	// THE EASY WAY
 	// get rough outcomes for instigator->target & target->instigator
 	FCombatSnapshot_Advanced InstigatorOutcome;
-	GetAdvancedSnapshot(InstigatorOutcome, InstigatorSnapshot, TargetSnapshot);
+	GetUnitSnapshotAdvanced(InstigatorOutcome, InstigatorSnapshot, TargetSnapshot);
 	FCombatSnapshot_Advanced TargetOutcome;
-	GetAdvancedSnapshot(TargetOutcome, TargetSnapshot, InstigatorSnapshot);
+	GetUnitSnapshotAdvanced(TargetOutcome, TargetSnapshot, InstigatorSnapshot);
 	
 	Outcome.InstigatorSnapshot = InstigatorOutcome;
 	Outcome.TargetSnapshot = TargetOutcome;
@@ -46,7 +47,7 @@ void UCombatCalculator_Basic::GetCombatOutcome(
 	Outcome.TargetAttacks *= TargetSnapshot.AttackSpeed - 4 > InstigatorSnapshot.Speed ? 2 : 1;
 }
 
-void UCombatCalculator_Basic::GetUnitSnapshot(FCombatSnapshot_Basic& OutSnapshot, AGridUnit* InGridUnit) const
+void UCombatCalculator_Basic::GetUnitSnapshotBasic(FCombatSnapshot_Basic& OutSnapshot, AGridUnit* InGridUnit) const
 {
 	if (!IsValid(InGridUnit)) { return; }
 
@@ -58,7 +59,14 @@ void UCombatCalculator_Basic::GetUnitSnapshot(FCombatSnapshot_Basic& OutSnapshot
 
 	if (!IsValid(Tile)) { return; }
 	
-	GetWeapon(OutSnapshot.WeaponTraits, InGridUnit->GetEquippedWeapon());
+	// GetWeapon(OutSnapshot.WeaponTraits, InGridUnit->GetEquippedWeapon());
+	// UWeaponDataAsset* WeaponDataAsset = InGridUnit->GetWeaponEquipped();
+	// OutSnapshot.WeaponTraits = WeaponDataAsset->WeaponTraits;
+
+	FWeaponContainer WeaponContainer;
+	GetWeaponByName(WeaponContainer, InGridUnit->GetEquippedWeaponName());
+	OutSnapshot.WeaponTraits = WeaponContainer.WeaponTraits;
+	
 	OutSnapshot.Strength = InGridUnit->GetAbilitySystemComponent()->GetNumericAttribute(UGridUnitAttributeSet::GetStrengthAttribute());
 	OutSnapshot.Skill = InGridUnit->GetAbilitySystemComponent()->GetNumericAttribute(UGridUnitAttributeSet::GetSkillAttribute());
 	OutSnapshot.Speed = InGridUnit->GetAbilitySystemComponent()->GetNumericAttribute(UGridUnitAttributeSet::GetSpeedAttribute());
@@ -74,7 +82,7 @@ void UCombatCalculator_Basic::GetUnitSnapshot(FCombatSnapshot_Basic& OutSnapshot
 	OutSnapshot.CriticalAvoid = CalculateCriticalAvoid(InGridUnit, Tile);
 }
 
-void UCombatCalculator_Basic::GetAdvancedSnapshot(
+void UCombatCalculator_Basic::GetUnitSnapshotAdvanced(
 	FCombatSnapshot_Advanced& OutSnapshot, const FCombatSnapshot_Basic& InstigatorSnapshot, const FCombatSnapshot_Basic& TargetSnapshot)
 {
 	OutSnapshot.HitChance = FMath::Clamp(InstigatorSnapshot.HitRate - TargetSnapshot.Avoid, 0, 100);
@@ -82,6 +90,19 @@ void UCombatCalculator_Basic::GetAdvancedSnapshot(
 	OutSnapshot.HealthChange = FMath::Clamp(InstigatorSnapshot.Strength + InstigatorSnapshot.WeaponTraits.Might - TargetSnapshot.Defence, 0, GetMaxDamage());
 	OutSnapshot.CriticalChance = FMath::Clamp(0, 100, InstigatorSnapshot.CriticalRate - TargetSnapshot.CriticalAvoid);
 
+}
+
+TArray<int32> UCombatCalculator_Basic::GetWeaponRangesByName(const TArray<FName>& WeaponNames) const
+{
+	TArray<int32> Ranges;
+	for (FName WeaponName : WeaponNames)
+	{
+		FWeaponContainer WeaponContainer;
+		GetWeaponByName(WeaponContainer, WeaponName);
+		Ranges.Add(WeaponContainer.WeaponTraits.Range);
+	}
+
+	return Ranges;
 }
 
 int32 UCombatCalculator_Basic::CalculateAttackSpeed(const AGridUnit* Unit, FWeaponTraits& WeaponTraits)
