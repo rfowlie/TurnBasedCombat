@@ -211,7 +211,7 @@ TArray<AGridTile*> UGridWorldSubsystem::GetGridTilesAtRanges(
 	return Output.Array();
 }
 
-void UGridWorldSubsystem::CalculateGridMovement(TArray<FGridMovement>& OutMovement, const AGridUnit* GridUnit)
+void UGridWorldSubsystem::CalculateGridMovement(TArray<FGridMovement>& OutMovement, const AGridUnit* GridUnit, const int32 AvailableMovement)
 {
 	if (!GridUnitLocationMap.Contains(GridUnit))
 	{
@@ -250,7 +250,8 @@ void UGridWorldSubsystem::CalculateGridMovement(TArray<FGridMovement>& OutMoveme
 		{
 			if (GetGridUnitOnTile(TargetTile)) { continue; }    	
 			const int32 CalculatedMovement = Current.Cost + TargetTile->GetMovementCost(); 
-			if (GridUnit->GetAvailableMovement() < CalculatedMovement)
+			// if (GridUnit->GetAvailableMovement() < CalculatedMovement)
+			if (AvailableMovement < CalculatedMovement)
 			{
 				continue;
 			}

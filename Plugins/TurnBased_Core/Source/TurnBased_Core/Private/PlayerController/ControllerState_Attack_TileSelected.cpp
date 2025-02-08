@@ -10,7 +10,7 @@
 #include "TurnBased_Core_Tags.h"
 #include "Grid/GridWorldSubsystem.h"
 #include "Kismet/KismetMathLibrary.h"
-#include "PlayerController/ControllerState_Combat.h"
+#include "PlayerController/ControllerState_OnUnitCombat.h"
 #include "Tile/GridTile.h"
 #include "UI/HUD_TurnBased.h"
 #include "UI/UserWidget_TurnBased.h"
@@ -159,6 +159,6 @@ void UControllerState_Attack_TileSelected::OnCycleTile(const FInputActionValue& 
 void UControllerState_Attack_TileSelected::CombatInitiated()
 {
 	// receive complete callback from combat widget indicating that combat is going to happen
-	PlayerController->SetBaseState(UControllerState_Combat::Create());
+	PlayerController->PushState(UControllerState_OnUnitCombat::Create(InstigatorUnit, TargetUnit), true);
 }
 

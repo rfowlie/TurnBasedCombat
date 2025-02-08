@@ -95,12 +95,8 @@ void APlayerController_TurnBased::PopState()
 	if (!StateStack.IsEmpty())
 	{
 		// restart the now top state
-        	StateStack.Top()->OnEnter(this, 2);
+        StateStack.Top()->OnEnter(this, 2);
 	}
-	else
-	{
-		PushState(UControllerState_Idle::Create(), false);
-	}	
 }
 
 void APlayerController_TurnBased::PopPushState(UControllerState_Abstract* InState, bool bDoExit)

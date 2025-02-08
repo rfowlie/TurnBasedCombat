@@ -40,14 +40,17 @@ void UControllerState_Abstract::OnExit()
 void UControllerState_Abstract::OnEnable()
 {
 	UEnhancedInputLocalPlayerSubsystem* EILP = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer());
-	check(EILP)
+	if (!EILP) { return; }
+	// check(EILP)
 	EILP->AddMappingContext(InputMappingContext, InputMappingContextPriority);
 }
 
 void UControllerState_Abstract::OnDisable()
 {
+	if (!InputMappingContext) { return; }
 	UEnhancedInputLocalPlayerSubsystem* EILP = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer());
-	checkf(EILP, TEXT("UEnhancedInputLocalPlayerSubsystem null, player controller local player might have issue"))
+	if (!EILP) { return; }
+	// checkf(EILP, TEXT("UEnhancedInputLocalPlayerSubsystem null, player controller local player might have issue"))
 	EILP->RemoveMappingContext(InputMappingContext);
 }
 

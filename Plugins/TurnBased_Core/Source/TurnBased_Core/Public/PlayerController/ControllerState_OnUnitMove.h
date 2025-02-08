@@ -33,4 +33,7 @@ protected:
 
 	UFUNCTION()
 	void OnGridUnitAbilityActivated(UGameplayAbility* InGameplayAbility);
+
+private:
+	FDelegateHandle GameplayAbilityDelegateHandle;
 };

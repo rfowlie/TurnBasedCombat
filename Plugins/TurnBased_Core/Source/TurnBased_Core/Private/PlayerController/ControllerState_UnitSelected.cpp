@@ -22,11 +22,12 @@ UControllerState_UnitSelected::UControllerState_UnitSelected()
 {
 }
 
-UControllerState_UnitSelected* UControllerState_UnitSelected::Create(AGridUnit* InSelectedUnit)
+UControllerState_UnitSelected* UControllerState_UnitSelected::Create(AGridUnit* InActiveUnit, const int32 InAvailableMovement)
 {
-	if (!IsValid(InSelectedUnit)) { return nullptr; }
+	if (!IsValid(InActiveUnit)) { return nullptr; }
 	UControllerState_UnitSelected* Object = NewObject<UControllerState_UnitSelected>();
-	Object->ActiveUnit = InSelectedUnit;
+	Object->ActiveUnit = InActiveUnit;
+	Object->AvailableMovement = InAvailableMovement;
 	
 	return Object;
 }
@@ -114,33 +115,43 @@ void UControllerState_UnitSelected::OnSelect()
 	UGridWorldSubsystem* GridSubsystem = PlayerController->GetWorld()->GetSubsystem<UGridWorldSubsystem>();
 	if (!GridSubsystem) { return; }
 
-	const AGridTile* SelectedGridTile = GridSubsystem->GetGridTileHovered();
+	AGridTile* SelectedTile = GridSubsystem->GetGridTileHovered();
 
 	// check attack tile selected, ALLOW THIS EVEN FOR NON PLAYER UNITS, NEXT STATE WILL BLOCK
-	AGridUnit* TargetUnit = GridSubsystem->GetGridUnitOnTile(SelectedGridTile);
+	AGridUnit* TargetUnit = GridSubsystem->GetGridUnitOnTile(SelectedTile);
 	if (IsValid(TargetUnit) && EnemyUnitsInRange.Contains(TargetUnit))
 	{
 		PlayerController->PushState(UControllerState_Attack_TargetSelected::Create(ActiveUnit, TargetUnit, GridMovements), true);
 	}
+	// check movement tile selected
 	else if (IsPlayerUnit)
 	{
-		// check movement tile selected
-		for (FGridMovement GridMovement : GridMovements)
+		// check if self selected, show actions menu
+		if (TargetUnit == ActiveUnit)
 		{
-			if (GridMovement.GridTile.Get() == SelectedGridTile)
-			{
-				// stop cursor follow
-				// GridSubsystem->OnGridTileHoveredStart.RemoveDynamic(this, &ThisClass::MoveSelectedTarget);
-				// PlayerController->PushState(UControllerState_UnitChooseAction::Create(ActiveUnit), false);
-
-				PlayerController->PushState(UControllerState_OnUnitMove::Create(ActiveUnit, GridMovement.GridTile.Get()), false);
-			}
+			// move to confirm movement state, should this just be here for now?
+			PlayerController->PushState(UControllerState_UnitChooseAction::Create(ActiveUnit, SelectedTile), true);
 		}
+		else
+		{
+			for (FGridMovement GridMovement : GridMovements)
+			{
+				if (GridMovement.GridTile.Get() == SelectedTile)
+				{
+					// stop cursor follow
+					// GridSubsystem->OnGridTileHoveredStart.RemoveDynamic(this, &ThisClass::MoveSelectedTarget);
+					// TODO: in the future, we can think about chaining movement together to follow a set path, etc.
+					// PlayerController->PushState(UControllerState_UnitSelected::Create(
+					// 	ActiveUnit, AvailableMovement - GridMovement.Cost), true);
+					PlayerController->PushState(UControllerState_UnitChooseAction::Create(ActiveUnit, SelectedTile), true);
+				}
+			}
+		}		
 	}
 	else
 	{
 		// check if a different unit is selected
-		if (AGridUnit* SelectedUnit = GridSubsystem->GetGridUnitOnTile(SelectedGridTile))
+		if (AGridUnit* SelectedUnit = GridSubsystem->GetGridUnitOnTile(SelectedTile))
 		{
 			if (UTurnWorldSubsystem* TurnSubsystem = PlayerController->GetWorld()->GetSubsystem<UTurnWorldSubsystem>())
 			{
@@ -149,7 +160,7 @@ void UControllerState_UnitSelected::OnSelect()
 				// 	UnitOnTile, TurnSubsystem->CanUnitTakeAction(UnitOnTile)));
 
 				// this will ensure that the movement tiles are not removed when moving to next state
-				PlayerController->PushState(UControllerState_UnitSelected::Create(SelectedUnit), true);
+				PlayerController->PushState(UControllerState_UnitSelected::Create(SelectedUnit, SelectedUnit->GetAvailableMovement()), true);
 			}
 		}
 	}	
@@ -186,7 +197,7 @@ bool UControllerState_UnitSelected::SetMovementTiles()
 	if (!GridSubsystem || !TurnSubsystem) { return false; }
 	
 	// calculate movement
-	GridSubsystem->CalculateGridMovement(GridMovements, ActiveUnit);
+	GridSubsystem->CalculateGridMovement(GridMovements, ActiveUnit, AvailableMovement);
 	for (auto GridMovement : GridMovements)
 	{
 		if (AGridUnit* GridUnit = GridSubsystem->GetGridUnitOnTile(GridMovement.GridTile))

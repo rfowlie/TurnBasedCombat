@@ -44,8 +44,7 @@ void UControllerState_Idle::OnSelect()
 		{
 			if (UTurnWorldSubsystem* TurnSubsystem = PlayerController->GetWorld()->GetSubsystem<UTurnWorldSubsystem>())
 			{
-				// check if unit apart from active faction (this should just be player usually...)
-				PlayerController->PushState(UControllerState_UnitSelected::Create(SelectedUnit), true);
+				PlayerController->PushState(UControllerState_UnitSelected::Create(SelectedUnit, SelectedUnit->GetAvailableMovement()), true);
 			}
 		}
 	}

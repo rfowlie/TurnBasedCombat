@@ -34,7 +34,7 @@ void UControllerState_OnUnitMove::OnEnter(APlayerController* InPlayerController,
 	if (!TurnWorldSubsystem) { return; }
 	if (!TurnWorldSubsystem->CanUnitTakeAction(ActiveUnit)) { return; }
 
-	ActiveUnit->GetAbilitySystemComponent()->AbilityActivatedCallbacks.AddUObject(
+	GameplayAbilityDelegateHandle = ActiveUnit->GetAbilitySystemComponent()->AbilityEndedCallbacks.AddUObject(
 			this, &ThisClass::OnGridUnitAbilityActivated);
 	
 	TArray<AGridTile*> Tiles;
@@ -52,12 +52,15 @@ void UControllerState_OnUnitMove::OnExit()
 {
 	Super::OnExit();
 
-	
+	// unbind or else first event data will always fire
+	ActiveUnit->GetAbilitySystemComponent()->AbilityEndedCallbacks.Remove(GameplayAbilityDelegateHandle);
 }
 
 void UControllerState_OnUnitMove::OnGridUnitAbilityActivated(UGameplayAbility* InGameplayAbility)
 {
-	// TODO: FOR NOW
-	// save to assume that the GA is the move GA...
-	PlayerController->SetBaseState(UControllerState_Idle::Create());
+	// only end when active unit finished ability...
+	if (InGameplayAbility->GetAvatarActorFromActorInfo() == ActiveUnit)
+	{
+		PlayerController->SetBaseState(UControllerState_Idle::Create());
+	}	
 }

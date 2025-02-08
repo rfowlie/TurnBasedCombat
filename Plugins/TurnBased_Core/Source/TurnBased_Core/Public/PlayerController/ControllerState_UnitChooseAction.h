@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "TurnBased_Core_Tags.h"
 #include "PlayerController/ControllerState_Abstract.h"
+#include "Tile/GridTile.h"
 #include "ControllerState_UnitChooseAction.generated.h"
 
 
@@ -23,7 +24,8 @@ class TURNBASED_CORE_API UControllerState_UnitChooseAction : public UControllerS
 	UControllerState_UnitChooseAction();
 
 public:
-	static UControllerState_UnitChooseAction* Create(AGridUnit* InActiveUnit);
+	static UControllerState_UnitChooseAction* Create(
+		AGridUnit* InActiveUnit, AGridTile* InTargetTile);
 
 	virtual void OnEnter(APlayerController* InPlayerController, const int32 InInputMappingContextPriority) override;
 	
@@ -32,6 +34,9 @@ public:
 protected:
 	UPROPERTY()
 	AGridUnit* ActiveUnit = nullptr;
+
+	UPROPERTY()
+	AGridTile* TargetTile = nullptr;
 	
 	UPROPERTY()
 	UUserWidget_ActionOptions* Widget_ActionOptions = nullptr;

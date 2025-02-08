@@ -9,6 +9,7 @@
 #include "PlayerController/ControllerState_Attack_TargetSelected.h"
 #include "UI/UserWidget_ActionOptions.h"
 #include "TurnBased_Core_Tags.h"
+#include "PlayerController/ControllerState_OnUnitMove.h"
 #include "UI/HUD_TurnBased.h"
 
 
@@ -16,9 +17,13 @@ UControllerState_UnitChooseAction::UControllerState_UnitChooseAction()
 {
 }
 
-UControllerState_UnitChooseAction* UControllerState_UnitChooseAction::Create(AGridUnit* InActiveUnit)
+UControllerState_UnitChooseAction* UControllerState_UnitChooseAction::Create(
+	AGridUnit* InActiveUnit, AGridTile* InTargetTile)
 {
 	UControllerState_UnitChooseAction* Object = NewObject<UControllerState_UnitChooseAction>();
+	Object->ActiveUnit = InActiveUnit;
+	Object->TargetTile = InTargetTile;
+	
 	return Object;
 }
 
@@ -27,31 +32,29 @@ void UControllerState_UnitChooseAction::OnEnter(APlayerController* InPlayerContr
 {
 	Super::OnEnter(InPlayerController, InInputMappingContextPriority);
 
-	// display action UI
-	if (!Widget_ActionOptions)
+	// try to get widget through HUD
+	if (AHUD_TurnBased* HUD = Cast<AHUD_TurnBased>(PlayerController->GetHUD()))
 	{
-		// try to get widget through HUD
-		if (AHUD_TurnBased* HUD = Cast<AHUD_TurnBased>(PlayerController->GetHUD()))
-		{
-			// this function should let all the setup and placement for the HUD to handle
-			// if this is a blocking widget then it should stop cursor movement...
+		// this function should let all the setup and placement for the HUD to handle
+		// if this is a blocking widget then it should stop cursor movement...
 
-			// TODO: this is slightly problematic, passing in the actions here...
-			// determine which actions this unit can take? do this here in the HUD?
-			TArray<FGameplayTag> ActionTags;
-			ActionTags.Add(TAG_TBCore_Action_Attack);
-			ActionTags.Add(TAG_TBCore_Action_Skill);
-			ActionTags.Add(TAG_TBCore_Action_Item);
-			Widget_ActionOptions = HUD->ActivateActionOptionsWidget(ActiveUnit, ActionTags);
-			// Widget_ActionOptions->OnActionSelected.AddUniqueDynamic(this, &ThisClass::OnActionSelected);
-		}
-		
+		// TODO: this is slightly problematic, passing in the actions here...
+		// determine which actions this unit can take? do this here in the HUD?
+		TArray<FGameplayTag> ActionTags;
+		ActionTags.Add(TAG_TBCore_Action_Skill);
+		ActionTags.Add(TAG_TBCore_Action_Item);
+		ActionTags.Add(TAG_TBCore_Action_Wait);
+		Widget_ActionOptions = HUD->ActivateActionOptionsWidget(ActiveUnit, ActionTags);
+		// Widget_ActionOptions->OnActionSelected.AddUniqueDynamic(this, &ThisClass::OnActionSelected);
 		// Widget_ActionOptions = Cast<UWidget_ActionOptions>(CreateWidget(PlayerController, PlayerController->ActionWidgetClass));
-		if (!Widget_ActionOptions) { UE_LOG(LogTemp, Error, TEXT("Widget ActionOptions is null")); }
+		if (!Widget_ActionOptions)
+		{
+			UE_LOG(LogTemp, Error, TEXT("Widget ActionOptions is null"));
+		}
 		else
 		{
 			Widget_ActionOptions->OnActionSelected.AddUniqueDynamic(this, &ThisClass::OnActionSelected);
-		}		
+		}	
 	}
 }
 
@@ -60,17 +63,21 @@ void UControllerState_UnitChooseAction::OnExit()
 	Super::OnExit();
 
 	// have HUD fire callback for other listeners
-	if (AHUD_TurnBased* HUD = Cast<AHUD_TurnBased>(PlayerController->GetHUD()))
+	// if (AHUD_TurnBased* HUD = Cast<AHUD_TurnBased>(PlayerController->GetHUD()))
+	// {
+	// 	HUD->RemoveActionOptionsWidget();
+	// }
+	if (Widget_ActionOptions)
 	{
-		HUD->RemoveActionOptionsWidget();
-	}
+		Widget_ActionOptions->OnActionSelected.RemoveDynamic(this, &ThisClass::OnActionSelected);
+	}	
 }
 
 void UControllerState_UnitChooseAction::OnActionSelected(FGameplayTag ActionTag)
 {
-	if (ActionTag.MatchesTagExact(TAG_TBCore_Action_Attack))
+	if (ActionTag.MatchesTagExact(TAG_TBCore_Action_Wait))
 	{
-		
+		PlayerController->PushState(UControllerState_OnUnitMove::Create(ActiveUnit, TargetTile), true);
 	}	
 }
 
@@ -92,6 +99,9 @@ UInputMappingContext* UControllerState_UnitChooseAction::CreateInputMappingConte
 void UControllerState_UnitChooseAction::OnDeselect()
 {
 	// remove self from callback
-	if (Widget_ActionOptions){ Widget_ActionOptions->OnActionSelected.RemoveDynamic(this, &ThisClass::OnActionSelected); }	
+	// if (Widget_ActionOptions)
+	// {
+	// 	Widget_ActionOptions->OnActionSelected.RemoveDynamic(this, &ThisClass::OnActionSelected);
+	// }	
 	PlayerController->PopState();
 }

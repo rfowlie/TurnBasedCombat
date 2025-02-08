@@ -24,7 +24,7 @@ class TURNBASED_CORE_API UControllerState_UnitSelected : public UControllerState
 	UControllerState_UnitSelected();
 	
 public:
-	static UControllerState_UnitSelected* Create(AGridUnit* InSelectedUnit);
+	static UControllerState_UnitSelected* Create(AGridUnit* InSelectedUnit, const int32 InAvailableMovement);
 
 	virtual void OnEnter(APlayerController* InPlayerController, const int32 InInputMappingContextPriority) override;
 	virtual void OnExit() override;
@@ -46,6 +46,9 @@ protected:
 
 	UPROPERTY()
 	bool IsPlayerUnit = false;
+
+	UPROPERTY()
+	int32 AvailableMovement = 0;
 	
 	UPROPERTY()
 	AGridUnit* ActiveUnit = nullptr;
