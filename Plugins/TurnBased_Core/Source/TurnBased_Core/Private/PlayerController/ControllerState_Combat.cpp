@@ -16,6 +16,8 @@ UControllerState_Combat* UControllerState_Combat::Create()
 
 void UControllerState_Combat::OnEnter(APlayerController* InPlayerController, const int32 InInputMappingContextPriority)
 {
+	UE_LOG(LogTemp, Error, TEXT("UControllerState_Combat"));
+	
 	Super::OnEnter(InPlayerController, InInputMappingContextPriority);
 
 	// bind to a callback that indicates combat is over and the player can resume actions...

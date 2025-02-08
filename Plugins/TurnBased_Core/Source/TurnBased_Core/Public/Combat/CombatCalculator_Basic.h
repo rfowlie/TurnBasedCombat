@@ -13,7 +13,7 @@ class AGridTile;
 /**
  * 
  */
-UCLASS()
+UCLASS(Blueprintable, BlueprintType)
 class TURNBASED_CORE_API UCombatCalculator_Basic : public UObject
 {
 	GENERATED_BODY()
@@ -27,7 +27,10 @@ public:
 
 	// weapon
 	UFUNCTION(BlueprintImplementableEvent)
-	void GetWeapon(FWeaponTraits& WeaponTraits, FGameplayTag Weapon) const;
+	void GetWeapon(FWeaponTraits& WeaponTraits, const FGameplayTag& WeaponTag) const;
+	
+	UFUNCTION(BlueprintImplementableEvent)
+	int32 GetWeaponRange(const FGameplayTag& WeaponTag) const;
 
 protected:
 	static int32 GetMaxDamage() { return 60; }

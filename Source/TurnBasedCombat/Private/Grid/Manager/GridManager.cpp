@@ -5,9 +5,10 @@
 #include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystemComponent.h"
 // #include "Grid/GridMovementNode.h"
+#include "TurnBased_Core_Tags.h"
 #include "Combat/CombatCalculator/CombatCalculator.h"
 #include "Combat/CombatCalculator/MoveAbility.h"
-#include "Combat/CombatCalculator/MoveAbilityPayload.h"
+#include "GameplayAbilities/MoveAbilityPayload.h"
 #include "Grid/GridHelper.h"
 #include "Grid/GridStructs.h"
 #include "Grid/Manager/TurnManager.h"
@@ -15,12 +16,11 @@
 #include "Tile/GridTile.h"
 #include "Unit/GridUnit.h"
 #include "_Framework/TBC_InfoWorldSubsystem.h"
+#include "NativeGameplayTags.h"
+#include "GameplayTagContainer.h"
 
 
-UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Grid_Move, "Event.Grid.Move");
-UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Grid_Attack, "Event.Grid.Attack");
-UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Grid_Damage, "Event.Grid.Damage");
-UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Grid_Death, "Event.Grid.Death");
+
 
 
 UGridManager::UGridManager()
@@ -194,8 +194,8 @@ void UGridManager::CreateMoveEvent(UGridProxy* Instigator, UGridProxy* Location)
 	EventData.OptionalObject = UMoveAbilityPayload::Create(Tiles);
 
 	// send gameplay event
-	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(
-		Instigator->GridUnit, TAG_Event_Grid_Move, EventData);
+	// UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(
+	// 	Instigator->GridUnit, TAG_Event_Grid_Move, EventData);
 
 	// activate ability...
 	// Instigator->GridUnit->AbilitySystemComponent->TryActivateAbility(Instigator->GridUnit->MoveAbilitySpecHandle);
@@ -279,8 +279,8 @@ void UGridManager::CreateAttackEvent(UGridProxy* Instigator, UGridProxy* Target,
 	}
 	
 	// send gameplay event
-	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(
-		Instigator->GridUnit, TAG_Event_Grid_Attack, EventData);
+	// UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(
+	// 	Instigator->GridUnit, TAG_Event_Grid_Attack, EventData);
 	// AbilitySystemComponent->TriggerAbilityFromGameplayEvent(
 	// 	AbilityHandle,
 	// 	&ActorInfo,

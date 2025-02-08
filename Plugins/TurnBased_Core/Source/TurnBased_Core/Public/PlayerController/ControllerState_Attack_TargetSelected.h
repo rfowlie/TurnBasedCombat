@@ -45,6 +45,9 @@ protected:
 	UInputAction* InputAction_Deselect = nullptr;
 	UFUNCTION()
 	void OnDeselect();
+
+	UPROPERTY()
+	bool IsPlayerUnit = false;
 	
 	UPROPERTY()
 	AGridUnit* InstigatorUnit = nullptr;

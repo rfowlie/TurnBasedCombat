@@ -19,7 +19,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE(FGridUnitAbilityDelegate);
 /**
  * organize, manage and broadcast all things related to the grid
  */
-UCLASS()
+UCLASS(Blueprintable)
 class TURNBASED_CORE_API UGridWorldSubsystem : public UWorldSubsystem
 {
 	GENERATED_BODY()
@@ -118,5 +118,9 @@ public:
     void OnGridUnitAbilityActivated(UGameplayAbility* InGameplayAbility);
     UFUNCTION()
     void OnGridUnitAbilityEnded(UGameplayAbility* InGameplayAbility);
-	
+
+
+public:
+	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
+	void TestFunction();
 };

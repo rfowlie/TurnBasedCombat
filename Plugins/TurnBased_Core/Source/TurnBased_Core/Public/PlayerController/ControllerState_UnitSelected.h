@@ -24,9 +24,7 @@ class TURNBASED_CORE_API UControllerState_UnitSelected : public UControllerState
 	UControllerState_UnitSelected();
 	
 public:
-	static UControllerState_UnitSelected* Create(
-		AGridUnit* InSelectedUnit,
-		bool IsPlayerUnit);
+	static UControllerState_UnitSelected* Create(AGridUnit* InSelectedUnit);
 
 	virtual void OnEnter(APlayerController* InPlayerController, const int32 InInputMappingContextPriority) override;
 	virtual void OnExit() override;
@@ -50,13 +48,16 @@ protected:
 	bool IsPlayerUnit = false;
 	
 	UPROPERTY()
-	AGridUnit* SelectedUnit = nullptr;
+	AGridUnit* ActiveUnit = nullptr;
 
 	UPROPERTY()
 	AGridTile* SelectedUnitTile = nullptr;
 
 	UPROPERTY()
 	TArray<FGridMovement> GridMovements;
+
+	UPROPERTY()
+	TArray<AGridUnit*> EnemyUnitsInRange;
 
 	UFUNCTION()
 	bool SetMovementTiles();

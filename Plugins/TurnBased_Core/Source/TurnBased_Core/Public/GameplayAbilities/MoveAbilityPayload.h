@@ -12,7 +12,7 @@ class AGridTile;
  * 
  */
 UCLASS(BlueprintType)
-class TURNBASEDCOMBAT_API UMoveAbilityPayload : public UObject
+class TURNBASED_CORE_API UMoveAbilityPayload : public UObject
 {
 	GENERATED_BODY()
 

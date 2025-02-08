@@ -2,12 +2,12 @@
 
 
 #include "PlayerController/ControllerState_Idle.h"
-
 #include "EnhancedInputComponent.h"
 #include "InputMappingContext.h"
 #include "Grid/GridWorldSubsystem.h"
-#include "PlayerController/ControllerState_UnitSelected.h"
 #include "Turn/TurnWorldSubsystem.h"
+#include "PlayerController/ControllerState_UnitSelected.h"
+
 
 struct FEnhancedActionKeyMapping;
 
@@ -44,12 +44,8 @@ void UControllerState_Idle::OnSelect()
 		{
 			if (UTurnWorldSubsystem* TurnSubsystem = PlayerController->GetWorld()->GetSubsystem<UTurnWorldSubsystem>())
 			{
-				// OnChangedDelegate.Execute(UControllerState_UnitSelected::Create(
-				// 	SelectedUnit, TurnSubsystem->CanUnitTakeAction(SelectedUnit)));
-
-				PlayerController->PushState(UControllerState_UnitSelected::Create(
-					SelectedUnit, TurnSubsystem->CanUnitTakeAction(SelectedUnit)), true);
-				
+				// check if unit apart from active faction (this should just be player usually...)
+				PlayerController->PushState(UControllerState_UnitSelected::Create(SelectedUnit), true);
 			}
 		}
 	}

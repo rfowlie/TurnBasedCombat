@@ -15,10 +15,7 @@ class AGridTile;
 class AGridUnit;
 class UGridRules;
 
-UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Event_Grid_Move);
-UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Event_Grid_Attack);
-UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Event_Grid_Damage);
-UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Event_Grid_Death);
+
 
 // DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FDisplayTile, UTerrainDataAsset*, DataAsset, FTileStatsSnapshot, Snapshot, const FName, TerrainType);
 // TODO: do not pass GridProxy, create new class or interface to pass out

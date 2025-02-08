@@ -61,7 +61,7 @@ void APlayerController_TurnBased::SetBaseState(UControllerState_Abstract* InStat
 {
 	while(!StateStack.IsEmpty())
 	{
-		auto State = StateStack.Pop();
+		UControllerState_Abstract* State = StateStack.Pop();
 		State->OnExit();
 	}
 
@@ -88,12 +88,19 @@ void APlayerController_TurnBased::PushState(UControllerState_Abstract* InState, 
 }
 
 void APlayerController_TurnBased::PopState()
-{
+{	
 	auto State = StateStack.Pop();
 	State->OnExit();
-	
-	// restart the now top state
-	StateStack.Top()->OnEnter(this, 2);
+
+	if (!StateStack.IsEmpty())
+	{
+		// restart the now top state
+        	StateStack.Top()->OnEnter(this, 2);
+	}
+	else
+	{
+		PushState(UControllerState_Idle::Create(), false);
+	}	
 }
 
 void APlayerController_TurnBased::PopPushState(UControllerState_Abstract* InState, bool bDoExit)

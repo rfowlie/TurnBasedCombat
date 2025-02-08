@@ -9,6 +9,7 @@
 #include "Grid/GridWorldSubsystem.h"
 #include "PlayerController/ControllerState_Attack_TileSelected.h"
 #include "Tile/GridTile.h"
+#include "Turn/TurnWorldSubsystem.h"
 #include "Unit/GridUnit.h"
 
 
@@ -29,8 +30,14 @@ UControllerState_Attack_TargetSelected* UControllerState_Attack_TargetSelected::
 void UControllerState_Attack_TargetSelected::OnEnter(APlayerController* InPlayerController,
 	const int32 InInputMappingContextPriority)
 {
+	UE_LOG(LogTemp, Error, TEXT("UControllerState_Attack_TargetSelected"));
+	
 	Super::OnEnter(InPlayerController, InInputMappingContextPriority);
 
+	UTurnWorldSubsystem* TurnSubsystem = PlayerController->GetWorld()->GetSubsystem<UTurnWorldSubsystem>();
+	if (!TurnSubsystem) { PlayerController->PopState(); }
+	IsPlayerUnit = TurnSubsystem->CanUnitTakeAction(InstigatorUnit);
+	
 	// set state of instigator
 	InstigatorUnit->SetState(TAG_TBCore_Grid_Tile_CanAttack);
 	
@@ -60,8 +67,8 @@ UInputMappingContext* UControllerState_Attack_TargetSelected::CreateInputMapping
 	
 	InputAction_Select = NewObject<UInputAction>(this);
 	InputAction_Select->ValueType = EInputActionValueType::Boolean;
-	FEnhancedActionKeyMapping& Mapping_Select = NewInputMappingContext->MapKey(InputAction_Select, EKeys::RightMouseButton);
-	EIC->BindAction(InputAction_Deselect, ETriggerEvent::Started, this, &ThisClass::OnSelect);
+	FEnhancedActionKeyMapping& Mapping_Select = NewInputMappingContext->MapKey(InputAction_Select, EKeys::LeftMouseButton);
+	EIC->BindAction(InputAction_Select, ETriggerEvent::Started, this, &ThisClass::OnSelect);
 	
 	InputAction_Deselect = NewObject<UInputAction>(this);
 	InputAction_Deselect->ValueType = EInputActionValueType::Boolean;
@@ -73,13 +80,16 @@ UInputMappingContext* UControllerState_Attack_TargetSelected::CreateInputMapping
 
 void UControllerState_Attack_TargetSelected::OnSelect()
 {
+	// do not progress any further if not a player unit
+	if (!IsPlayerUnit) { return; }
+
 	// check if tile selected is in attack tiles map
 	if (UGridWorldSubsystem* GridSubsystem = PlayerController->GetWorld()->GetSubsystem<UGridWorldSubsystem>())
 	{
 		if (AttackTileRangeMap.Contains(GridSubsystem->GridTileHovered))
 		{
 			PlayerController->PushState(UControllerState_Attack_TileSelected::Create(
-				InstigatorUnit, TargetUnit, GridSubsystem->GridTileHovered), false);
+				InstigatorUnit, TargetUnit, GridSubsystem->GridTileHovered, AttackTileRangeMap), false);
 		}
 	}
 }

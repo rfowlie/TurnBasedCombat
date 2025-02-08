@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "ControllerState_Abstract.h"
+#include "InputActionValue.h"
 #include "ControllerState_Attack_TileSelected.generated.h"
 
 class UInputAction;
@@ -24,7 +25,7 @@ class TURNBASED_CORE_API UControllerState_Attack_TileSelected : public UControll
 
 public:
 	static UControllerState_Attack_TileSelected* Create(
-		AGridUnit* InstigatorUnit, AGridUnit* TargetUnit, AGridTile* TileSelected);
+		AGridUnit* InstigatorUnit, AGridUnit* TargetUnit, AGridTile* TileSelected, const TMap<AGridTile*, int32>& InAttackTileRangeMap);
 
 	virtual void OnEnter(APlayerController* InPlayerController, const int32 InInputMappingContextPriority) override;
 	virtual void OnExit() override;
@@ -32,13 +33,21 @@ public:
 protected:
 	virtual UInputMappingContext* CreateInputMappingContext() override;
 
-	// UPROPERTY()
-	// UInputAction* InputAction_Select = nullptr;
-
+	UPROPERTY()
+	UInputAction* InputAction_Select = nullptr;
+	UFUNCTION()
+	void OnSelect();
+	
 	UPROPERTY()
 	UInputAction* InputAction_Deselect = nullptr;
 	UFUNCTION()
 	void OnDeselect();
+
+	UPROPERTY()
+	UInputAction* InputAction_CycleWeapon = nullptr;
+	UFUNCTION()
+	void OnCycleTile(const FInputActionValue& Value);
+	
 	
 	UPROPERTY()
 	AGridUnit* InstigatorUnit = nullptr;
@@ -53,6 +62,15 @@ protected:
 	void CombatInitiated();
 
 private:
-	FVector InstigatorPreviousPosition = FVector::ZeroVector;
+	UPROPERTY()
+	AGridTile* InstigatorInitialTile = nullptr;
+	UPROPERTY()
+	FRotator InstigatorInitialRotation = FRotator();
+
+	UPROPERTY()
+	TMap<AGridTile*, int32> AttackTileRangeMap;
+	
+	UPROPERTY()
+	TArray<AGridTile*> AttackTileOrder;
 
 };

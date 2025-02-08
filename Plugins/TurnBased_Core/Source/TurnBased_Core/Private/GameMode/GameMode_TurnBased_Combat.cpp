@@ -2,6 +2,7 @@
 
 
 #include "GameMode/GameMode_TurnBased_Combat.h"
+#include "Combat/CombatCalculator_Basic.h"
 
 
 
@@ -12,5 +13,4 @@ AGameMode_TurnBased_Combat::AGameMode_TurnBased_Combat()
 void AGameMode_TurnBased_Combat::BeginPlay()
 {
 	Super::BeginPlay();
-	
 }

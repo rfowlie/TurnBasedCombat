@@ -2,8 +2,11 @@
 
 
 #include "Grid/GridWorldSubsystem.h"
+
+#include "Combat/CombatCalculator_Basic.h"
 #include "Engine/World.h"
 #include "GameFramework/Actor.h"
+#include "GameMode/GameMode_TurnBased_Combat.h"
 #include "Grid/GridHelper.h"
 #include "Tile/GridTile.h"
 #include "Turn/TurnWorldSubsystem.h"
@@ -295,7 +298,14 @@ void UGridWorldSubsystem::CalculateGridAttacks(
 
 	// unit info
 	TMap<int32, TSet<AGridTile*>> RangeTileMap;
-	TSet<int32> WeaponRanges = GridUnit->GetWeaponRanges();
+	TSet<int32> WeaponRanges;
+	// TODO: FOR NOW
+	AGameMode_TurnBased_Combat* GameMode = Cast<AGameMode_TurnBased_Combat>(GetWorld()->GetAuthGameMode());
+	if (!GameMode) { return; }
+	for (auto Weapon : GridUnit->WeaponsInventory)
+	{
+		WeaponRanges.Add(GameMode->GetCombatCalculator()->GetWeaponRange(Weapon));
+	}
 	TMap<FGridPosition, bool> MovementMap;
 	for (const auto GridMovement : InGridMovements)
 	{
@@ -331,13 +341,27 @@ void UGridWorldSubsystem::CalculateGridAttackTiles(TMap<AGridTile*, int32>& OutW
 {
 	if (!IsValid(InstigatorUnit) || !IsValid(TargetUnit)) { return; }
 
-	AGridTile* TargetTile = GetGridTileOfUnit(TargetUnit);
-	for (auto WeaponRange : InstigatorUnit->GetWeaponRanges())
+	AGameMode_TurnBased_Combat* GameMode = Cast<AGameMode_TurnBased_Combat>(GetWorld()->GetAuthGameMode());
+	if (!GameMode) { return; }
+	const UCombatCalculator_Basic* CombatCalculator = GameMode->GetCombatCalculator();
+	TSet<int32> WeaponRanges;
+	for (auto Weapon : InstigatorUnit->WeaponsInventory)
+	{
+		WeaponRanges.Add(CombatCalculator->GetWeaponRange(Weapon));
+	}
+	// AGridTile* TargetTile = GetGridTileOfUnit(TargetUnit);
+	for (auto WeaponRange : WeaponRanges)
 	{
 		TArray<FGridPosition> OutWeaponRangePositions;
-		UGridHelper::GetGridPositionsAtRange(UGridHelper::CalculateGridPosition(InstigatorUnit), WeaponRange, OutWeaponRangePositions);
+		UGridHelper::GetGridPositionsAtRange(UGridHelper::CalculateGridPosition(TargetUnit), WeaponRange, OutWeaponRangePositions);
 		for (const FGridPosition GridPosition : OutWeaponRangePositions)
 		{
+			// don't add tile of instigator
+			if (GridPosition == UGridHelper::CalculateGridPosition(GetGridTileOfUnit(InstigatorUnit)))
+			{
+				continue;
+			}
+			
 			for (auto GridMovement : InGridMovements)
 			{
 				if (GridTileLocationMap[GridMovement.GridTile] == GridPosition)
