@@ -60,6 +60,7 @@ void UControllerState_Attack_TileSelected::OnEnter(APlayerController* InPlayerCo
 	// set state of instigator and selected tile
 	InstigatorUnit->SetState(TAG_TBCore_Grid_Tile_Combat);
 	TileSelected->SetState(TAG_TBCore_Grid_Tile_Combat);
+	
 	// pass units to combat UI, OR to combat subsystem (which will then take on passing all the relevant info?)
 	if (AHUD_TurnBased* HUD = Cast<AHUD_TurnBased>(PlayerController->GetHUD()))
 	{

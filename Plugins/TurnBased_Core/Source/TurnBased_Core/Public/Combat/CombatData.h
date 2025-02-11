@@ -98,6 +98,9 @@ struct FCombatSnapshot_Advanced
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int32 HealthChange = 0;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int32 AttackPower = 0;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bHit = false;

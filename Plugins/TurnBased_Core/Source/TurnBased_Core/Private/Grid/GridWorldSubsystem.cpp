@@ -41,35 +41,14 @@ void UGridWorldSubsystem::RegisterGridUnit(AGridUnit* GridUnit)
 		// add to map
 		FGridPosition GridPosition = UGridHelper::CalculateGridPosition(GridUnit);
 		
-		// TODO: why the double map???
 		LocationGridUnitMap.Add(GridPosition, GridUnit);
 		GridUnitLocationMap.Add(GridUnit, GridPosition);
 
-		// GridUnit->GetAbilitySystemComponent()->AbilityActivatedCallbacks.AddLambda([this, GridUnit](const FAbilityEndedData& Data)
-		// {
-		// 	if (Data.AbilitySpecHandle == GridUnit->GameplayAbilitySpecHandle_Move)
-		// 	{
-		// 		PostEvent_Move(GridUnit);
-		// 	}
-		// });
-
-		// whenever a unit does something, add it to the active units list
-		// GridUnit->GetAbilitySystemComponent()->AbilityActivatedCallbacks.AddUObject(
-		// 	this, &ThisClass::OnGridUnitAbilityActivated, GridUnit);
-		// GridUnit->GetAbilitySystemComponent()->AbilityEndedCallbacks.AddUObject(
-		// 	this, &ThisClass::OnGridUnitAbilityEnded, GridUnit);
+		// TODO: do we need this???
 		GridUnit->GetAbilitySystemComponent()->AbilityActivatedCallbacks.AddUObject(
 			this, &ThisClass::OnGridUnitAbilityActivated);
 		GridUnit->GetAbilitySystemComponent()->AbilityEndedCallbacks.AddUObject(
 			this, &ThisClass::OnGridUnitAbilityEnded);
-		
-		// GridUnit->GetAbilitySystemComponent()->OnAbilityEnded.AddLambda([this, GridUnit](const FAbilityEndedData& Data)
-		// {
-		// 	if (Data.AbilitySpecHandle == GridUnit->GameplayAbilitySpecHandle_Move)
-		// 	{
-		// 		PostEvent_Move(GridUnit);
-		// 	}
-		// });
 	}
 }
 

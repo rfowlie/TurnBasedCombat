@@ -66,7 +66,7 @@ public:
 	void PopPushState(UControllerState_Abstract* InState, bool bDoExit);
 	
 protected:
-	UPROPERTY()
+	UPROPERTY(BlueprintReadOnly, Category = "TurnBased | State")
 	TArray<UControllerState_Abstract*> StateStack;
 	// State ~ end
 	

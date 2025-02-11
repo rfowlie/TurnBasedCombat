@@ -12,7 +12,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FLevelManagerEventDelegate, bool, bS
 /*
  * every level should contain one of these, and it should be used to store all required or relevant information
  */
-UCLASS()
+UCLASS(Blueprintable, BlueprintType)
 class TURNBASED_CORE_API ALevelManagerActor : public AActor
 {
 	GENERATED_BODY()

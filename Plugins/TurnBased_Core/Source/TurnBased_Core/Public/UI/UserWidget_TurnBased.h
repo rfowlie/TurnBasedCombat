@@ -19,7 +19,7 @@ class TURNBASED_CORE_API UUserWidget_TurnBased : public UUserWidget
 
 public:
 	UPROPERTY(BlueprintAssignable, BlueprintCallable)
-	FWidgetActionOptionDelegate OnInitiate;
+	FWidgetActionOptionDelegate OnBegin;
 	
 	UPROPERTY(BlueprintAssignable, BlueprintCallable)
 	FWidgetActionOptionDelegate OnComplete;

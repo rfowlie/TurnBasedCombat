@@ -85,6 +85,7 @@ void UCombatCalculator_Basic::GetUnitSnapshotBasic(FCombatSnapshot_Basic& OutSna
 void UCombatCalculator_Basic::GetUnitSnapshotAdvanced(
 	FCombatSnapshot_Advanced& OutSnapshot, const FCombatSnapshot_Basic& InstigatorSnapshot, const FCombatSnapshot_Basic& TargetSnapshot)
 {
+	OutSnapshot.AttackPower = FMath::Max(0, InstigatorSnapshot.Strength + InstigatorSnapshot.WeaponTraits.Might - TargetSnapshot.Defence);
 	OutSnapshot.HitChance = FMath::Clamp(InstigatorSnapshot.HitRate - TargetSnapshot.Avoid, 0, 100);
 	OutSnapshot.bHit = FMath::RandRange(0, 100) < OutSnapshot.HitChance;
 	OutSnapshot.HealthChange = FMath::Clamp(InstigatorSnapshot.Strength + InstigatorSnapshot.WeaponTraits.Might - TargetSnapshot.Defence, 0, GetMaxDamage());
