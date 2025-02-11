@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "WeaponDataAsset.h"
+#include "WeaponDataAsset_OLD.h"
 #include "UObject/Object.h"
 #include "Weapon.generated.h"
 
@@ -32,5 +32,5 @@ public:
 	int32 GetEffort() const;
 
 	UFUNCTION()
-	bool SetWeaponStats(const UWeaponDataAsset* WeaponDataAsset);
+	bool SetWeaponStats(const UWeaponDataAsset_OLD* WeaponDataAsset);
 };

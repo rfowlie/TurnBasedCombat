@@ -2,9 +2,41 @@
 
 
 #include "Turn/TurnWorldSubsystem.h"
-
 #include "Grid/GridStructs.h"
 
+
+void UTurnWorldSubsystem::BeginTurns()
+{
+	if (TurnNumber == 0)
+	{
+		TurnNumber += 1;
+		if (OnTurnStart.IsBound()) { OnTurnStart.Broadcast(TurnNumber); }
+
+		FactionIndex = 0;
+		if (OnFactionStart.IsBound()) { OnFactionStart.Broadcast(FactionOrder[FactionIndex]); }
+		FactionMap[FactionOrder[FactionIndex]].ActivateUnits();
+	}
+}
+
+void UTurnWorldSubsystem::EnableTurns()
+{
+	if (TurnNumber == 0)
+	{
+		TurnNumber += 1;
+		if (OnTurnStart.IsBound()) { OnTurnStart.Broadcast(TurnNumber); }
+
+		FactionIndex = 0;
+		if (OnFactionStart.IsBound()) { OnFactionStart.Broadcast(FactionOrder[FactionIndex]); }
+		FactionMap[FactionOrder[FactionIndex]].ActivateUnits();
+	}
+	
+	TurnsActive = true;
+}
+
+void UTurnWorldSubsystem::DisableTurns()
+{
+	TurnsActive = false;
+}
 
 int32 UTurnWorldSubsystem::GetTurnNumber() const
 {
@@ -18,6 +50,9 @@ void UTurnWorldSubsystem::IncrementFaction()
 		UE_LOG(LogTemp, Error, TEXT("Turn Manager - Increment Faction: no factions registered"));
 		return;
 	}
+
+	// do not allow changes if paused...
+	if (!TurnsActive) { return; }
 	
 	if (FactionIndex + 1 < FactionOrder.Num())
 	{
@@ -79,13 +114,10 @@ bool UTurnWorldSubsystem::IsFactionDefeated(const FGameplayTag FactionTag)
 
 void UTurnWorldSubsystem::CheckFactionDefeated(AGridUnit* GridUnit)
 {
-	for (auto Pair : FactionMap)
+	FGameplayTag FactionTag = GridUnit->Execute_GetFaction(GridUnit);
+	if (FactionMap[FactionTag].IsFactionDefeated())
 	{
-		if (Pair.Value.GridUnits.Contains(GridUnit))
-		{
-			if (OnFactionDefeated.IsBound()) { OnFactionDefeated.Broadcast(Pair.Key); }
-			break;
-		}
+		if (OnFactionDefeated.IsBound()) { OnFactionDefeated.Broadcast(FactionTag); }
 	}
 }
 
@@ -106,6 +138,7 @@ bool UTurnWorldSubsystem::RegisterGridUnit(AGridUnit* InGridUnit)
 		FFactionInfo FactionInfo;
 		FactionInfo.GridUnits.Add(InGridUnit);
 		FactionMap.Add(FactionTag, FactionInfo);
+		FactionOrder.Add(FactionTag);
 	}
 	
 	return true;
@@ -138,4 +171,27 @@ AGridUnit* UTurnWorldSubsystem::GetNextUnit(AGridUnit* InGridUnit)
 	// }
 	//
 	// return FactionMap[FactionOrder[FactionIndex]].GetNextUnit(InGridUnit);
+}
+
+void UTurnWorldSubsystem::GetFactionEnemies(AGridUnit* InGridUnit, TArray<AGridUnit*>& EnemyGridUnits)
+{
+	if (!IsValid(InGridUnit)) { return; }
+	FGameplayTag FactionTag = InGridUnit->Execute_GetFaction(InGridUnit);
+	if (!FactionOrder.Contains(FactionTag))
+	{
+		UE_LOG(LogTemp, Error, TEXT("Turn World Subsystem - Get Faction Enemies: faction not registered"));
+		return;
+	}
+
+	// FOR NOW
+	EnemyGridUnits.Empty();
+	for (auto Pair : FactionMap)
+	{
+		if (Pair.Key != FactionTag)
+		{
+			TArray<AGridUnit*> OutUnits;
+			Pair.Value.GetGridUnits(OutUnits);
+			EnemyGridUnits.Append(OutUnits);
+		}
+	}	
 }

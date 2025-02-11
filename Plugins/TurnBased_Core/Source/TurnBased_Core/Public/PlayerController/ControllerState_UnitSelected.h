@@ -24,15 +24,13 @@ class TURNBASED_CORE_API UControllerState_UnitSelected : public UControllerState
 	UControllerState_UnitSelected();
 	
 public:
-	static UControllerState_UnitSelected* Create(
-		AGridUnit* InSelectedUnit,
-		bool IsPlayerUnit);
+	static UControllerState_UnitSelected* Create(AGridUnit* InSelectedUnit, const int32 InAvailableMovement);
 
-	virtual void OnEnter(APlayerController* PlayerController, const int32 InInputMappingContextPriority) override;
-	virtual void OnExit(const APlayerController* PlayerController) override;
+	virtual void OnEnter(APlayerController* InPlayerController, const int32 InInputMappingContextPriority) override;
+	virtual void OnExit() override;
 
 protected:
-	virtual UInputMappingContext* CreateInputMappingContext(APlayerController* PlayerController) override;
+	virtual UInputMappingContext* CreateInputMappingContext() override;
 
 	UPROPERTY()
 	UInputAction* InputAction_Select = nullptr;
@@ -48,9 +46,12 @@ protected:
 
 	UPROPERTY()
 	bool IsPlayerUnit = false;
+
+	UPROPERTY()
+	int32 AvailableMovement = 0;
 	
 	UPROPERTY()
-	AGridUnit* SelectedUnit = nullptr;
+	AGridUnit* ActiveUnit = nullptr;
 
 	UPROPERTY()
 	AGridTile* SelectedUnitTile = nullptr;
@@ -58,6 +59,12 @@ protected:
 	UPROPERTY()
 	TArray<FGridMovement> GridMovements;
 
+	UPROPERTY()
+	TArray<AGridUnit*> EnemyUnitsInRange;
+
+	UFUNCTION()
+	bool SetMovementTiles();
+	
 	UFUNCTION()
 	void MoveSelectedTarget(AGridTile* InGridTile);
 	

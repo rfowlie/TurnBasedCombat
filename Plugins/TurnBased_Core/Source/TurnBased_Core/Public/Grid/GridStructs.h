@@ -3,15 +3,13 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Unit/GridUnit.h"
 #include "UObject/Object.h"
+#include "Unit/GridUnit.h"
 #include "GridStructs.generated.h"
 
-
 class AGridUnit;
-class UWeapon;
 class AGridTile;
-
+class UWeapon;
 
 USTRUCT(BlueprintType)
 struct TURNBASED_CORE_API FGridPosition
@@ -27,20 +25,22 @@ struct TURNBASED_CORE_API FGridPosition
 	UPROPERTY(BlueprintReadOnly)
 	int32 Y;
 
+	// FOR NOW
+	int32 GetDistance(const FGridPosition& Other) const
+	{
+		// Chebyshev distance
+		return FMath::Max(FMath::Abs(Other.X - X), FMath::Abs(Other.Y - Y));
+	}
+	
 	bool operator==(const FGridPosition& Other) const
 	{
-		return (X == Other.X) && (Y == Other.Y);
+		return X == Other.X && Y == Other.Y;
 	}
 	
 	bool operator<(const FGridPosition& Other) const
 	{
 		return (X < Other.X) ? true : (Y < Other.Y) ? true : false;
 	}
-
-	// bool operator>(const FGridLocation& Other) const
-	// {
-	// 	return (X > Other.X) ? true : (Y > Other.Y) ? true : false;
-	// }
 
 	FGridPosition operator+(const FGridPosition& Other) const
 	{
@@ -74,8 +74,6 @@ struct TURNBASED_CORE_API FGridMovement
 {
 	GENERATED_BODY()
 
-	FGridMovement() {}
-
 	UPROPERTY(BlueprintReadOnly)
 	TObjectPtr<AGridTile> GridTile = nullptr;
 
@@ -94,7 +92,6 @@ struct TURNBASED_CORE_API FGridMovement
 	
 	bool operator==(const FGridMovement& Other) const
 	{
-		// return (GridPosition == Other.GridPosition) && GridTile == Other.GridTile;
 		return GridTile == Other.GridTile;
 	}
 	
@@ -173,6 +170,11 @@ struct TURNBASED_CORE_API FFactionInfo
 	
 	UPROPERTY()
 	TMap<AGridUnit*, bool> GridUnits;
+
+	void GetGridUnits(TArray<AGridUnit*>& OutGridUnits)
+	{
+		GridUnits.GetKeys(OutGridUnits);
+	}
 
 	void ActivateUnits()
 	{

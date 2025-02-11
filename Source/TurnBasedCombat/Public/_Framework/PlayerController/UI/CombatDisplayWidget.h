@@ -7,7 +7,7 @@
 #include "CombatDisplayWidget.generated.h"
 
 class AGridUnit;
-class UWeaponDataAsset;
+class UWeaponDataAsset_OLD;
 
 USTRUCT(Blueprintable, BlueprintType)
 struct FCombatDisplayInfo
@@ -21,7 +21,7 @@ struct FCombatDisplayInfo
 	AGridUnit* Target;
 	
 	UPROPERTY(BlueprintReadOnly)
-	TArray<UWeaponDataAsset*> ValidWeapons;
+	TArray<UWeaponDataAsset_OLD*> ValidWeapons;
 };
 
 /**

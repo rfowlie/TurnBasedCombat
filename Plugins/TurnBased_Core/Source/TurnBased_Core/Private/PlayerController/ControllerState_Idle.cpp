@@ -2,12 +2,12 @@
 
 
 #include "PlayerController/ControllerState_Idle.h"
-
 #include "EnhancedInputComponent.h"
 #include "InputMappingContext.h"
 #include "Grid/GridWorldSubsystem.h"
-#include "PlayerController/ControllerState_UnitSelected.h"
 #include "Turn/TurnWorldSubsystem.h"
+#include "PlayerController/ControllerState_UnitSelected.h"
+
 
 struct FEnhancedActionKeyMapping;
 
@@ -21,27 +21,7 @@ UControllerState_Idle* UControllerState_Idle::Create()
 	return Object;
 }
 
-void UControllerState_Idle::OnEnter(APlayerController* InPlayerController, const int32 InInputMappingContextPriority)
-{
-	Super::OnEnter(InPlayerController, InInputMappingContextPriority);
-
-	// if (UGridWorldSubsystem* Subsystem = GetWorld()->GetSubsystem<UGridWorldSubsystem>())
-	// {
-	// 	Subsystem->OnGridUnitSelectedStart.AddUniqueDynamic(this, &ThisClass::OnUnitSelected);
-	// }
-}
-
-void UControllerState_Idle::OnExit(const APlayerController* InPlayerController)
-{
-	Super::OnExit(InPlayerController);
-	
-	// if (UGridWorldSubsystem* Subsystem = GetWorld()->GetSubsystem<UGridWorldSubsystem>())
-	// {
-	// 	Subsystem->OnGridUnitSelectedStart.AddUniqueDynamic(this, &ThisClass::OnUnitSelected);
-	// }
-}
-
-UInputMappingContext* UControllerState_Idle::CreateInputMappingContext(APlayerController* PlayerController)
+UInputMappingContext* UControllerState_Idle::CreateInputMappingContext()
 {
 	UEnhancedInputComponent* EIC = Cast<UEnhancedInputComponent>(PlayerController->InputComponent);
 	check(EIC)
@@ -58,21 +38,14 @@ UInputMappingContext* UControllerState_Idle::CreateInputMappingContext(APlayerCo
 
 void UControllerState_Idle::OnSelect()
 {
-	if (UGridWorldSubsystem* GridSubsystem = GetWorld()->GetSubsystem<UGridWorldSubsystem>())
+	if (UGridWorldSubsystem* GridSubsystem = PlayerController->GetWorld()->GetSubsystem<UGridWorldSubsystem>())
 	{
 		if (AGridUnit* SelectedUnit = GridSubsystem->GetGridUnitOnTile(GridSubsystem->GetGridTileHovered()))
 		{
-			if (UTurnWorldSubsystem* TurnSubsystem = GetWorld()->GetSubsystem<UTurnWorldSubsystem>())
+			if (UTurnWorldSubsystem* TurnSubsystem = PlayerController->GetWorld()->GetSubsystem<UTurnWorldSubsystem>())
 			{
-				// TODO: need to decide how we want to handle selecting player/enemy unit
-				OnChangedDelegate.Execute(UControllerState_UnitSelected::Create(
-					SelectedUnit, TurnSubsystem->CanUnitTakeAction(SelectedUnit)));
-				
+				PlayerController->PushState(UControllerState_UnitSelected::Create(SelectedUnit, SelectedUnit->GetAvailableMovement()), true);
 			}
 		}
 	}
-}
-
-void UControllerState_Idle::OnUnitSelected(AGridUnit* InGridUnit) const
-{
 }

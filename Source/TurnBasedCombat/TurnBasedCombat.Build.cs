@@ -24,7 +24,7 @@ public class TurnBasedCombat : ModuleRules
 
 		PrivateDependencyModuleNames.AddRange(new string[]
 		{
-			
+			"TurnBased_Core"
 		});
 
 		// Uncomment if you are using Slate UI

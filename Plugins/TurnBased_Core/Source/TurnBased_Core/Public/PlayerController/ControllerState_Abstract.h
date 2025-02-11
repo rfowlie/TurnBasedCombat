@@ -17,10 +17,11 @@ UCLASS(Abstract, Blueprintable, BlueprintType)
 class TURNBASED_CORE_API UControllerState_Abstract : public UObject
 {
 	GENERATED_BODY()
-
 	
 public:
-	FControllerStateChangedDelegate OnChangedDelegate;
+	// FControllerStateChangedDelegate OnNewState;
+	// FControllerStateChangedDelegate OnPushState;
+	// FControllerStateChangedDelegate OnPopState;
 	
 	virtual FGameplayTag GetStateTag() const;
 	
@@ -28,15 +29,20 @@ public:
 	virtual void OnEnter(APlayerController* InPlayerController, const int32 InInputMappingContextPriority);
 	
 	UFUNCTION(BlueprintCallable, Category="Controller State")
-	virtual void OnExit(const APlayerController* InPlayerController);
+	virtual void OnExit();
 
 	UFUNCTION(BlueprintCallable, Category="Controller State")
-	void OnEnable(const APlayerController* PlayerController);
+	void OnEnable();
 	
 	UFUNCTION(BlueprintCallable, Category="Controller State")
-	void OnDisable(const APlayerController* InPlayerController);
+	void OnDisable();
 	
 protected:
+	// UPROPERTY()
+	// APlayerController* PlayerController = nullptr;
+	UPROPERTY()
+	APlayerController_TurnBased* PlayerController = nullptr;
+	
 	UPROPERTY()
 	UInputMappingContext* InputMappingContext = nullptr;
 
@@ -44,6 +50,6 @@ protected:
 	int32 InputMappingContextPriority = 1;
 
 	UFUNCTION()
-	virtual UInputMappingContext* CreateInputMappingContext(APlayerController* PlayerController);
+	virtual UInputMappingContext* CreateInputMappingContext();
 	
 };

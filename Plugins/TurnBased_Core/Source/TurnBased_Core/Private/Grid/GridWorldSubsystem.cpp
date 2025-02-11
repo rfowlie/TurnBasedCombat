@@ -2,10 +2,14 @@
 
 
 #include "Grid/GridWorldSubsystem.h"
+
+#include "Combat/CombatCalculator_Basic.h"
 #include "Engine/World.h"
 #include "GameFramework/Actor.h"
+#include "GameMode/GameMode_TurnBased_Combat.h"
 #include "Grid/GridHelper.h"
 #include "Tile/GridTile.h"
+#include "Turn/TurnWorldSubsystem.h"
 #include "Unit/GridUnit.h"
 
 
@@ -23,6 +27,8 @@ void UGridWorldSubsystem::RegisterGridTile(AGridTile* GridTile)
 		
 		// bind to events
 		GridTile->OnBeginCursorOver.AddDynamic(this, &ThisClass::OnBeginCursorOverGridTile);
+
+		UE_LOG(LogTemp, Log, TEXT("GridWorldSubsystem - RegisterGridTile: %s"), *GridTile->GetName());
 	}
 }
 
@@ -35,35 +41,14 @@ void UGridWorldSubsystem::RegisterGridUnit(AGridUnit* GridUnit)
 		// add to map
 		FGridPosition GridPosition = UGridHelper::CalculateGridPosition(GridUnit);
 		
-		// TODO: why the double map???
 		LocationGridUnitMap.Add(GridPosition, GridUnit);
 		GridUnitLocationMap.Add(GridUnit, GridPosition);
 
-		// GridUnit->GetAbilitySystemComponent()->AbilityActivatedCallbacks.AddLambda([this, GridUnit](const FAbilityEndedData& Data)
-		// {
-		// 	if (Data.AbilitySpecHandle == GridUnit->GameplayAbilitySpecHandle_Move)
-		// 	{
-		// 		PostEvent_Move(GridUnit);
-		// 	}
-		// });
-
-		// whenever a unit does something, add it to the active units list
-		// GridUnit->GetAbilitySystemComponent()->AbilityActivatedCallbacks.AddUObject(
-		// 	this, &ThisClass::OnGridUnitAbilityActivated, GridUnit);
-		// GridUnit->GetAbilitySystemComponent()->AbilityEndedCallbacks.AddUObject(
-		// 	this, &ThisClass::OnGridUnitAbilityEnded, GridUnit);
+		// TODO: do we need this???
 		GridUnit->GetAbilitySystemComponent()->AbilityActivatedCallbacks.AddUObject(
 			this, &ThisClass::OnGridUnitAbilityActivated);
 		GridUnit->GetAbilitySystemComponent()->AbilityEndedCallbacks.AddUObject(
 			this, &ThisClass::OnGridUnitAbilityEnded);
-		
-		// GridUnit->GetAbilitySystemComponent()->OnAbilityEnded.AddLambda([this, GridUnit](const FAbilityEndedData& Data)
-		// {
-		// 	if (Data.AbilitySpecHandle == GridUnit->GameplayAbilitySpecHandle_Move)
-		// 	{
-		// 		PostEvent_Move(GridUnit);
-		// 	}
-		// });
 	}
 }
 
@@ -187,8 +172,8 @@ TArray<AGridTile*> UGridWorldSubsystem::GetGridTilesAtRange(FGridPosition StartG
 	return Output;
 }
 
-TArray<AGridTile*> UGridWorldSubsystem::GetGridTilesAtRanges(const FGridPosition StartGridPosition,
-	TArray<int32> Ranges)
+TArray<AGridTile*> UGridWorldSubsystem::GetGridTilesAtRanges(
+	const FGridPosition StartGridPosition, TArray<int32> Ranges)
 {
 	TSet UniqueRanges(Ranges);
 	for (const int32 Range : Ranges)
@@ -205,7 +190,7 @@ TArray<AGridTile*> UGridWorldSubsystem::GetGridTilesAtRanges(const FGridPosition
 	return Output.Array();
 }
 
-void UGridWorldSubsystem::CalculateGridMovement(TArray<FGridMovement>& OutMovement, const AGridUnit* GridUnit)
+void UGridWorldSubsystem::CalculateGridMovement(TArray<FGridMovement>& OutMovement, const AGridUnit* GridUnit, const int32 AvailableMovement)
 {
 	if (!GridUnitLocationMap.Contains(GridUnit))
 	{
@@ -244,7 +229,8 @@ void UGridWorldSubsystem::CalculateGridMovement(TArray<FGridMovement>& OutMoveme
 		{
 			if (GetGridUnitOnTile(TargetTile)) { continue; }    	
 			const int32 CalculatedMovement = Current.Cost + TargetTile->GetMovementCost(); 
-			if (GridUnit->GetAvailableMovement() < CalculatedMovement)
+			// if (GridUnit->GetAvailableMovement() < CalculatedMovement)
+			if (AvailableMovement < CalculatedMovement)
 			{
 				continue;
 			}
@@ -272,6 +258,95 @@ void UGridWorldSubsystem::CalculateGridMovement(TArray<FGridMovement>& OutMoveme
 	
 	OutMovement = Processed.Array();
 }
+
+void UGridWorldSubsystem::CalculateGridAttacks(
+	TArray<FGridPair>& OutGridPairs, AGridUnit* GridUnit, const TArray<FGridMovement>& InGridMovements)
+{
+	if (!IsValid(GridUnit)) { return; }
+
+	// get enemy info
+	TArray<AGridUnit*> EnemyGridUnits;
+	if (UTurnWorldSubsystem* TurnSubsystem = GetWorld()->GetSubsystem<UTurnWorldSubsystem>())
+	{
+		TurnSubsystem->GetFactionEnemies(GridUnit, EnemyGridUnits);
+	}
+	TArray<FGridPosition> EnemyPositions;
+	for (auto Unit : EnemyGridUnits)
+	{
+		EnemyPositions.Add(UGridHelper::CalculateGridPosition(Unit));
+	}
+
+	// unit info
+	TMap<int32, TSet<AGridTile*>> RangeTileMap;
+	
+	TMap<FGridPosition, bool> MovementMap;
+	for (const auto GridMovement : InGridMovements)
+	{
+		MovementMap.Add(GridTileLocationMap[GridMovement.GridTile], false);
+	}
+
+	// TODO: for now... need to figure out better way to gain access ot weapon information
+	AGameMode_TurnBased_Combat* GameMode = Cast<AGameMode_TurnBased_Combat>(GetWorld()->GetAuthGameMode());
+	if (!GameMode) { return; }
+	
+	TArray<FGridPosition> TempPositions;
+	for (AGridUnit* EnemyUnit : EnemyGridUnits)
+	{
+		for (const int32 WeaponRange : GameMode->GetCombatCalculator()->GetWeaponRangesByName(GridUnit->GetWeaponsInMap()))
+		{
+			TempPositions.Empty();
+			UGridHelper::GetGridPositionsAtRange(
+				UGridHelper::CalculateGridPosition(EnemyUnit), WeaponRange, TempPositions);
+			for (FGridPosition RangePosition : TempPositions)
+			{
+				if (MovementMap.Contains(RangePosition) && MovementMap[RangePosition] == false)
+				{
+					MovementMap[RangePosition] = true;
+					// find the tile that matches with this unit					
+					OutGridPairs.Add(
+						FGridPair(LocationGridTileMap[GridUnitLocationMap[EnemyUnit]], EnemyUnit));
+				}
+			}
+		}		
+	}
+}
+
+// calculate attack tiles for a single enemy unit
+// TODO: we could make this more robust and have specific rules around weapon types and ranges, etc.
+void UGridWorldSubsystem::CalculateGridAttackTiles(TMap<AGridTile*, int32>& OutWeaponPositions,
+	const TArray<FGridMovement>& InGridMovements, const AGridUnit* InstigatorUnit, const AGridUnit* TargetUnit)
+{
+	if (!IsValid(InstigatorUnit) || !IsValid(TargetUnit)) { return; }
+
+	// TODO: this is a bit hacky...
+	AGameMode_TurnBased_Combat* GameMode = Cast<AGameMode_TurnBased_Combat>(GetWorld()->GetAuthGameMode());
+	if (!GameMode) { return; }
+	
+	for (auto WeaponRange : GameMode->GetCombatCalculator()->GetWeaponRangesByName(InstigatorUnit->GetWeaponsInMap()))
+	{
+		if (WeaponRange == 0) { continue; }
+		TArray<FGridPosition> OutWeaponRangePositions;
+		UGridHelper::GetGridPositionsAtRange(UGridHelper::CalculateGridPosition(TargetUnit), WeaponRange, OutWeaponRangePositions);
+		for (const FGridPosition GridPosition : OutWeaponRangePositions)
+		{
+			// // don't add tile of instigator
+			// if (GridPosition == UGridHelper::CalculateGridPosition(GetGridTileOfUnit(InstigatorUnit)))
+			// {
+			// 	continue;
+			// }
+			
+			for (auto GridMovement : InGridMovements)
+			{
+				if (GridTileLocationMap[GridMovement.GridTile] == GridPosition)
+				{
+					OutWeaponPositions.Add(LocationGridTileMap[GridPosition], WeaponRange);
+				}
+			}
+		}
+	}
+	
+}
+
 
 void UGridWorldSubsystem::OnGridUnitAbilityActivated(UGameplayAbility* InGameplayAbility)
 {
