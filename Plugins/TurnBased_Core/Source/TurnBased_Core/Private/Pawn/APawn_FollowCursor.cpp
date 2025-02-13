@@ -23,7 +23,7 @@ APawn_FollowCursor::APawn_FollowCursor()
 	CameraComponent->SetRelativeRotation(FRotator(-60.f, 0.f, 0.f));
 
 	// default state
-	FollowDelegate.BindUObject(this, &ThisClass::HandleFollowCursor);
+	SetFollowCursor();
 }
 
 void APawn_FollowCursor::Tick(float DeltaTime)
@@ -37,6 +37,12 @@ void APawn_FollowCursor::SetMapBounds(FVector2D MinBounds, FVector2D MaxBounds)
 {
 	MapMinBounds = MinBounds;
 	MapMaxBounds = MaxBounds;
+}
+
+void APawn_FollowCursor::SetFollowCursor()
+{
+	FollowDelegate.Unbind();
+	FollowDelegate.BindUObject(this, &ThisClass::HandleFollowCursor);
 }
 
 void APawn_FollowCursor::HandleFollowCursor(float DeltaTime)
@@ -56,12 +62,7 @@ void APawn_FollowCursor::HandleFollowCursor(float DeltaTime)
 		PositionPercentage.X > 1.f - EdgeThresholdPercentX ? 1.f : 0;
 	MoveDirection.X = PositionPercentage.Y < EdgeThresholdPercentY ? 1.f :
 		PositionPercentage.Y > 1.f - EdgeThresholdPercentY ? -1.f : 0;
-
-	// if (MouseX <= EdgeThreshold) MoveDirection.Y = -1;  // Move Left
-	// if (MouseX >= ScreenX - EdgeThreshold) MoveDirection.Y = 1;  // Move Right
-	// if (MouseY <= EdgeThreshold) MoveDirection.X = 1;  // Move Up
-	// if (MouseY >= ScreenY - EdgeThreshold) MoveDirection.X = -1;  // Move Down
-
+	
 	FVector NewLocation = GetActorLocation() + (MoveDirection * CursorFollowSpeed * DeltaTime);
 
 	// Clamp movement within map boundaries
@@ -73,11 +74,15 @@ void APawn_FollowCursor::HandleFollowCursor(float DeltaTime)
 
 void APawn_FollowCursor::SetFollowTarget(AActor* InTarget)
 {
-	if (!IsValid(InTarget)) { return; }
+	if (!IsValid(InTarget))
+	{
+		if (OnFollowTargetComplete.IsBound()) { OnFollowTargetComplete.Broadcast(); }
+		return;
+	}
 
 	FollowTarget = InTarget;
+	FollowDelegate.Unbind();
 	FollowDelegate.BindUObject(this, &ThisClass::HandleFollowTarget);
-	FollowMode = EFollowMode::Target;
 	
 }
 
@@ -85,16 +90,21 @@ void APawn_FollowCursor::HandleFollowTarget(float DeltaTime)
 {
 	if (IsValid(FollowTarget))
 	{
-		FVector TargetLocation = FollowTarget->GetActorLocation();
-		TargetLocation.Z = GetActorLocation().Z;
-		const FVector NewLocation = FMath::VInterpTo(GetActorLocation(), TargetLocation, DeltaTime, TargetFollowSpeed);
+		FVector NewLocation = FMath::VInterpTo(GetActorLocation(), FollowTarget->GetActorLocation(), DeltaTime, TargetFollowSpeed);
+		NewLocation.Z = GetActorLocation().Z;
 		SetActorLocation(NewLocation);
+
+		FVector2D Self = FVector2D(GetActorLocation());
+		FVector2D Target = FVector2D(FollowTarget->GetActorLocation());
+		if (FMath::Abs((Target - Self).Size()) < FollowThreshold)
+		{
+			if (OnFollowTargetComplete.IsBound()) { OnFollowTargetComplete.Broadcast(); }
+		}
 	}
 	else
 	{
 		FollowTarget = nullptr;
 		FollowDelegate.BindUObject(this, &ThisClass::HandleFollowCursor);
-		FollowMode = EFollowMode::Cursor;
 	}
 }
 

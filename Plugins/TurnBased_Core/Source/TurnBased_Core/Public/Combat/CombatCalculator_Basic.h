@@ -21,13 +21,19 @@ class TURNBASED_CORE_API UCombatCalculator_Basic : public UObject
 
 public:
 	UFUNCTION(BlueprintCallable, Category="Combat Calculator")
-	void GetCombatOutcome(FCombatSnapshot_Outcome& Outcome, AGridUnit* InstigatorUnit, AGridUnit* TargetUnit);
+	void GetCombatOutcome(FCombatSnapshot_Outcome& Outcome, AGridUnit* InstigatorUnit, AGridUnit* TargetUnit) const;
 
+	UFUNCTION(BlueprintCallable, Category="Combat Calculator")
+	TArray<AGridUnit*> GetCombatOrder(FCombatSnapshot_Outcome& Outcome);
+	
 	// unit
 	UFUNCTION(BlueprintCallable, Category="Combat Calculator")
 	void GetUnitSnapshotBasic(FCombatSnapshot_Basic& OutSnapshot, AGridUnit* InGridUnit) const;
 	UFUNCTION(BlueprintCallable, Category="Combat Calculator")
-	void GetUnitSnapshotAdvanced(FCombatSnapshot_Advanced& OutSnapshot, const FCombatSnapshot_Basic& InstigatorSnapshot, const FCombatSnapshot_Basic& TargetSnapshot);
+	void GetUnitSnapshotAdvanced(
+		FCombatSnapshot_Advanced& OutSnapshot,
+		const FCombatSnapshot_Basic& InstigatorSnapshot,
+		const FCombatSnapshot_Basic& TargetSnapshot) const;
 
 	// weapon
 	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)

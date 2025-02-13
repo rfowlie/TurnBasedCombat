@@ -5,6 +5,7 @@
 #include "EnhancedInputComponent.h"
 #include "InputMappingContext.h"
 #include "Grid/GridWorldSubsystem.h"
+#include "Pawn/APawn_FollowCursor.h"
 #include "Turn/TurnWorldSubsystem.h"
 #include "PlayerController/ControllerState_UnitSelected.h"
 
@@ -19,6 +20,19 @@ UControllerState_Idle* UControllerState_Idle::Create()
 {
 	UControllerState_Idle* Object = NewObject<UControllerState_Idle>();
 	return Object;
+}
+
+void UControllerState_Idle::OnEnter(APlayerController* InPlayerController, const int32 InInputMappingContextPriority)
+{
+	Super::OnEnter(InPlayerController, InInputMappingContextPriority);
+	
+	APawn_FollowCursor* Pawn = Cast<APawn_FollowCursor>(PlayerController->GetPawn());
+	if (Pawn)
+	{
+		Pawn->SetFollowCursor();
+		Pawn->SetActorTickEnabled(true);
+		
+	}
 }
 
 UInputMappingContext* UControllerState_Idle::CreateInputMappingContext()

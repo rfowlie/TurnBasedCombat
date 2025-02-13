@@ -11,10 +11,13 @@
 
 
 void UCombatCalculator_Basic::GetCombatOutcome(
-	FCombatSnapshot_Outcome& Outcome, AGridUnit* InstigatorUnit, AGridUnit* TargetUnit)
+	FCombatSnapshot_Outcome& Outcome, AGridUnit* InstigatorUnit, AGridUnit* TargetUnit) const
 {
 	if (!IsValid(InstigatorUnit) || !IsValid(TargetUnit)) { return; }
 
+	Outcome.Instigator = InstigatorUnit;
+	Outcome.Target = TargetUnit;
+	
 	FCombatSnapshot_Basic InstigatorSnapshot;
 	GetUnitSnapshotBasic(InstigatorSnapshot, InstigatorUnit);
 	FCombatSnapshot_Basic TargetSnapshot;
@@ -38,6 +41,7 @@ void UCombatCalculator_Basic::GetCombatOutcome(
 	Outcome.InstigatorSnapshot = InstigatorOutcome;
 	Outcome.TargetSnapshot = TargetOutcome;
 
+	// FOR NOW
 	// check how many attacks each unit can potentially get
 	const int32 CombatRange = UGridHelper::CalculateGridPosition(InstigatorUnit).GetDistance(UGridHelper::CalculateGridPosition(TargetUnit));
 	Outcome.InstigatorAttacks = InstigatorSnapshot.WeaponTraits.Range == CombatRange ? 1 : 0;
@@ -45,6 +49,55 @@ void UCombatCalculator_Basic::GetCombatOutcome(
 	// DO FE IF ATTACK SPEED GREATER BY 4+
 	Outcome.InstigatorAttacks *= InstigatorSnapshot.AttackSpeed - 4 > TargetSnapshot.Speed ? 2 : 1;
 	Outcome.TargetAttacks *= TargetSnapshot.AttackSpeed - 4 > InstigatorSnapshot.Speed ? 2 : 1;
+
+	// attack order
+	Outcome.CombatOrder.Empty();
+	if (InstigatorSnapshot.WeaponTraits.Range == CombatRange)
+	{
+		Outcome.CombatOrder.Add(InstigatorUnit);
+	}
+	if (TargetSnapshot.WeaponTraits.Range == CombatRange)
+	{
+		Outcome.CombatOrder.Add(TargetUnit);
+	}
+
+	// extra speed attack
+	if (InstigatorSnapshot.WeaponTraits.Range == CombatRange && InstigatorSnapshot.AttackSpeed - 4 > TargetSnapshot.Speed)
+	{
+		Outcome.CombatOrder.Add(InstigatorUnit);
+	}
+	else if (TargetSnapshot.WeaponTraits.Range == CombatRange && TargetSnapshot.AttackSpeed - 4 > InstigatorSnapshot.Speed)
+	{
+		Outcome.CombatOrder.Add(TargetUnit);
+	}
+}
+
+TArray<AGridUnit*> UCombatCalculator_Basic::GetCombatOrder(FCombatSnapshot_Outcome& Outcome)
+{
+	// // FOR NOW
+	// // check how many attacks each unit can potentially get
+	// const int32 CombatRange = UGridHelper::CalculateGridPosition(InstigatorUnit).GetDistance(UGridHelper::CalculateGridPosition(TargetUnit));
+	// Outcome.InstigatorAttacks = Outcome.InstigatorSnapshot.WeaponTraits.Range == CombatRange ? 1 : 0;
+	// Outcome.TargetAttacks = Outcome.TargetSnapshot.WeaponTraits.Range == CombatRange ? 1 : 0;
+	// // DO FE IF ATTACK SPEED GREATER BY 4+
+	// Outcome.InstigatorAttacks *= Outcome.InstigatorSnapshot.AttackSpeed - 4 > Outcome.TargetSnapshot.Speed ? 2 : 1;
+	// Outcome.TargetAttacks *= Outcome.TargetSnapshot.AttackSpeed - 4 > Outcome.InstigatorSnapshot.Speed ? 2 : 1;
+	//
+	// // attack order
+	// if (Outcome.InstigatorSnapshot.WeaponTraits.Range == CombatRange) { Outcome.CombatOrder.Add(InstigatorUnit); }
+	// if (Outcome.TargetSnapshot.WeaponTraits.Range == CombatRange) { Outcome.CombatOrder.Add(TargetUnit); }
+	//
+	// // extra speed attack
+	// if (Outcome.InstigatorSnapshot.WeaponTraits.Range == CombatRange && Outcome.InstigatorSnapshot.AttackSpeed - 4 > Outcome.TargetSnapshot.Speed)
+	// {
+	// 	Outcome.CombatOrder.Add(InstigatorUnit);
+	// }
+	// else if (Outcome.TargetSnapshot.WeaponTraits.Range == CombatRange && Outcome.TargetSnapshot.AttackSpeed - 4 > Outcome.InstigatorSnapshot.Speed)
+	// {
+	// 	Outcome.CombatOrder.Add(TargetUnit);
+	// }
+
+	return TArray<AGridUnit*>();
 }
 
 void UCombatCalculator_Basic::GetUnitSnapshotBasic(FCombatSnapshot_Basic& OutSnapshot, AGridUnit* InGridUnit) const
@@ -83,7 +136,9 @@ void UCombatCalculator_Basic::GetUnitSnapshotBasic(FCombatSnapshot_Basic& OutSna
 }
 
 void UCombatCalculator_Basic::GetUnitSnapshotAdvanced(
-	FCombatSnapshot_Advanced& OutSnapshot, const FCombatSnapshot_Basic& InstigatorSnapshot, const FCombatSnapshot_Basic& TargetSnapshot)
+	FCombatSnapshot_Advanced& OutSnapshot,
+	const FCombatSnapshot_Basic& InstigatorSnapshot,
+	const FCombatSnapshot_Basic& TargetSnapshot) const
 {
 	OutSnapshot.AttackPower = FMath::Max(0, InstigatorSnapshot.Strength + InstigatorSnapshot.WeaponTraits.Might - TargetSnapshot.Defence);
 	OutSnapshot.HitChance = FMath::Clamp(InstigatorSnapshot.HitRate - TargetSnapshot.Avoid, 0, 100);

@@ -44,6 +44,10 @@ public:
 
 protected:
 	void CreateCursor();
+	
+	UPROPERTY(BlueprintReadWrite, Category="TurnBased | Cursor")
+	bool CursorVisible = true;
+
 	UFUNCTION()
 	void UpdateCursor(AGridTile* GridTile);
 	// Cursor ~ end
@@ -69,5 +73,14 @@ protected:
 	UPROPERTY(BlueprintReadOnly, Category = "TurnBased | State")
 	TArray<UControllerState_Abstract*> StateStack;
 	// State ~ end
+
+	// Combat ~ start
+	// UFUNCTION(BlueprintImplementableEvent, BlueprintCallable, Category="Combat")
+	UFUNCTION(BlueprintCallable, Category="Combat")
+	void OnCombatStart(const AGridUnit* InInstigator, const AGridUnit* InTarget);
 	
+	UFUNCTION(BlueprintCallable, Category="Combat")
+	void OnCombatEnd(const AGridUnit* InInstigator, const AGridUnit* InTarget);
+
+	// Combat ~ end
 };

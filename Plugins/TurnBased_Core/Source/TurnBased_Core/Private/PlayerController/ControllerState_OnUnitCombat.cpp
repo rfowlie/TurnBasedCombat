@@ -2,11 +2,9 @@
 
 
 #include "PlayerController/ControllerState_OnUnitCombat.h"
-
-#include "AbilitySystemBlueprintLibrary.h"
-#include "TurnBased_Core_Tags.h"
+#include "Combat/CombatWorldSubsystem.h"
+#include "Pawn/APawn_FollowCursor.h"
 #include "PlayerController/ControllerState_Idle.h"
-#include "Turn/TurnWorldSubsystem.h"
 #include "Unit/GridUnit.h"
 
 
@@ -30,33 +28,20 @@ void UControllerState_OnUnitCombat::OnEnter(APlayerController* InPlayerControlle
 	
 	Super::OnEnter(InPlayerController, InInputMappingContextPriority);
 
-	if (!IsValid(InstigatorUnit)) { PlayerController->PopState(); }
-	UTurnWorldSubsystem* TurnWorldSubsystem = PlayerController->GetWorld()->GetSubsystem<UTurnWorldSubsystem>();
-	if (!TurnWorldSubsystem) { return; }
-	if (!TurnWorldSubsystem->CanUnitTakeAction(InstigatorUnit)) { return; }
-
-	DelegateHandle = InstigatorUnit->GetAbilitySystemComponent()->AbilityEndedCallbacks.AddUObject(this, &ThisClass::OnGridUnitAbilityActivated);
-	
-	FGameplayEventData EventData;
-	EventData.Instigator = InstigatorUnit;
-	EventData.Target = TargetUnit;
-
-	// send gameplay event
-	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(InstigatorUnit, TAG_Event_Grid_Attack, EventData);
-}
-
-void UControllerState_OnUnitCombat::OnExit()
-{
-	Super::OnExit();
-
-	InstigatorUnit->GetAbilitySystemComponent()->AbilityEndedCallbacks.Remove(DelegateHandle);
-}
-
-void UControllerState_OnUnitCombat::OnGridUnitAbilityActivated(UGameplayAbility* InGameplayAbility)
-{
-	// only end when active unit finished ability...
-	if (InGameplayAbility->GetAvatarActorFromActorInfo() == InstigatorUnit)
+	if (UCombatWorldSubsystem* CombatSubsystem = PlayerController->GetWorld()->GetSubsystem<UCombatWorldSubsystem>())
 	{
-		PlayerController->SetBaseState(UControllerState_Idle::Create());
+		CombatSubsystem->OnCombatEnd.AddUniqueDynamic(this, &ThisClass::OnCombatEnd);
+		CombatSubsystem->InitiateCombat(InstigatorUnit, TargetUnit);
+		APawn_FollowCursor* Pawn = Cast<APawn_FollowCursor>(PlayerController->GetPawn());
+		if (Pawn)
+		{
+			Pawn->SetFollowTarget(TargetUnit);
+			// Pawn->OnFollowTargetComplete.AddUniqueDynamic(this, &ThisClass::OnFollowTargetComplete);
+		}
 	}
+}
+
+void UControllerState_OnUnitCombat::OnCombatEnd(const AGridUnit* Instigator, const AGridUnit* Target)
+{
+	PlayerController->SetBaseState(UControllerState_Idle::Create());
 }

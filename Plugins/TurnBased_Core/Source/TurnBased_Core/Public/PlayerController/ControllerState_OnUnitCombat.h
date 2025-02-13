@@ -6,8 +6,9 @@
 #include "ControllerState_Abstract.h"
 #include "ControllerState_OnUnitCombat.generated.h"
 
-class UGameplayAbility;
+
 class AGridUnit;
+
 /**
  * this is a watching state that will not accept any input and disable the mouse?
  * but will listen for a callback to indicate that combat is finished, then pass in the idle state
@@ -22,7 +23,6 @@ class TURNBASED_CORE_API UControllerState_OnUnitCombat : public UControllerState
 	public:
 	static UControllerState_OnUnitCombat* Create(AGridUnit* InInstigatorUnit, AGridUnit* InTargetUnit);	
 	virtual void OnEnter(APlayerController* InPlayerController, const int32 InInputMappingContextPriority) override;
-	virtual void OnExit() override;
 
 protected:
 	UPROPERTY()
@@ -30,9 +30,7 @@ protected:
 
 	UPROPERTY()
 	AGridUnit* TargetUnit = nullptr;
-
-	UFUNCTION()
-	void OnGridUnitAbilityActivated(UGameplayAbility* InGameplayAbility);
 	
-	FDelegateHandle DelegateHandle;
+	UFUNCTION()
+	void OnCombatEnd(const AGridUnit* Instigator, const AGridUnit* Target);
 };

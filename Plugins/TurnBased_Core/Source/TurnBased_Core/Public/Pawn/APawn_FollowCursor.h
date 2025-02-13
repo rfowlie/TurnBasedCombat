@@ -7,6 +7,8 @@
 #include "APawn_FollowCursor.generated.h"
 
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FFollowPawnDelegate);
+
 UCLASS(Blueprintable, BlueprintType)
 class TURNBASED_CORE_API APawn_FollowCursor : public APawn
 {
@@ -21,7 +23,15 @@ public:
 	void SetMapBounds(FVector2D MinBounds, FVector2D MaxBounds);
 
 	UFUNCTION(BlueprintCallable)
+	void SetFollowCursor();
+	
+	UFUNCTION(BlueprintCallable)
 	void SetFollowTarget(AActor* InTarget);
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float FollowThreshold = 0.25f;
+	
+	FFollowPawnDelegate OnFollowTargetComplete;
 	
 private:
 	UPROPERTY(VisibleAnywhere, Category = "Camera")
@@ -58,14 +68,6 @@ private:
 	
 	UFUNCTION()
 	void HandleFollowTarget(float DeltaTime);
-	
-	enum EFollowMode
-	{
-		Cursor,
-		Target
-	};	
-	
-	EFollowMode FollowMode = EFollowMode::Cursor;
 
 	DECLARE_DELEGATE_OneParam(FFollowDelegate, float);
 	FFollowDelegate FollowDelegate;

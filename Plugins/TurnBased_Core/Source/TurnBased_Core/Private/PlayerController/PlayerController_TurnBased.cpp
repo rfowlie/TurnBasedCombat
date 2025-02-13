@@ -2,6 +2,8 @@
 
 
 #include "PlayerController/PlayerController_TurnBased.h"
+
+#include "Combat/CombatWorldSubsystem.h"
 #include "Engine/StaticMeshActor.h"
 #include "Grid/GridWorldSubsystem.h"
 #include "PlayerController/ControllerState_Abstract.h"
@@ -17,9 +19,15 @@ void APlayerController_TurnBased::BeginPlay()
 	CreateCursor();
 	
 	// bind cursor update to grid tile hovered
-	if (UGridWorldSubsystem* Subsystem = GetWorld()->GetSubsystem<UGridWorldSubsystem>())
+	if (UGridWorldSubsystem* GridSubsystem = GetWorld()->GetSubsystem<UGridWorldSubsystem>())
 	{
-		Subsystem->OnGridTileHoveredStart.AddUniqueDynamic(this, &ThisClass::UpdateCursor);
+		GridSubsystem->OnGridTileHoveredStart.AddUniqueDynamic(this, &ThisClass::UpdateCursor);
+	}
+	
+	if (UCombatWorldSubsystem* CombatSubsystem = GetWorld()->GetSubsystem<UCombatWorldSubsystem>())
+	{
+		CombatSubsystem->OnCombatStart.AddUniqueDynamic(this, &ThisClass::OnCombatStart);
+		CombatSubsystem->OnCombatEnd.AddUniqueDynamic(this, &ThisClass::OnCombatEnd);
 	}
 
 	// create initial state idle
@@ -54,7 +62,10 @@ void APlayerController_TurnBased::CreateCursor()
 
 void APlayerController_TurnBased::UpdateCursor(AGridTile* GridTile)
 {
-	Cursor->SetActorLocation(GridTile->GetActorLocation() + Cursor_ExtraHeight);
+	if (CursorVisible)
+	{
+		Cursor->SetActorLocation(GridTile->GetActorLocation() + Cursor_ExtraHeight);
+	}	
 }
 
 void APlayerController_TurnBased::SetBaseState(UControllerState_Abstract* InState)
@@ -103,4 +114,14 @@ void APlayerController_TurnBased::PopPushState(UControllerState_Abstract* InStat
 {
 	// TODO: pop current state then apply new state on top
 	// call OnEnter on bottom state?
+}
+
+void APlayerController_TurnBased::OnCombatStart(const AGridUnit* InInstigator, const AGridUnit* InTarget)
+{
+	
+}
+
+void APlayerController_TurnBased::OnCombatEnd(const AGridUnit* InInstigator, const AGridUnit* InTarget)
+{
+	
 }

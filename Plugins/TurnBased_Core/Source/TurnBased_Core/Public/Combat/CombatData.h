@@ -121,17 +121,24 @@ struct FCombatSnapshot_Outcome
 	{
 	}
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	AGridUnit* Instigator = nullptr;
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FCombatSnapshot_Advanced InstigatorSnapshot;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int32 InstigatorAttacks;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	AGridUnit* Target = nullptr;
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FCombatSnapshot_Advanced TargetSnapshot;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int32 TargetAttacks;
 	
-	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	TArray<AGridUnit*> CombatOrder = TArray<AGridUnit*>();
 };
