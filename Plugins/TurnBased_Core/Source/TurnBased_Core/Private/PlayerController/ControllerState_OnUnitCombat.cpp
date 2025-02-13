@@ -36,7 +36,6 @@ void UControllerState_OnUnitCombat::OnEnter(APlayerController* InPlayerControlle
 		if (Pawn)
 		{
 			Pawn->SetFollowTarget(TargetUnit);
-			// Pawn->OnFollowTargetComplete.AddUniqueDynamic(this, &ThisClass::OnFollowTargetComplete);
 		}
 	}
 }

@@ -22,12 +22,11 @@ class TURNBASED_CORE_API UTurnWorldSubsystem : public UWorldSubsystem
 
 	UPROPERTY()
 	bool TurnsActive = false;
+
+	virtual void PostInitialize() override;
 	
 public:
-	// flow control
-	UFUNCTION(BlueprintCallable)
-	void BeginTurns();
-	
+	// flow control	
 	UFUNCTION(BlueprintCallable)
 	void EnableTurns();
 	
@@ -69,6 +68,7 @@ public:
 	bool IsFactionDefeated(FGameplayTag FactionTag);
 	UFUNCTION()
 	void CheckFactionDefeated(AGridUnit* GridUnit);
+	void CheckFactionTurnComplete(const FGameplayTag& FactionTag);
 	
 	// unit
 	bool RegisterGridUnit(AGridUnit* InGridUnit);
@@ -76,5 +76,11 @@ public:
 	int32 GetRemainingUnitActions();
 	AGridUnit* GetNextUnit(AGridUnit* InGridUnit);
 	void GetFactionEnemies(AGridUnit* InGridUnit, TArray<AGridUnit*>& EnemyGridUnits);
+	void SetUnitTurnOver(AGridUnit* InGridUnit);
+	UFUNCTION()
+	void OnCombatEnd(const AGridUnit* InInstigator, const AGridUnit* InTarget);
+
+protected:
+
 	
 };

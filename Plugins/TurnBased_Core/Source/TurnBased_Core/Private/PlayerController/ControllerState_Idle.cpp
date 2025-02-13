@@ -29,9 +29,7 @@ void UControllerState_Idle::OnEnter(APlayerController* InPlayerController, const
 	APawn_FollowCursor* Pawn = Cast<APawn_FollowCursor>(PlayerController->GetPawn());
 	if (Pawn)
 	{
-		Pawn->SetFollowCursor();
-		Pawn->SetActorTickEnabled(true);
-		
+		Pawn->SetFollowCursor();		
 	}
 }
 

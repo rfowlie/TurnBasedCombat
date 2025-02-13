@@ -2,19 +2,18 @@
 
 
 #include "Turn/TurnWorldSubsystem.h"
+
+#include "Combat/CombatWorldSubsystem.h"
 #include "Grid/GridStructs.h"
 
 
-void UTurnWorldSubsystem::BeginTurns()
+void UTurnWorldSubsystem::PostInitialize()
 {
-	if (TurnNumber == 0)
-	{
-		TurnNumber += 1;
-		if (OnTurnStart.IsBound()) { OnTurnStart.Broadcast(TurnNumber); }
+	Super::PostInitialize();
 
-		FactionIndex = 0;
-		if (OnFactionStart.IsBound()) { OnFactionStart.Broadcast(FactionOrder[FactionIndex]); }
-		FactionMap[FactionOrder[FactionIndex]].ActivateUnits();
+	if (UCombatWorldSubsystem* CombatWorldSubsystem = GetWorld()->GetSubsystem<UCombatWorldSubsystem>())
+	{
+		CombatWorldSubsystem->OnCombatEnd.AddUniqueDynamic(this, &ThisClass::OnCombatEnd);
 	}
 }
 
@@ -31,6 +30,8 @@ void UTurnWorldSubsystem::EnableTurns()
 	}
 	
 	TurnsActive = true;
+	// need to check after turns gets enabled to see if current faction units are done
+	CheckFactionTurnComplete(FactionOrder[FactionIndex]);
 }
 
 void UTurnWorldSubsystem::DisableTurns()
@@ -54,28 +55,20 @@ void UTurnWorldSubsystem::IncrementFaction()
 	// do not allow changes if paused...
 	if (!TurnsActive) { return; }
 	
-	if (FactionIndex + 1 < FactionOrder.Num())
-	{
-		// not all factions finished for this turns
-		if (OnFactionEnd.IsBound()) { OnFactionEnd.Broadcast(FactionOrder[FactionIndex]); }
-		do {
-			FactionIndex++;
-		} while (FactionMap[FactionOrder[FactionIndex]].IsFactionDefeated());
-		if (OnFactionStart.IsBound()) { OnFactionStart.Broadcast(FactionOrder[FactionIndex]); }
-		FactionMap[FactionOrder[FactionIndex]].ActivateUnits();
-	}
-	else
-	{
-		// all factions have finished for this turn, move to next turn
-		if (OnFactionEnd.IsBound()) { OnFactionEnd.Broadcast(FactionOrder[FactionIndex]); }
-		if (OnTurnEnd.IsBound()) { OnTurnEnd.Broadcast(TurnNumber); }
-		TurnNumber += 1;
-		if (OnTurnStart.IsBound()) { OnTurnStart.Broadcast(TurnNumber); }
-		FactionIndex = 0;
-		while (FactionMap[FactionOrder[FactionIndex]].IsFactionDefeated()) { FactionIndex++; }
-		if (OnFactionStart.IsBound()) { OnFactionStart.Broadcast(FactionOrder[FactionIndex]); }
-		FactionMap[FactionOrder[FactionIndex]].ActivateUnits();
-	}
+	if (OnFactionEnd.IsBound()) { OnFactionEnd.Broadcast(FactionOrder[FactionIndex]); }
+	do {
+		++FactionIndex;
+		if (FactionIndex >= FactionOrder.Num())
+		{
+			// all factions have finished for this turn, move to next turn
+			if (OnTurnEnd.IsBound()) { OnTurnEnd.Broadcast(TurnNumber); }
+			TurnNumber += 1;
+			if (OnTurnStart.IsBound()) { OnTurnStart.Broadcast(TurnNumber); }
+			FactionIndex = 0;
+		}
+	} while (FactionMap[FactionOrder[FactionIndex]].IsFactionDefeated());
+	if (OnFactionStart.IsBound()) { OnFactionStart.Broadcast(FactionOrder[FactionIndex]); }
+	FactionMap[FactionOrder[FactionIndex]].ActivateUnits();
 }
 
 TArray<FGameplayTag> UTurnWorldSubsystem::GetAllFactions(const bool IncludeDefeated)
@@ -118,6 +111,14 @@ void UTurnWorldSubsystem::CheckFactionDefeated(AGridUnit* GridUnit)
 	if (FactionMap[FactionTag].IsFactionDefeated())
 	{
 		if (OnFactionDefeated.IsBound()) { OnFactionDefeated.Broadcast(FactionTag); }
+	}
+}
+
+void UTurnWorldSubsystem::CheckFactionTurnComplete(const FGameplayTag& FactionTag)
+{
+	if(FactionMap[FactionTag].GetActiveUnitsCount() == 0)
+	{
+		IncrementFaction();
 	}
 }
 
@@ -194,4 +195,22 @@ void UTurnWorldSubsystem::GetFactionEnemies(AGridUnit* InGridUnit, TArray<AGridU
 			EnemyGridUnits.Append(OutUnits);
 		}
 	}	
+}
+
+void UTurnWorldSubsystem::SetUnitTurnOver(AGridUnit* InGridUnit)
+{
+	if (!IsValid(InGridUnit)) { return; }
+	const FGameplayTag FactionTag = InGridUnit->Execute_GetFaction(InGridUnit);
+	FactionMap[FactionTag].GridUnits[InGridUnit] = false;
+	
+	CheckFactionTurnComplete(FactionTag);
+}
+
+void UTurnWorldSubsystem::OnCombatEnd(const AGridUnit* InInstigator, const AGridUnit* InTarget)
+{
+	if (!IsValid(InInstigator)) { return; }
+	const FGameplayTag FactionTag = InInstigator->Execute_GetFaction(InInstigator);
+	FactionMap[FactionTag].GridUnits[InInstigator] = false;
+	
+	CheckFactionTurnComplete(FactionTag);
 }

@@ -11,7 +11,7 @@
 
 
 void UCombatCalculator_Basic::GetCombatOutcome(
-	FCombatSnapshot_Outcome& Outcome, AGridUnit* InstigatorUnit, AGridUnit* TargetUnit) const
+	FCombatSnapshot_Outcome& Outcome, AGridUnit* InstigatorUnit, const FName WeaponName, AGridUnit* TargetUnit) const
 {
 	if (!IsValid(InstigatorUnit) || !IsValid(TargetUnit)) { return; }
 
@@ -19,9 +19,9 @@ void UCombatCalculator_Basic::GetCombatOutcome(
 	Outcome.Target = TargetUnit;
 	
 	FCombatSnapshot_Basic InstigatorSnapshot;
-	GetUnitSnapshotBasic(InstigatorSnapshot, InstigatorUnit);
+	GetUnitSnapshotBasic(InstigatorSnapshot, InstigatorUnit, WeaponName);
 	FCombatSnapshot_Basic TargetSnapshot;
-	GetUnitSnapshotBasic(TargetSnapshot, TargetUnit);
+	GetUnitSnapshotBasic(TargetSnapshot, TargetUnit, TargetUnit->GetEquippedWeaponName());
 
 	// THE HARD WAY
 	// check if target can attack first (special attributes or skills, etc.)
@@ -62,11 +62,11 @@ void UCombatCalculator_Basic::GetCombatOutcome(
 	}
 
 	// extra speed attack
-	if (InstigatorSnapshot.WeaponTraits.Range == CombatRange && InstigatorSnapshot.AttackSpeed - 4 > TargetSnapshot.Speed)
+	if (InstigatorSnapshot.WeaponTraits.Range == CombatRange && InstigatorSnapshot.AttackSpeed - 4 > TargetSnapshot.AttackSpeed)
 	{
 		Outcome.CombatOrder.Add(InstigatorUnit);
 	}
-	else if (TargetSnapshot.WeaponTraits.Range == CombatRange && TargetSnapshot.AttackSpeed - 4 > InstigatorSnapshot.Speed)
+	else if (TargetSnapshot.WeaponTraits.Range == CombatRange && TargetSnapshot.AttackSpeed - 4 > InstigatorSnapshot.AttackSpeed)
 	{
 		Outcome.CombatOrder.Add(TargetUnit);
 	}
@@ -100,7 +100,8 @@ TArray<AGridUnit*> UCombatCalculator_Basic::GetCombatOrder(FCombatSnapshot_Outco
 	return TArray<AGridUnit*>();
 }
 
-void UCombatCalculator_Basic::GetUnitSnapshotBasic(FCombatSnapshot_Basic& OutSnapshot, AGridUnit* InGridUnit) const
+void UCombatCalculator_Basic::GetUnitSnapshotBasic(
+	FCombatSnapshot_Basic& OutSnapshot, AGridUnit* InGridUnit, const FName WeaponName) const
 {
 	if (!IsValid(InGridUnit)) { return; }
 
@@ -111,13 +112,10 @@ void UCombatCalculator_Basic::GetUnitSnapshotBasic(FCombatSnapshot_Basic& OutSna
 	}
 
 	if (!IsValid(Tile)) { return; }
-	
-	// GetWeapon(OutSnapshot.WeaponTraits, InGridUnit->GetEquippedWeapon());
-	// UWeaponDataAsset* WeaponDataAsset = InGridUnit->GetWeaponEquipped();
-	// OutSnapshot.WeaponTraits = WeaponDataAsset->WeaponTraits;
 
 	FWeaponContainer WeaponContainer;
-	GetWeaponByName(WeaponContainer, InGridUnit->GetEquippedWeaponName());
+	// GetWeaponByName(WeaponContainer, InGridUnit->GetEquippedWeaponName());
+	GetWeaponByName(WeaponContainer, WeaponName);
 	OutSnapshot.WeaponTraits = WeaponContainer.WeaponTraits;
 	
 	OutSnapshot.Strength = InGridUnit->GetAbilitySystemComponent()->GetNumericAttribute(UGridUnitAttributeSet::GetStrengthAttribute());
@@ -130,7 +128,7 @@ void UCombatCalculator_Basic::GetUnitSnapshotBasic(FCombatSnapshot_Basic& OutSna
 	OutSnapshot.Constitution = InGridUnit->GetAbilitySystemComponent()->GetNumericAttribute(UGridUnitAttributeSet::GetConstitutionAttribute());
 	OutSnapshot.AttackSpeed = CalculateAttackSpeed(InGridUnit, OutSnapshot.WeaponTraits);
 	OutSnapshot.HitRate = CalculateHitRate(InGridUnit, OutSnapshot.WeaponTraits);
-	OutSnapshot.Avoid = CalculateAvoid(InGridUnit, Tile);
+	OutSnapshot.Avoid = CalculateAvoid(OutSnapshot, InGridUnit, Tile);
 	OutSnapshot.CriticalRate = CalculateCriticalRate(InGridUnit, OutSnapshot.WeaponTraits);
 	OutSnapshot.CriticalAvoid = CalculateCriticalAvoid(InGridUnit, Tile);
 }
@@ -140,12 +138,13 @@ void UCombatCalculator_Basic::GetUnitSnapshotAdvanced(
 	const FCombatSnapshot_Basic& InstigatorSnapshot,
 	const FCombatSnapshot_Basic& TargetSnapshot) const
 {
-	OutSnapshot.AttackPower = FMath::Max(0, InstigatorSnapshot.Strength + InstigatorSnapshot.WeaponTraits.Might - TargetSnapshot.Defence);
 	OutSnapshot.HitChance = FMath::Clamp(InstigatorSnapshot.HitRate - TargetSnapshot.Avoid, 0, 100);
 	OutSnapshot.bHit = FMath::RandRange(0, 100) < OutSnapshot.HitChance;
 	OutSnapshot.HealthChange = FMath::Clamp(InstigatorSnapshot.Strength + InstigatorSnapshot.WeaponTraits.Might - TargetSnapshot.Defence, 0, GetMaxDamage());
 	OutSnapshot.CriticalChance = FMath::Clamp(0, 100, InstigatorSnapshot.CriticalRate - TargetSnapshot.CriticalAvoid);
 
+	// are we using this??? 
+	OutSnapshot.AttackPower = OutSnapshot.HealthChange;
 }
 
 TArray<int32> UCombatCalculator_Basic::GetWeaponRangesByName(const TArray<FName>& WeaponNames) const
@@ -164,7 +163,7 @@ TArray<int32> UCombatCalculator_Basic::GetWeaponRangesByName(const TArray<FName>
 int32 UCombatCalculator_Basic::CalculateAttackSpeed(const AGridUnit* Unit, FWeaponTraits& WeaponTraits)
 {
 	int32 Speed = Unit->GetAbilitySystemComponent()->GetNumericAttribute(UGridUnitAttributeSet::GetSpeedAttribute());
-	return Speed - FMath::Max(0, WeaponTraits.Weight - Speed);
+	return Speed - FMath::Max(0,Speed - WeaponTraits.Weight);
 }
 
 int32 UCombatCalculator_Basic::CalculateHitRate(const AGridUnit* Unit, FWeaponTraits& WeaponTraits)
@@ -174,11 +173,10 @@ int32 UCombatCalculator_Basic::CalculateHitRate(const AGridUnit* Unit, FWeaponTr
 	return Skill*2 + Luck + WeaponTraits.HitRate;
 }
 
-int32 UCombatCalculator_Basic::CalculateAvoid(const AGridUnit* Unit, const AGridTile* Tile)
+int32 UCombatCalculator_Basic::CalculateAvoid(
+	const FCombatSnapshot_Basic& Snapshot, const AGridUnit* Unit, const AGridTile* Tile)
 {
-	return Unit->GetAbilitySystemComponent()->GetNumericAttribute(UGridUnitAttributeSet::GetSpeedAttribute()) +
-		Unit->GetAbilitySystemComponent()->GetNumericAttribute(UGridUnitAttributeSet::GetLuckAttribute()) / 2 +
-		Tile->TerrainDataAsset->TerrainStats.Avoid;
+	return Snapshot.AttackSpeed * 2 + Snapshot.Luck / 2 + Tile->TerrainDataAsset->TerrainStats.Avoid;
 }
 
 int32 UCombatCalculator_Basic::CalculateCriticalRate(const AGridUnit* Unit, FWeaponTraits& WeaponTraits)
@@ -193,4 +191,24 @@ int32 UCombatCalculator_Basic::CalculateCriticalAvoid(const AGridUnit* Unit, con
 	const int32 Luck = Unit->GetAbilitySystemComponent()->GetNumericAttribute(UGridUnitAttributeSet::GetLuckAttribute());
 	const int32 TerrainAvoid = Tile->TerrainDataAsset->TerrainStats.Avoid;
 	return Luck + TerrainAvoid/4;
+}
+
+void UCombatCalculator_Basic::CalculateCombatScore(FCombatScore& CombatScore) const
+{
+	FCombatSnapshot_Basic InstigatorSnapshotBasic;
+	GetUnitSnapshotBasic(InstigatorSnapshotBasic, CombatScore.InstigatorUnit, CombatScore.InstigatorWeapon);
+	FCombatSnapshot_Basic TargetSnapshotBasic;
+	GetUnitSnapshotBasic(TargetSnapshotBasic, CombatScore.TargetUnit, CombatScore.TargetWeapon);
+	FCombatSnapshot_Advanced InstigatorSnapShotAdvanced;
+	GetUnitSnapshotAdvanced(InstigatorSnapShotAdvanced, InstigatorSnapshotBasic, TargetSnapshotBasic);
+	FCombatSnapshot_Advanced TargetSnapShotAdvanced;
+	GetUnitSnapshotAdvanced(TargetSnapShotAdvanced, TargetSnapshotBasic, InstigatorSnapshotBasic);
+
+	// FOR NOW... do not worry about speed, just give a score to the outcome
+	float Score = 0;
+	Score += InstigatorSnapShotAdvanced.HitChance / 100.f;
+	Score += InstigatorSnapShotAdvanced.CriticalChance / 100.f * 2.f;
+	Score += InstigatorSnapShotAdvanced.HealthChange / TargetSnapshotBasic.Health;
+	Score += TargetSnapShotAdvanced.HealthChange / InstigatorSnapshotBasic.Health;
+	CombatScore.Score = Score;
 }

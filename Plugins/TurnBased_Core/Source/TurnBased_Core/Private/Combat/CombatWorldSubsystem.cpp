@@ -17,7 +17,9 @@ void UCombatWorldSubsystem::InitiateCombat(AGridUnit* InInstigatorUnit, AGridUni
 	if (!GameMode) { return; }
 	CombatCalculator = GameMode->GetCombatCalculator();
 	if (!CombatCalculator) { return; }
-	CombatCalculator->GetCombatOutcome(CombatOutcome, InInstigatorUnit, InTargetUnit);
+	
+	CombatCalculator->GetCombatOutcome(
+		CombatOutcome, InInstigatorUnit, InInstigatorUnit->GetEquippedWeaponName(), InTargetUnit);
 	if (CombatOutcome.CombatOrder.IsEmpty()) { return; }
 	if (OnCombatStart.IsBound()) { OnCombatStart.Broadcast(InInstigatorUnit, InTargetUnit); }
 	DoCombatTurn();
@@ -53,6 +55,6 @@ void UCombatWorldSubsystem::OnGridUnitAbilityActivated(UGameplayAbility* InGamep
 	}
 	else
 	{
-		if (OnCombatEnd.IsBound()) { OnCombatEnd.Broadcast(InstigatorUnit, TargetUnit); }
+		if (OnCombatEnd.IsBound()) { OnCombatEnd.Broadcast(CombatOutcome.Instigator, CombatOutcome.Target); }
 	}
 }

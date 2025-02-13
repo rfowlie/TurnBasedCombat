@@ -62,7 +62,7 @@ struct FWeaponTraits : public FTableRowBase
 	int32 Range;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	int32 CriticalBonus;	
+	int32 CriticalBonus;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FGameplayTagContainer SpecialTraits;

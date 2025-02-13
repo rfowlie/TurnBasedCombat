@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Combat/CombatData.h"
 #include "UObject/Object.h"
 #include "Unit/GridUnit.h"
 #include "GridStructs.generated.h"
@@ -94,38 +95,7 @@ struct TURNBASED_CORE_API FGridMovement
 	{
 		return GridTile == Other.GridTile;
 	}
-	
-	// bool operator<(const FGridMovement& Other) const
-	// {
-	// 	if (GridPosition.X < Other.GridPosition.X)
-	// 	{
-	// 		return true;
-	// 	}
-	// 	if (GridPosition.Y < Other.GridPosition.Y)
-	// 	{
-	// 		return true;
-	// 	}
-	// 	
-	// 	return false;
-	// }
 };
-
-// USTRUCT(Blueprintable, BlueprintType)
-// struct TURNBASED_CORE_API FTargetingUnit
-// {
-// 	GENERATED_BODY()
-//
-// 	UPROPERTY()
-// 	AGridTile* GridTile = nullptr;
-//
-// 	UPROPERTY()
-// 	AGridUnit* GridUnit = nullptr;
-// 	
-// 	UPROPERTY()
-// 	TArray<UWeapon*> Weapons;
-// 	
-// 	TMap<int32, TArray<AGridUnit*>> RangeMap;
-// };
 
 // Define a custom GetTypeHash function for hashing
 inline uint32 GetTypeHash(const FGridMovement& Struct)
@@ -133,16 +103,6 @@ inline uint32 GetTypeHash(const FGridMovement& Struct)
 	// Use a combination of GetTypeHash for FString and int32
 	return GetTypeHash(Struct.GridTile);
 }
-
-// USTRUCT(Blueprintable, BlueprintType)
-// struct FTileStatsSnapshot
-// {
-// 	GENERATED_BODY()
-//
-// 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-// 	FTerrainStats TerrainStats;
-// 	
-// };
 
 USTRUCT(BlueprintType)
 struct TURNBASED_CORE_API FGridPair
@@ -234,4 +194,54 @@ struct TURNBASED_CORE_API FFactionInfo
 		Index = (Index + 1 + GridUnits.Num()) % GridUnits.Num();
 		return Keys[Index];
 	}
+};
+
+/*
+ * calculate a score for each potential combat a unit can do on its turn
+ */
+USTRUCT()
+struct FCombatScore
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	AGridUnit* InstigatorUnit = nullptr;
+
+	UPROPERTY()
+	AGridTile* InstigatorTile = nullptr;
+
+	UPROPERTY()
+	FName InstigatorWeapon;
+	
+	UPROPERTY()
+	AGridUnit* TargetUnit = nullptr;
+
+	UPROPERTY()
+	AGridTile* TargetTile = nullptr;
+
+	UPROPERTY()
+	FName TargetWeapon;
+
+	UPROPERTY()
+	float Score = 0.f;
+
+	bool operator==(const FCombatScore& Other) const
+	{
+		return Score == Other.Score;
+	}
+
+	bool operator<(const FCombatScore& Other) const
+	{
+		return Score < Other.Score;
+	}
+};
+
+USTRUCT()
+struct FGridUnitArray
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	TArray<AGridUnit*> GridUnits;
+	
 };

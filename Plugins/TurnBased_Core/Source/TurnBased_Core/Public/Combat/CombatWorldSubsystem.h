@@ -37,12 +37,6 @@ protected:
 
 	UPROPERTY()
 	FCombatSnapshot_Outcome CombatOutcome;
-	
-	UPROPERTY()
-	AGridUnit* InstigatorUnit = nullptr;
-
-	UPROPERTY()
-	AGridUnit* TargetUnit = nullptr;
 
 	UPROPERTY()
 	AGridUnit* ActiveUnit = nullptr;
