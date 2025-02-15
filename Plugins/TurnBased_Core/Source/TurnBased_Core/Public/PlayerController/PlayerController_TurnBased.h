@@ -55,6 +55,8 @@ protected:
 
 public:
 	// State ~ start
+	void EmptyStack();
+	
 	// walk backwards through array and do exit for each state, then push new state
 	UFUNCTION(BlueprintCallable, Category="TurnBased | State")
 	void SetBaseState(UControllerState_Abstract* InState);
@@ -78,10 +80,12 @@ protected:
 	// Combat ~ start
 	// UFUNCTION(BlueprintImplementableEvent, BlueprintCallable, Category="Combat")
 	UFUNCTION(BlueprintCallable, Category="Combat")
-	void OnCombatStart(const AGridUnit* InInstigator, const AGridUnit* InTarget);
+	void OnCombatStart(AGridUnit* InInstigator, AGridUnit* InTarget);
 	
 	UFUNCTION(BlueprintCallable, Category="Combat")
 	void OnCombatEnd(const FCombatPrediction& InCombatPrediction);
 
+	UFUNCTION()
+	void OnFactionStart(FGameplayTag FactionTag);
 	// Combat ~ end
 };

@@ -13,7 +13,8 @@ void UTurnWorldSubsystem::PostInitialize()
 
 	if (UCombatWorldSubsystem* CombatWorldSubsystem = GetWorld()->GetSubsystem<UCombatWorldSubsystem>())
 	{
-		CombatWorldSubsystem->OnCombatEnd.AddUniqueDynamic(this, &ThisClass::OnCombatEnd);
+		// Deprecated: Manually setting turn over for unit instead
+		// CombatWorldSubsystem->OnCombatEnd.AddUniqueDynamic(this, &ThisClass::OnCombatEnd);
 	}
 }
 

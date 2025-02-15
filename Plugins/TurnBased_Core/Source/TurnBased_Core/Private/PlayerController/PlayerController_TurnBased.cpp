@@ -6,9 +6,11 @@
 #include "Combat/CombatWorldSubsystem.h"
 #include "Engine/StaticMeshActor.h"
 #include "Grid/GridWorldSubsystem.h"
+#include "Pawn/APawn_FollowCursor.h"
 #include "PlayerController/ControllerState_Abstract.h"
 #include "PlayerController/ControllerState_Idle.h"
 #include "Tile/GridTile.h"
+#include "Turn/TurnWorldSubsystem.h"
 
 
 void APlayerController_TurnBased::BeginPlay()
@@ -28,6 +30,10 @@ void APlayerController_TurnBased::BeginPlay()
 	{
 		CombatSubsystem->OnCombatStart.AddUniqueDynamic(this, &ThisClass::OnCombatStart);
 		CombatSubsystem->OnCombatEnd.AddUniqueDynamic(this, &ThisClass::OnCombatEnd);
+	}
+	if (UTurnWorldSubsystem* TurnWorldSubsystem = GetWorld()->GetSubsystem<UTurnWorldSubsystem>())
+	{
+		TurnWorldSubsystem->OnFactionStart.AddUniqueDynamic(this, &ThisClass::OnFactionStart);
 	}
 
 	// create initial state idle
@@ -68,14 +74,18 @@ void APlayerController_TurnBased::UpdateCursor(AGridTile* GridTile)
 	}	
 }
 
-void APlayerController_TurnBased::SetBaseState(UControllerState_Abstract* InState)
+void APlayerController_TurnBased::EmptyStack()
 {
 	while(!StateStack.IsEmpty())
 	{
 		UControllerState_Abstract* State = StateStack.Pop();
 		State->OnExit();
 	}
+}
 
+void APlayerController_TurnBased::SetBaseState(UControllerState_Abstract* InState)
+{
+	EmptyStack();	
 	PushState(InState, false);
 }
 
@@ -116,12 +126,37 @@ void APlayerController_TurnBased::PopPushState(UControllerState_Abstract* InStat
 	// call OnEnter on bottom state?
 }
 
-void APlayerController_TurnBased::OnCombatStart(const AGridUnit* InInstigator, const AGridUnit* InTarget)
+void APlayerController_TurnBased::OnCombatStart(AGridUnit* InInstigator, AGridUnit* InTarget)
 {
-	
+	SetShowMouseCursor(false);
+	APawn_FollowCursor* Pawn_FollowCursor = Cast<APawn_FollowCursor>(GetPawn());
+	if (Pawn_FollowCursor)
+	{
+		Pawn_FollowCursor->SetFollowTarget(InInstigator);
+	}
 }
 
 void APlayerController_TurnBased::OnCombatEnd(const FCombatPrediction& InCombatPrediction)
 {
-	
+	SetShowMouseCursor(true);
+	// APawn_FollowCursor* Pawn = Cast<APawn_FollowCursor>(GetPawn());
+	// if (Pawn)
+	// {
+	// 	Pawn->SetFollowCursor();
+	// }
+}
+
+void APlayerController_TurnBased::OnFactionStart(FGameplayTag FactionTag)
+{
+	if (FactionTag == TAG_TBCore_Faction_Player)
+	{
+		// set controller on, Idle will enable the cursor...
+		SetBaseState(UControllerState_Idle::Create());
+	}
+	else
+	{
+		// turn of controller
+		EmptyStack();
+		SetShowMouseCursor(false);
+	}
 }

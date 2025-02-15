@@ -79,10 +79,16 @@ void UCombatWorldSubsystem::OnGridUnitAbilityActivated(UGameplayAbility* InGamep
 		}
 		else
 		{
+			// zero out values???
+			// ActiveUnit = nullptr;
+			// CombatPrediction = FCombatPrediction();
+			
 			// should call this every time a combat finishes, not just when all units finished (AI)
 			if (OnCombatEnd.IsBound()) { OnCombatEnd.Broadcast(CombatPrediction); }
 			
 			// TODO: a bit odd, we want the turn manager to still function properly
+			// ALREADY HAPPENING TURN MANAGER HAS CALLBACK
+			// Lets try manually doing this for better control???
 			UTurnWorldSubsystem* TurnWorldSubsystem = GetWorld()->GetSubsystem<UTurnWorldSubsystem>();
 			TurnWorldSubsystem->SetUnitTurnOver(CombatPrediction.CombatInformation.InstigatorUnit);
 
@@ -101,51 +107,6 @@ void UCombatWorldSubsystem::OnGridUnitAbilityActivated(UGameplayAbility* InGamep
 			}
 		}
 	}
-	// 	else if (!UnitsToExecuteTurns.IsEmpty())
-	// 	{
-	// 		// just add some delay so it's not so crazy fast
-	// 		FTimerHandle TimerHandle;
-	// 		FTimerDelegate TimerDelegate;
-	// 		TimerDelegate.BindLambda([this]()
-	// 		{
-	// 			InitiateUnitCombat(FCombatPrediction());
-	// 		});
-	// 	
-	// 		GetWorld()->GetTimerManager().SetTimer(TimerHandle, TimerDelegate, 0.f, false, 2.0f);
-	// 	}
-	// 	else
-	// 	{
-	// 		if (OnCombatEnd.IsBound()) { OnCombatEnd.Broadcast(CombatPrediction); }
-	// 	}
-	// 	
-	//
-	// 	// TODO: a bit odd, we want the turn manager to still function properly
-	// 	UTurnWorldSubsystem* TurnWorldSubsystem = GetWorld()->GetSubsystem<UTurnWorldSubsystem>();
-	// 	TurnWorldSubsystem->SetUnitTurnOver(ActiveUnit);
-	// }
-	//
-	// // only end when attack order finished
-	// if (!CombatPrediction.CombatOrder.IsEmpty() &&
-	// 	 CombatPrediction.CombatInformation.InstigatorUnit->GetHealth() > 0 && CombatPrediction.CombatInformation.TargetUnit->GetHealth() > 0)
-	// {
-	// 	DoCombatTurn();
-	// }
-	// else if (!UnitsToExecuteTurns.IsEmpty())
-	// {
-	// 	// just add some delay so it's not so crazy fast
-	// 	FTimerHandle TimerHandle;
-	// 	FTimerDelegate TimerDelegate;
-	// 	TimerDelegate.BindLambda([this]()
-	// 	{
-	// 		InitiateUnitCombat(FCombatPrediction());
-	// 	});
-	// 	
-	// 	GetWorld()->GetTimerManager().SetTimer(TimerHandle, TimerDelegate, 0.f, false, 2.0f);
-	// }
-	// else
-	// {
-	// 	if (OnCombatEnd.IsBound()) { OnCombatEnd.Broadcast(CombatPrediction); }
-	// }
 }
 
 void UCombatWorldSubsystem::ExecuteEnemyTurn(FGameplayTag FactionTag)

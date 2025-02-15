@@ -29,6 +29,7 @@ void UControllerState_Idle::OnEnter(APlayerController* InPlayerController, const
 	APawn_FollowCursor* Pawn = Cast<APawn_FollowCursor>(PlayerController->GetPawn());
 	if (Pawn)
 	{
+		PlayerController->SetShowMouseCursor(true);
 		Pawn->SetFollowCursor();		
 	}
 }

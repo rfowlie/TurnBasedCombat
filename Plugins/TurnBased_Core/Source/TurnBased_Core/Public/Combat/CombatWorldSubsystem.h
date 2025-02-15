@@ -13,7 +13,7 @@ class UCombatCalculator_Basic;
 class UActionEvaluator_Combat;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FCombatWorldSubsystemEventDelegate, const FCombatPrediction&, CombatPrediction);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FCombatWorldSubsystemDelegate, const AGridUnit*, Instigator, const AGridUnit*, Target);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FCombatWorldSubsystemDelegate, AGridUnit*, Instigator, AGridUnit*, Target);
 
 /**
  * 
