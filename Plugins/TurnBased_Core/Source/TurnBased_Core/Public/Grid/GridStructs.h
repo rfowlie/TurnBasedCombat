@@ -131,9 +131,11 @@ struct TURNBASED_CORE_API FFactionInfo
 	UPROPERTY()
 	TMap<AGridUnit*, bool> GridUnits;
 
-	void GetGridUnits(TArray<AGridUnit*>& OutGridUnits)
+	TArray<AGridUnit*> GetGridUnits() const
 	{
+		TArray<AGridUnit*> OutGridUnits;
 		GridUnits.GetKeys(OutGridUnits);
+		return OutGridUnits;
 	}
 
 	void ActivateUnits()
@@ -221,10 +223,36 @@ struct FCombatScore
 
 	UPROPERTY()
 	FName TargetWeapon;
+	
+	UPROPERTY()
+	FCombatSnapshot_Outcome CombatOutcome;
+	
+	UPROPERTY()
+	FCombatSnapshot_Basic InstigatorSnapshotBasic;
+	
+	UPROPERTY()
+	FCombatSnapshot_Advanced InstigatorSnapShotAdvanced;
 
+	UPROPERTY()
+	FCombatSnapshot_Basic TargetSnapshotBasic;
+
+	UPROPERTY()
+	FCombatSnapshot_Advanced TargetSnapShotAdvanced;
+
+
+	// evaluate
 	UPROPERTY()
 	float Score = 0.f;
 
+	void CalculateScore()
+	{
+		Score = 0;
+		Score += InstigatorSnapShotAdvanced.HitChance / 100.f;
+		Score += InstigatorSnapShotAdvanced.CriticalChance / 100.f * 2.f;
+		Score += InstigatorSnapShotAdvanced.DamageDealt / TargetSnapshotBasic.Health;
+		Score += TargetSnapShotAdvanced.DamageDealt / InstigatorSnapshotBasic.Health;
+	}
+	
 	bool operator==(const FCombatScore& Other) const
 	{
 		return Score == Other.Score;
@@ -243,5 +271,15 @@ struct FGridUnitArray
 
 	UPROPERTY()
 	TArray<AGridUnit*> GridUnits;
+	
+};
+
+USTRUCT()
+struct FGridTileArray
+{
+	GENERATED_BODY()
+	
+	UPROPERTY()
+	TArray<AGridTile*> GridTiles;
 	
 };

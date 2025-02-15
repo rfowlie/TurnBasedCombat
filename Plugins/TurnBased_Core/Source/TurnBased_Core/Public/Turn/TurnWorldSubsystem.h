@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "TurnBased_Core_Tags.h"
 #include "Grid/GridStructs.h"
 #include "Subsystems/WorldSubsystem.h"
 #include "Unit/GridUnit.h"
@@ -26,6 +27,9 @@ class TURNBASED_CORE_API UTurnWorldSubsystem : public UWorldSubsystem
 	virtual void PostInitialize() override;
 	
 public:
+	UFUNCTION(BlueprintCallable)
+	static FGameplayTag GetPlayerFactionTag() { return TAG_TBCore_Faction_Player; }
+	
 	// flow control	
 	UFUNCTION(BlueprintCallable)
 	void EnableTurns();
@@ -64,6 +68,7 @@ public:
 	TArray<FGameplayTag> GetAllFactions(bool IncludeDefeated = true);
 	bool IsFactionValid(FGameplayTag FactionTag) const;
 	FGameplayTag GetActiveFaction();
+	TArray<AGridUnit*> GetUnitsInFaction(const FGameplayTag FactionTag);
 	bool IsFactionActive(FGameplayTag FactionTag);
 	bool IsFactionDefeated(FGameplayTag FactionTag);
 	UFUNCTION()
@@ -78,7 +83,7 @@ public:
 	void GetFactionEnemies(AGridUnit* InGridUnit, TArray<AGridUnit*>& EnemyGridUnits);
 	void SetUnitTurnOver(AGridUnit* InGridUnit);
 	UFUNCTION()
-	void OnCombatEnd(const AGridUnit* InInstigator, const AGridUnit* InTarget);
+	void OnCombatEnd(const FCombatPrediction& InCombatPrediction);
 
 protected:
 

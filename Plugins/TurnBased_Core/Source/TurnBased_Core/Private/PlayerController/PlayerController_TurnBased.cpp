@@ -121,7 +121,7 @@ void APlayerController_TurnBased::OnCombatStart(const AGridUnit* InInstigator, c
 	
 }
 
-void APlayerController_TurnBased::OnCombatEnd(const AGridUnit* InInstigator, const AGridUnit* InTarget)
+void APlayerController_TurnBased::OnCombatEnd(const FCombatPrediction& InCombatPrediction)
 {
 	
 }

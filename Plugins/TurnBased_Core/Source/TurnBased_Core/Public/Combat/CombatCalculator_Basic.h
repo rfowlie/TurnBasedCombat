@@ -21,6 +21,9 @@ class TURNBASED_CORE_API UCombatCalculator_Basic : public UObject
 	GENERATED_BODY()
 
 public:
+	void GetCombatPrediction(
+		FCombatPrediction& OutCombatPrediction, const FCombatInformation& CombatInformation) const;
+	
 	UFUNCTION(BlueprintCallable, Category="Combat Calculator")
 	void GetCombatOutcome(
 		FCombatSnapshot_Outcome& Outcome, AGridUnit* InstigatorUnit, const FName WeaponName, AGridUnit* TargetUnit) const;

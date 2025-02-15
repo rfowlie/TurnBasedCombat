@@ -2,40 +2,66 @@
 
 
 #include "Combat/CombatWorldSubsystem.h"
-
 #include "AbilitySystemBlueprintLibrary.h"
 #include "TurnBased_Core_Tags.h"
+#include "AI/ActionEvaluator_Combat.h"
 #include "Combat/CombatCalculator_Basic.h"
+#include "Combat/CombatEventWrapper.h"
 #include "GameMode/GameMode_TurnBased_Combat.h"
+#include "Grid/GridHelper.h"
+#include "Grid/GridWorldSubsystem.h"
+#include "Turn/TurnWorldSubsystem.h"
 #include "Unit/GridUnit.h"
+#include "Unit/Components/GridUnitBehaviourComponent.h"
 
 
-void UCombatWorldSubsystem::InitiateCombat(AGridUnit* InInstigatorUnit, AGridUnit* InTargetUnit)
+
+void UCombatWorldSubsystem::PostInitialize()
 {
-	if (!IsValid(InInstigatorUnit) || !IsValid(InTargetUnit)) { return; }
-	AGameMode_TurnBased_Combat* GameMode = Cast<AGameMode_TurnBased_Combat>(GetWorld()->GetAuthGameMode());
-	if (!GameMode) { return; }
-	CombatCalculator = GameMode->GetCombatCalculator();
-	if (!CombatCalculator) { return; }
+	Super::PostInitialize();
+
+	CombatEvaluator = NewObject<UActionEvaluator_Combat>();
+
+	// bind to turn change so we can tell when enemy factions turn...
+	UTurnWorldSubsystem* TurnWorldSubsystem = GetWorld()->GetSubsystem<UTurnWorldSubsystem>();
+	TurnWorldSubsystem->OnFactionStart.AddUniqueDynamic(this, &ThisClass::ExecuteEnemyTurn);
+}
+
+void UCombatWorldSubsystem::InitiateCombat(FCombatPrediction InCombatPrediction)
+{
+	if (InCombatPrediction.CombatOrder.IsEmpty()) { return; }
+
+	CombatPrediction = InCombatPrediction;
+
+	// TODO: for now... just move units here...
+	CombatPrediction.CombatInformation.InstigatorUnit->SetActorLocation(CombatPrediction.CombatInformation.InstigatorTile->GetPlacementLocation());
 	
-	CombatCalculator->GetCombatOutcome(
-		CombatOutcome, InInstigatorUnit, InInstigatorUnit->GetEquippedWeaponName(), InTargetUnit);
-	if (CombatOutcome.CombatOrder.IsEmpty()) { return; }
-	if (OnCombatStart.IsBound()) { OnCombatStart.Broadcast(InInstigatorUnit, InTargetUnit); }
+	if (OnCombatStart.IsBound()) { OnCombatStart.Broadcast(
+		InCombatPrediction.CombatInformation.InstigatorUnit,
+		InCombatPrediction.CombatInformation.TargetUnit
+		); }
+	
 	DoCombatTurn();
 }
 
 void UCombatWorldSubsystem::DoCombatTurn()
 {
-	ActiveUnit = CombatOutcome.CombatOrder[0];
-	CombatOutcome.CombatOrder.RemoveAt(0);
+	ActiveUnit = CombatPrediction.CombatOrder[0];
+	CombatPrediction.CombatOrder.RemoveAt(0);
 
 	DelegateHandle = ActiveUnit->GetAbilitySystemComponent()->AbilityEndedCallbacks.AddUObject(this, &ThisClass::OnGridUnitAbilityActivated);
 
 	// send gameplay event
 	FGameplayEventData EventData;
 	EventData.Instigator = ActiveUnit;
-	EventData.Target = ActiveUnit == CombatOutcome.Instigator ? CombatOutcome.Target : CombatOutcome.Instigator;
+	EventData.Target = ActiveUnit == CombatPrediction.CombatInformation.InstigatorUnit ?
+		CombatPrediction.CombatInformation.TargetUnit : CombatPrediction.CombatInformation.InstigatorUnit;
+	
+	UCombatEventWrapper* EventWrapper = NewObject<UCombatEventWrapper>();
+	EventWrapper->InstigatorSnapShotAdvanced = ActiveUnit == CombatPrediction.CombatInformation.InstigatorUnit ?
+		CombatPrediction.TargetSnapshotAdvanced : CombatPrediction.InstigatorSnapShotAdvanced;
+	EventData.OptionalObject = EventWrapper;
+	
 	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(ActiveUnit, TAG_Event_Grid_Attack, EventData);
 }
 
@@ -45,16 +71,160 @@ void UCombatWorldSubsystem::OnGridUnitAbilityActivated(UGameplayAbility* InGamep
 	if (InGameplayAbility->GetAvatarActorFromActorInfo() == ActiveUnit)
 	{
 		ActiveUnit->GetAbilitySystemComponent()->AbilityEndedCallbacks.Remove(DelegateHandle);
+		
+		if (!CombatPrediction.CombatOrder.IsEmpty() &&
+		 CombatPrediction.CombatInformation.InstigatorUnit->GetHealth() > 0 && CombatPrediction.CombatInformation.TargetUnit->GetHealth() > 0)
+		{
+			DoCombatTurn();
+		}
+		else
+		{
+			// should call this every time a combat finishes, not just when all units finished (AI)
+			if (OnCombatEnd.IsBound()) { OnCombatEnd.Broadcast(CombatPrediction); }
+			
+			// TODO: a bit odd, we want the turn manager to still function properly
+			UTurnWorldSubsystem* TurnWorldSubsystem = GetWorld()->GetSubsystem<UTurnWorldSubsystem>();
+			TurnWorldSubsystem->SetUnitTurnOver(CombatPrediction.CombatInformation.InstigatorUnit);
+
+			if (!UnitsToExecuteTurns.IsEmpty())
+			{
+				InitiateUnitCombat(FCombatPrediction());
+				// // just add some delay so it's not so crazy fast
+				// FTimerHandle TimerHandle;
+				// FTimerDelegate TimerDelegate;
+				// TimerDelegate.BindLambda([this]()
+				// {
+				// 	InitiateUnitCombat(FCombatPrediction());
+				// });
+				//
+				// GetWorld()->GetTimerManager().SetTimer(TimerHandle, TimerDelegate, 2.0f, false, 2.0f);
+			}
+		}
+	}
+	// 	else if (!UnitsToExecuteTurns.IsEmpty())
+	// 	{
+	// 		// just add some delay so it's not so crazy fast
+	// 		FTimerHandle TimerHandle;
+	// 		FTimerDelegate TimerDelegate;
+	// 		TimerDelegate.BindLambda([this]()
+	// 		{
+	// 			InitiateUnitCombat(FCombatPrediction());
+	// 		});
+	// 	
+	// 		GetWorld()->GetTimerManager().SetTimer(TimerHandle, TimerDelegate, 0.f, false, 2.0f);
+	// 	}
+	// 	else
+	// 	{
+	// 		if (OnCombatEnd.IsBound()) { OnCombatEnd.Broadcast(CombatPrediction); }
+	// 	}
+	// 	
+	//
+	// 	// TODO: a bit odd, we want the turn manager to still function properly
+	// 	UTurnWorldSubsystem* TurnWorldSubsystem = GetWorld()->GetSubsystem<UTurnWorldSubsystem>();
+	// 	TurnWorldSubsystem->SetUnitTurnOver(ActiveUnit);
+	// }
+	//
+	// // only end when attack order finished
+	// if (!CombatPrediction.CombatOrder.IsEmpty() &&
+	// 	 CombatPrediction.CombatInformation.InstigatorUnit->GetHealth() > 0 && CombatPrediction.CombatInformation.TargetUnit->GetHealth() > 0)
+	// {
+	// 	DoCombatTurn();
+	// }
+	// else if (!UnitsToExecuteTurns.IsEmpty())
+	// {
+	// 	// just add some delay so it's not so crazy fast
+	// 	FTimerHandle TimerHandle;
+	// 	FTimerDelegate TimerDelegate;
+	// 	TimerDelegate.BindLambda([this]()
+	// 	{
+	// 		InitiateUnitCombat(FCombatPrediction());
+	// 	});
+	// 	
+	// 	GetWorld()->GetTimerManager().SetTimer(TimerHandle, TimerDelegate, 0.f, false, 2.0f);
+	// }
+	// else
+	// {
+	// 	if (OnCombatEnd.IsBound()) { OnCombatEnd.Broadcast(CombatPrediction); }
+	// }
+}
+
+void UCombatWorldSubsystem::ExecuteEnemyTurn(FGameplayTag FactionTag)
+{
+	UTurnWorldSubsystem* TurnWorldSubsystem = GetWorld()->GetSubsystem<UTurnWorldSubsystem>();
+	if (FactionTag == TurnWorldSubsystem->GetPlayerFactionTag()) { return; }
+	
+	UnitsToExecuteTurns.Empty();
+	UnitsToExecuteTurns = TurnWorldSubsystem->GetUnitsInFaction(FactionTag);
+	// OnCombatEnd.AddUniqueDynamic(this, &ThisClass::InitiateUnitCombat);
+	// TODO: THIS IS HACKYYYYYYYYY... need a better way than to pass this...
+	InitiateUnitCombat(FCombatPrediction());
+}
+
+void UCombatWorldSubsystem::InitiateUnitCombat(const FCombatPrediction& InCombatPrediction)
+{
+	if (UnitsToExecuteTurns.IsEmpty())
+	{
+		// TODO: what goes here...
+		return;
 	}
 
-	// only end when attack order finished
-	if (!CombatOutcome.CombatOrder.IsEmpty() &&
-		 CombatOutcome.Instigator->GetHealth() > 0 && CombatOutcome.Target->GetHealth() > 0)
+	AGameMode_TurnBased_Combat* GameMode = Cast<AGameMode_TurnBased_Combat>(GetWorld()->GetAuthGameMode());
+	UGridWorldSubsystem* GridWorldSubsystem = GetWorld()->GetSubsystem<UGridWorldSubsystem>();
+	
+	ActiveUnit = UnitsToExecuteTurns.Pop();
+	TArray<FCombatPrediction> CombatPredictions;
+	TMap<AGridUnit*, FGridTileArray> PossibleAttacksMap = GridWorldSubsystem->GetEnemiesInRangeWithAttackTiles(ActiveUnit);
+
+	// get all possible combats (predictions)
+	for (auto GridUnitTilePair : PossibleAttacksMap)
 	{
-		DoCombatTurn();
+		AGridTile* TargetsGridTile = GridWorldSubsystem->GetGridTileOfUnit(GridUnitTilePair.Key);
+		FName TargetWeapon = GridUnitTilePair.Key->GetEquippedWeaponName();
+		for (auto GridTile : GridUnitTilePair.Value.GridTiles)
+		{
+			for (FName Weapon : ActiveUnit->GetWeaponsInMap())
+			{
+				FCombatPrediction OutCombatPrediction;
+				FCombatInformation CombatInformation;
+				CombatInformation.InstigatorUnit = ActiveUnit;
+				CombatInformation.InstigatorTile = GridTile;
+				CombatInformation.InstigatorWeapon = Weapon;
+				CombatInformation.TargetUnit = GridUnitTilePair.Key;
+				CombatInformation.TargetTile = TargetsGridTile;
+				CombatInformation.TargetWeapon = TargetWeapon;
+				GameMode->GetCombatCalculator()->GetCombatPrediction(OutCombatPrediction, CombatInformation);
+
+				// don't allow it as an option if neither unit can attack or instigator cannot reach with weapon range
+				if (!OutCombatPrediction.CombatOrder.IsEmpty() && OutCombatPrediction.CombatOrder.Contains(OutCombatPrediction.CombatInformation.InstigatorUnit))
+				{
+					CombatPredictions.Add(OutCombatPrediction);
+				}				
+			}
+		}
 	}
+
+	if (!CombatPredictions.IsEmpty())
+	{
+		// determine best action to take
+		for (FCombatPrediction& Prediction : CombatPredictions)
+		{
+			FCombatEvaluation ObjectiveCombatEvaluation;
+			CombatEvaluator->GetCombatEvaluation(ObjectiveCombatEvaluation, Prediction);
+			FCombatEvaluation UnitCombatEvaluation;
+			Prediction.CombatInformation.InstigatorUnit->CombatBehaviourComponent->GetCombatEvaluation(UnitCombatEvaluation, Prediction);
+
+			// assign evaluation to prediction
+			Prediction.CombatEvaluation = ObjectiveCombatEvaluation * UnitCombatEvaluation;
+		}
+
+		// CombatPredictions.Sort();
+		Algo::Sort(CombatPredictions);
+		InitiateCombat(CombatPredictions[0]);
+	}
+	// no combat predictions... skip turn???
 	else
 	{
-		if (OnCombatEnd.IsBound()) { OnCombatEnd.Broadcast(CombatOutcome.Instigator, CombatOutcome.Target); }
-	}
+		// TODO: hacky for the same above reasons...
+		InitiateUnitCombat(FCombatPrediction());
+	}	
 }

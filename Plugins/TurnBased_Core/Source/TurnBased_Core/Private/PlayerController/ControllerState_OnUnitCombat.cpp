@@ -2,7 +2,12 @@
 
 
 #include "PlayerController/ControllerState_OnUnitCombat.h"
+
+#include "Combat/CombatCalculator_Basic.h"
 #include "Combat/CombatWorldSubsystem.h"
+#include "GameMode/GameMode_TurnBased_Combat.h"
+#include "Grid/GridHelper.h"
+#include "Grid/GridWorldSubsystem.h"
 #include "Pawn/APawn_FollowCursor.h"
 #include "PlayerController/ControllerState_Idle.h"
 #include "Unit/GridUnit.h"
@@ -28,19 +33,30 @@ void UControllerState_OnUnitCombat::OnEnter(APlayerController* InPlayerControlle
 	
 	Super::OnEnter(InPlayerController, InInputMappingContextPriority);
 
-	if (UCombatWorldSubsystem* CombatSubsystem = PlayerController->GetWorld()->GetSubsystem<UCombatWorldSubsystem>())
+	UCombatWorldSubsystem* CombatSubsystem = PlayerController->GetWorld()->GetSubsystem<UCombatWorldSubsystem>();	
+	CombatSubsystem->OnCombatEnd.AddUniqueDynamic(this, &ThisClass::OnCombatEnd);
+	UGridWorldSubsystem* GridWorldSubsystem = PlayerController->GetWorld()->GetSubsystem<UGridWorldSubsystem>();
+	AGameMode_TurnBased_Combat* GameMode = Cast<AGameMode_TurnBased_Combat>(PlayerController->GetWorld()->GetAuthGameMode());
+
+	FCombatPrediction OutCombatPrediction;
+	FCombatInformation CombatInformation;
+	CombatInformation.InstigatorUnit = InstigatorUnit;
+	CombatInformation.InstigatorTile = GridWorldSubsystem->GetGridTileOfUnit(InstigatorUnit);
+	CombatInformation.InstigatorWeapon = InstigatorUnit->GetEquippedWeaponName();
+	CombatInformation.TargetUnit = TargetUnit;
+	CombatInformation.TargetTile = GridWorldSubsystem->GetGridTileOfUnit(TargetUnit);
+	CombatInformation.TargetWeapon = TargetUnit->GetEquippedWeaponName();
+	GameMode->GetCombatCalculator()->GetCombatPrediction(OutCombatPrediction, CombatInformation);
+
+	CombatSubsystem->InitiateCombat(OutCombatPrediction);
+	APawn_FollowCursor* Pawn = Cast<APawn_FollowCursor>(PlayerController->GetPawn());
+	if (Pawn)
 	{
-		CombatSubsystem->OnCombatEnd.AddUniqueDynamic(this, &ThisClass::OnCombatEnd);
-		CombatSubsystem->InitiateCombat(InstigatorUnit, TargetUnit);
-		APawn_FollowCursor* Pawn = Cast<APawn_FollowCursor>(PlayerController->GetPawn());
-		if (Pawn)
-		{
-			Pawn->SetFollowTarget(TargetUnit);
-		}
+		Pawn->SetFollowTarget(TargetUnit);
 	}
 }
 
-void UControllerState_OnUnitCombat::OnCombatEnd(const AGridUnit* Instigator, const AGridUnit* Target)
+void UControllerState_OnUnitCombat::OnCombatEnd(const FCombatPrediction& InCombatPrediction)
 {
 	PlayerController->SetBaseState(UControllerState_Idle::Create());
 }

@@ -3,12 +3,46 @@
 
 #include "Combat/CombatCalculator_Basic.h"
 #include "Combat/CombatData.h"
-#include "Combat/Weapon/WeaponDataAsset.h"
 #include "Grid/GridHelper.h"
 #include "Grid/GridWorldSubsystem.h"
 #include "Tile/GridTile.h"
 #include "Unit/GridUnit.h"
 
+
+void UCombatCalculator_Basic::GetCombatPrediction(FCombatPrediction& OutCombatPrediction,
+	const FCombatInformation& CombatInformation) const
+{
+	OutCombatPrediction.CombatInformation = CombatInformation;
+
+	// always calculate basic information
+	GetUnitSnapshotBasic(OutCombatPrediction.InstigatorSnapshotBasic, CombatInformation.InstigatorUnit, CombatInformation.InstigatorWeapon);
+	GetUnitSnapshotBasic(OutCombatPrediction.TargetSnapshotBasic, CombatInformation.TargetUnit, CombatInformation.TargetWeapon);
+	
+	const int32 CombatRange = UGridHelper::CalculateGridPosition(CombatInformation.InstigatorTile).GetDistance(UGridHelper::CalculateGridPosition(CombatInformation.TargetTile));
+	OutCombatPrediction.CombatOrder.Empty();
+
+	// only calculate advanced information if unit has correct weapon range
+	if (OutCombatPrediction.InstigatorSnapshotBasic.WeaponTraits.Range == CombatRange)
+	{
+		GetUnitSnapshotAdvanced(OutCombatPrediction.InstigatorSnapShotAdvanced, OutCombatPrediction.InstigatorSnapshotBasic, OutCombatPrediction.TargetSnapshotBasic);
+		OutCombatPrediction.CombatOrder.Add(CombatInformation.InstigatorUnit);
+	}
+	if (OutCombatPrediction.TargetSnapshotBasic.WeaponTraits.Range == CombatRange)
+	{
+		GetUnitSnapshotAdvanced(OutCombatPrediction.TargetSnapshotAdvanced, OutCombatPrediction.TargetSnapshotBasic, OutCombatPrediction.InstigatorSnapshotBasic);
+		OutCombatPrediction.CombatOrder.Add(CombatInformation.TargetUnit);
+	}
+
+	// doubling
+	if (OutCombatPrediction.InstigatorSnapshotBasic.WeaponTraits.Range == CombatRange && OutCombatPrediction.InstigatorSnapshotBasic.AttackSpeed - 4 > OutCombatPrediction.TargetSnapshotBasic.AttackSpeed)
+	{
+		OutCombatPrediction.CombatOrder.Add(CombatInformation.InstigatorUnit);
+	}
+	if (OutCombatPrediction.TargetSnapshotBasic.WeaponTraits.Range == CombatRange && OutCombatPrediction.TargetSnapshotBasic.AttackSpeed - 4 > OutCombatPrediction.InstigatorSnapshotBasic.AttackSpeed)
+	{
+		OutCombatPrediction.CombatOrder.Add(CombatInformation.TargetUnit);
+	}
+}
 
 void UCombatCalculator_Basic::GetCombatOutcome(
 	FCombatSnapshot_Outcome& Outcome, AGridUnit* InstigatorUnit, const FName WeaponName, AGridUnit* TargetUnit) const
@@ -43,14 +77,15 @@ void UCombatCalculator_Basic::GetCombatOutcome(
 
 	// FOR NOW
 	// check how many attacks each unit can potentially get
-	const int32 CombatRange = UGridHelper::CalculateGridPosition(InstigatorUnit).GetDistance(UGridHelper::CalculateGridPosition(TargetUnit));
-	Outcome.InstigatorAttacks = InstigatorSnapshot.WeaponTraits.Range == CombatRange ? 1 : 0;
-	Outcome.TargetAttacks = TargetSnapshot.WeaponTraits.Range == CombatRange ? 1 : 0;
-	// DO FE IF ATTACK SPEED GREATER BY 4+
-	Outcome.InstigatorAttacks *= InstigatorSnapshot.AttackSpeed - 4 > TargetSnapshot.Speed ? 2 : 1;
-	Outcome.TargetAttacks *= TargetSnapshot.AttackSpeed - 4 > InstigatorSnapshot.Speed ? 2 : 1;
+	// const int32 CombatRange = UGridHelper::CalculateGridPosition(InstigatorUnit).GetDistance(UGridHelper::CalculateGridPosition(TargetUnit));
+	// Outcome.InstigatorAttacks = InstigatorSnapshot.WeaponTraits.Range == CombatRange ? 1 : 0;
+	// Outcome.TargetAttacks = TargetSnapshot.WeaponTraits.Range == CombatRange ? 1 : 0;
+	// // DO FE IF ATTACK SPEED GREATER BY 4+
+	// Outcome.InstigatorAttacks *= InstigatorSnapshot.AttackSpeed - 4 > TargetSnapshot.Speed ? 2 : 1;
+	// Outcome.TargetAttacks *= TargetSnapshot.AttackSpeed - 4 > InstigatorSnapshot.Speed ? 2 : 1;
 
 	// attack order
+	const int32 CombatRange = UGridHelper::CalculateGridPosition(InstigatorUnit).GetDistance(UGridHelper::CalculateGridPosition(TargetUnit));
 	Outcome.CombatOrder.Empty();
 	if (InstigatorSnapshot.WeaponTraits.Range == CombatRange)
 	{
@@ -117,7 +152,8 @@ void UCombatCalculator_Basic::GetUnitSnapshotBasic(
 	// GetWeaponByName(WeaponContainer, InGridUnit->GetEquippedWeaponName());
 	GetWeaponByName(WeaponContainer, WeaponName);
 	OutSnapshot.WeaponTraits = WeaponContainer.WeaponTraits;
-	
+
+	OutSnapshot.Health =  InGridUnit->GetAbilitySystemComponent()->GetNumericAttribute(UGridUnitAttributeSet::GetHealthAttribute());
 	OutSnapshot.Strength = InGridUnit->GetAbilitySystemComponent()->GetNumericAttribute(UGridUnitAttributeSet::GetStrengthAttribute());
 	OutSnapshot.Skill = InGridUnit->GetAbilitySystemComponent()->GetNumericAttribute(UGridUnitAttributeSet::GetSkillAttribute());
 	OutSnapshot.Speed = InGridUnit->GetAbilitySystemComponent()->GetNumericAttribute(UGridUnitAttributeSet::GetSpeedAttribute());
@@ -140,11 +176,11 @@ void UCombatCalculator_Basic::GetUnitSnapshotAdvanced(
 {
 	OutSnapshot.HitChance = FMath::Clamp(InstigatorSnapshot.HitRate - TargetSnapshot.Avoid, 0, 100);
 	OutSnapshot.bHit = FMath::RandRange(0, 100) < OutSnapshot.HitChance;
-	OutSnapshot.HealthChange = FMath::Clamp(InstigatorSnapshot.Strength + InstigatorSnapshot.WeaponTraits.Might - TargetSnapshot.Defence, 0, GetMaxDamage());
+	OutSnapshot.DamageDealt = FMath::Clamp(InstigatorSnapshot.Strength + InstigatorSnapshot.WeaponTraits.Might - TargetSnapshot.Defence, 0, GetMaxDamage());
 	OutSnapshot.CriticalChance = FMath::Clamp(0, 100, InstigatorSnapshot.CriticalRate - TargetSnapshot.CriticalAvoid);
 
 	// are we using this??? 
-	OutSnapshot.AttackPower = OutSnapshot.HealthChange;
+	OutSnapshot.AttackPower = OutSnapshot.DamageDealt;
 }
 
 TArray<int32> UCombatCalculator_Basic::GetWeaponRangesByName(const TArray<FName>& WeaponNames) const
@@ -208,7 +244,7 @@ void UCombatCalculator_Basic::CalculateCombatScore(FCombatScore& CombatScore) co
 	float Score = 0;
 	Score += InstigatorSnapShotAdvanced.HitChance / 100.f;
 	Score += InstigatorSnapShotAdvanced.CriticalChance / 100.f * 2.f;
-	Score += InstigatorSnapShotAdvanced.HealthChange / TargetSnapshotBasic.Health;
-	Score += TargetSnapShotAdvanced.HealthChange / InstigatorSnapshotBasic.Health;
+	Score += InstigatorSnapShotAdvanced.DamageDealt / TargetSnapshotBasic.Health;
+	Score += TargetSnapShotAdvanced.DamageDealt / InstigatorSnapshotBasic.Health;
 	CombatScore.Score = Score;
 }

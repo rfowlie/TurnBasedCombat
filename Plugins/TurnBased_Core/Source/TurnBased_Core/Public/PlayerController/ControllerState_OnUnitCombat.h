@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "ControllerState_Abstract.h"
+#include "Combat/CombatData.h"
 #include "ControllerState_OnUnitCombat.generated.h"
 
 
@@ -32,5 +33,5 @@ protected:
 	AGridUnit* TargetUnit = nullptr;
 	
 	UFUNCTION()
-	void OnCombatEnd(const AGridUnit* Instigator, const AGridUnit* Target);
+	void OnCombatEnd(const FCombatPrediction& InCombatPrediction);
 };

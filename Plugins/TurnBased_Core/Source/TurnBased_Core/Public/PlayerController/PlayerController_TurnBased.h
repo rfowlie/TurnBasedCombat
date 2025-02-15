@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
+#include "Combat/CombatData.h"
 #include "GameFramework/PlayerController.h"
 #include "PlayerController_TurnBased.generated.h"
 
@@ -80,7 +81,7 @@ protected:
 	void OnCombatStart(const AGridUnit* InInstigator, const AGridUnit* InTarget);
 	
 	UFUNCTION(BlueprintCallable, Category="Combat")
-	void OnCombatEnd(const AGridUnit* InInstigator, const AGridUnit* InTarget);
+	void OnCombatEnd(const FCombatPrediction& InCombatPrediction);
 
 	// Combat ~ end
 };

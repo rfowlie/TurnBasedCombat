@@ -278,8 +278,8 @@ void UCombatCalculator::CalculateCombatOutcome(
 	int32 AttackPower = Instigator.Strength + Instigator.WeaponTraits.Might;
 	int32 DefensePower = Target.Defence;
 	
-	CombatOutcome.HealthChange = FMath::Clamp(AttackPower - DefensePower, 0, GetMaxDamage());
-	UE_LOG(LogTemp, Log, TEXT("COMBAT CALCULATOR - HealthChange: %d"), CombatOutcome.HealthChange);
+	CombatOutcome.DamageDealt = FMath::Clamp(AttackPower - DefensePower, 0, GetMaxDamage());
+	UE_LOG(LogTemp, Log, TEXT("COMBAT CALCULATOR - HealthChange: %d"), CombatOutcome.DamageDealt);
 	
 	CombatOutcome.CriticalChance = 0;
 }

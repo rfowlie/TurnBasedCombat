@@ -372,34 +372,39 @@ void UGridWorldSubsystem::OnGridUnitAbilityEnded(UGameplayAbility* InGameplayAbi
 {
 	AGridUnit* InGridUnit = Cast<AGridUnit>(InGameplayAbility->GetAvatarActorFromActorInfo());
 	if (!IsValid(InGridUnit)) { return; }
-	
-	TPair<AActor*, UGameplayAbility*> FoundPair;
-	for (TPair<AActor*, UGameplayAbility*> Pair : GridUnitsTakingActions)
-	{
-		if (Pair.Key == InGridUnit && Pair.Value == InGameplayAbility)
-		{
-			FoundPair = Pair;
-			break;
-		}
-	}
-	
-	if (FoundPair.Key == InGridUnit && FoundPair.Value == InGameplayAbility)
-	{
-		GridUnitsTakingActions.Remove(FoundPair);
 
-		// if this array is empty then no units are taking actions and it is safe to return PC control
-		if (GridUnitsTakingActions.IsEmpty())
-		{
-			UpdateUnitMappingsAll();
-			if (OnGridUnitAbilityEnd.IsBound()) { OnGridUnitAbilityEnd.Broadcast(); }
-
-			UE_LOG(LogTemp, Log, TEXT("On Grid Unit Ability Ended: no more units taking actions"));
-		}
-	}
-	else
-	{
-		UE_LOG(LogTemp, Log, TEXT("On Grid Unit Ability Ended: %d"), GridUnitsTakingActions.Num());
-	}
+	// update positioning of unit
+	UpdateUnitMapping(InGridUnit);
+		
+		
+	// TODO: this was for PC control flow before, might be deprecated now???
+	// TPair<AActor*, UGameplayAbility*> FoundPair;
+	// for (TPair<AActor*, UGameplayAbility*> Pair : GridUnitsTakingActions)
+	// {
+	// 	if (Pair.Key == InGridUnit && Pair.Value == InGameplayAbility)
+	// 	{
+	// 		FoundPair = Pair;
+	// 		break;
+	// 	}
+	// }
+	//
+	// if (FoundPair.Key == InGridUnit && FoundPair.Value == InGameplayAbility)
+	// {
+	// 	GridUnitsTakingActions.Remove(FoundPair);
+	//
+	// 	// if this array is empty then no units are taking actions and it is safe to return PC control
+	// 	if (GridUnitsTakingActions.IsEmpty())
+	// 	{
+	// 		UpdateUnitMappingsAll();
+	// 		if (OnGridUnitAbilityEnd.IsBound()) { OnGridUnitAbilityEnd.Broadcast(); }
+	//
+	// 		UE_LOG(LogTemp, Log, TEXT("On Grid Unit Ability Ended: no more units taking actions"));
+	// 	}
+	// }
+	// else
+	// {
+	// 	UE_LOG(LogTemp, Log, TEXT("On Grid Unit Ability Ended: %d"), GridUnitsTakingActions.Num());
+	// }
 }
 
 void UGridWorldSubsystem::DisplayAttackHeatMap(FGameplayTag InFactionTag)
@@ -498,4 +503,37 @@ void UGridWorldSubsystem::CalculateCombatScores(TArray<FCombatScore>& CombatScor
 
 	// sort scores
 	CombatScores.Sort();
+}
+
+TMap<AGridUnit*, FGridTileArray> UGridWorldSubsystem::GetEnemiesInRangeWithAttackTiles(AGridUnit* InstigatorUnit)
+{
+	TMap<AGridUnit*, FGridTileArray> OutMap;
+	
+	AGameMode_TurnBased_Combat* GameMode = Cast<AGameMode_TurnBased_Combat>(GetWorld()->GetAuthGameMode());
+		
+	// get instigator movement
+	TArray<FGridMovement> GridMovements;
+	CalculateGridMovement(GridMovements, InstigatorUnit, InstigatorUnit->GetAvailableMovement());
+	
+	// get enemies of instigator
+	UTurnWorldSubsystem* TurnSubsystem = GetWorld()->GetSubsystem<UTurnWorldSubsystem>();
+	TArray<AGridUnit*> TargetUnits;
+	TurnSubsystem->GetFactionEnemies(InstigatorUnit, TargetUnits);
+	
+	// for every enemy, get tiles from which instigator can attack the target from
+	for (auto Target : TargetUnits)
+	{
+		TMap<AGridTile*, int32> AttackTiles;
+		CalculateGridAttackTiles(AttackTiles, GridMovements, InstigatorUnit, Target);
+
+		// check if not able to attack this enemy
+		if (AttackTiles.IsEmpty()) { continue; }
+
+		// add target and tiles to map
+		FGridTileArray GridTileArray;
+		AttackTiles.GetKeys(GridTileArray.GridTiles);
+		OutMap.Add(Target, GridTileArray);
+	}
+
+	return OutMap;
 }

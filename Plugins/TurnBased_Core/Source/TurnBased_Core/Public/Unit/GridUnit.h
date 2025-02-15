@@ -12,6 +12,8 @@
 #include "GridUnit.generated.h"
 
 
+class UGridUnitBehaviourComponent;
+class UActionBehaviour_Combat;
 class UWeaponDataAsset;
 class UMoveAbility;
 class UAbilityAsync_WaitAttributeChanged;
@@ -178,6 +180,13 @@ public:
 	UFUNCTION(BlueprintCallable)
 	TArray<FName> GetWeaponsInMap() const;
 
+
+public:
+	// Action Behaviour ~ start
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UGridUnitBehaviourComponent* CombatBehaviourComponent = nullptr;
+	
+	// Action Behaviour ~ end
 private:
 	UFUNCTION()
 	void OnAbilityEnded(const FAbilityEndedData& Data);

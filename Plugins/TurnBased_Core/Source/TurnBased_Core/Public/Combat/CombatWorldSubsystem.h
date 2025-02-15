@@ -8,8 +8,11 @@
 #include "CombatWorldSubsystem.generated.h"
 
 
+class UGameplayAbility;
 class UCombatCalculator_Basic;
+class UActionEvaluator_Combat;
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FCombatWorldSubsystemEventDelegate, const FCombatPrediction&, CombatPrediction);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FCombatWorldSubsystemDelegate, const AGridUnit*, Instigator, const AGridUnit*, Target);
 
 /**
@@ -19,6 +22,8 @@ UCLASS()
 class TURNBASED_CORE_API UCombatWorldSubsystem : public UWorldSubsystem
 {
 	GENERATED_BODY()
+
+	virtual void PostInitialize() override;
 	
 public:
 	// FOR NOW... just use this as an event focale point
@@ -26,21 +31,21 @@ public:
 	FCombatWorldSubsystemDelegate OnCombatStart;
 	
 	UPROPERTY(BlueprintAssignable, Category="Combat")
-	FCombatWorldSubsystemDelegate OnCombatEnd;
+	FCombatWorldSubsystemEventDelegate OnCombatEnd;
 
 	UFUNCTION()
-	void InitiateCombat(AGridUnit* InInstigatorUnit, AGridUnit* InTargetUnit);
+	void InitiateCombat(FCombatPrediction InCombatPrediction);
 	
 protected:
+	UPROPERTY()
+	FCombatPrediction CombatPrediction;
+	
 	UPROPERTY()
 	const UCombatCalculator_Basic* CombatCalculator = nullptr;
 
 	UPROPERTY()
-	FCombatSnapshot_Outcome CombatOutcome;
-
-	UPROPERTY()
 	AGridUnit* ActiveUnit = nullptr;
-		
+
 	UFUNCTION()
 	void DoCombatTurn();
 	
@@ -48,4 +53,17 @@ protected:
 	void OnGridUnitAbilityActivated(UGameplayAbility* InGameplayAbility);
 	
 	FDelegateHandle DelegateHandle;
+
+	// AI ~ start
+	UPROPERTY()
+	UActionEvaluator_Combat* CombatEvaluator = nullptr;
+
+	UPROPERTY()
+	TArray<AGridUnit*> UnitsToExecuteTurns;
+	UFUNCTION()
+	void ExecuteEnemyTurn(FGameplayTag FactionTag);
+	UFUNCTION()
+	void InitiateUnitCombat(const FCombatPrediction& InCombatPrediction);
+	
+	// AI ~ end
 };
