@@ -70,6 +70,7 @@ void UControllerState_OnUnitMove::OnGridUnitAbilityActivated(UGameplayAbility* I
 	{
 		UTurnWorldSubsystem* TurnWorldSubsystem = PlayerController->GetWorld()->GetSubsystem<UTurnWorldSubsystem>();
 		TurnWorldSubsystem->SetUnitTurnOver(ActiveUnit);
+		TurnWorldSubsystem->CheckFactionTurnComplete(ActiveUnit->Execute_GetFaction(ActiveUnit));
 		PlayerController->SetBaseState(UControllerState_Idle::Create());
 	}	
 }

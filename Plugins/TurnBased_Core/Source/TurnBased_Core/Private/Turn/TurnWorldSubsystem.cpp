@@ -10,12 +10,7 @@
 void UTurnWorldSubsystem::PostInitialize()
 {
 	Super::PostInitialize();
-
-	if (UCombatWorldSubsystem* CombatWorldSubsystem = GetWorld()->GetSubsystem<UCombatWorldSubsystem>())
-	{
-		// Deprecated: Manually setting turn over for unit instead
-		// CombatWorldSubsystem->OnCombatEnd.AddUniqueDynamic(this, &ThisClass::OnCombatEnd);
-	}
+	
 }
 
 void UTurnWorldSubsystem::EnableTurns()
@@ -107,11 +102,16 @@ FGameplayTag UTurnWorldSubsystem::GetActiveFaction()
 	return FactionOrder[FactionIndex];
 }
 
-TArray<AGridUnit*> UTurnWorldSubsystem::GetUnitsInFaction(const FGameplayTag FactionTag)
+// only return units that can take an action or that are alive
+TArray<AGridUnit*> UTurnWorldSubsystem::GetAliveUnitsInFaction
+(const FGameplayTag FactionTag)
 {
-	if (!FactionMap.Contains(FactionTag)) { return TArray<AGridUnit*>(); }
-	TArray<AGridUnit*> OutGridUnits = FactionMap[FactionTag].GetGridUnits();
-	return OutGridUnits;
+	if (!FactionMap.Contains(FactionTag))
+	{
+		return TArray<AGridUnit*>();
+	}
+
+	return FactionMap[FactionTag].GetAliveGridUnits();
 }
 
 bool UTurnWorldSubsystem::IsFactionActive(const FGameplayTag FactionTag)
@@ -130,6 +130,23 @@ void UTurnWorldSubsystem::CheckFactionDefeated(AGridUnit* GridUnit)
 	if (FactionMap[FactionTag].IsFactionDefeated())
 	{
 		if (OnFactionDefeated.IsBound()) { OnFactionDefeated.Broadcast(FactionTag); }
+
+		// check only one faction left
+		int32 FactionAliveCount = 0;
+		for (auto Faction : FactionMap)
+		{
+			FactionAliveCount+= Faction.Value.IsFactionDefeated();
+		}
+
+		// stop turn system from running (doing AI turns, etc.)
+		if (FactionAliveCount == 0)
+		{
+			UE_LOG(LogTemp, Error, TEXT("UTurnWorldSubsystem::CheckFactionDefeated - all factions defeated, something wrong... "))
+		}
+		if (FactionAliveCount == 1)
+		{
+			TurnsActive = false;
+		}
 	}
 }
 
@@ -137,6 +154,15 @@ void UTurnWorldSubsystem::CheckFactionTurnComplete(const FGameplayTag& FactionTa
 {
 	if(FactionMap[FactionTag].GetActiveUnitsCount() == 0)
 	{
+		IncrementFaction();
+	}
+}
+
+void UTurnWorldSubsystem::SetFactionTurnComplete(const FGameplayTag& FactionTag)
+{
+	if (FactionMap.Contains(FactionTag))
+	{
+		FactionMap[FactionTag].DeactivateUnits();
 		IncrementFaction();
 	}
 }
@@ -193,6 +219,7 @@ AGridUnit* UTurnWorldSubsystem::GetNextUnit(AGridUnit* InGridUnit)
 	// return FactionMap[FactionOrder[FactionIndex]].GetNextUnit(InGridUnit);
 }
 
+// only return valid enemies
 void UTurnWorldSubsystem::GetFactionEnemies(AGridUnit* InGridUnit, TArray<AGridUnit*>& EnemyGridUnits)
 {
 	if (!IsValid(InGridUnit)) { return; }
@@ -215,21 +242,42 @@ void UTurnWorldSubsystem::GetFactionEnemies(AGridUnit* InGridUnit, TArray<AGridU
 	}	
 }
 
+void UTurnWorldSubsystem::GetAliveFactionEnemies(AGridUnit* InGridUnit, TArray<AGridUnit*>& EnemyGridUnits)
+{
+	if (!IsValid(InGridUnit)) { return; }
+	FGameplayTag FactionTag = InGridUnit->Execute_GetFaction(InGridUnit);
+	if (!FactionOrder.Contains(FactionTag))
+	{
+		UE_LOG(LogTemp, Error, TEXT("Turn World Subsystem - Get Faction Enemies: faction not registered"));
+		return;
+	}
+
+	// FOR NOW
+	EnemyGridUnits.Empty();
+	for (auto Pair : FactionMap)
+	{
+		if (Pair.Key != FactionTag)
+		{
+			EnemyGridUnits.Append(Pair.Value.GetAliveGridUnits());
+		}
+	}	
+}
+
 void UTurnWorldSubsystem::SetUnitTurnOver(AGridUnit* InGridUnit)
 {
 	if (!IsValid(InGridUnit)) { return; }
 	const FGameplayTag FactionTag = InGridUnit->Execute_GetFaction(InGridUnit);
 	FactionMap[FactionTag].GridUnits[InGridUnit] = false;
 	
-	CheckFactionTurnComplete(FactionTag);
+	// CheckFactionTurnComplete(FactionTag);
 }
 
-void UTurnWorldSubsystem::OnCombatEnd(const FCombatPrediction& InCombatPrediction)
-{
-	AGridUnit* InInstigator = InCombatPrediction.CombatInformation.InstigatorUnit;
-	if (!IsValid(InInstigator)) { return; }
-	const FGameplayTag FactionTag = InInstigator->Execute_GetFaction(InInstigator);
-	FactionMap[FactionTag].GridUnits[InInstigator] = false;
-	
-	CheckFactionTurnComplete(FactionTag);
-}
+// void UTurnWorldSubsystem::OnCombatEnd(const FCombatPrediction& InCombatPrediction)
+// {
+// 	AGridUnit* InInstigator = InCombatPrediction.CombatInformation.InstigatorUnit;
+// 	if (!IsValid(InInstigator)) { return; }
+// 	const FGameplayTag FactionTag = InInstigator->Execute_GetFaction(InInstigator);
+// 	FactionMap[FactionTag].GridUnits[InInstigator] = false;
+// 	
+// 	CheckFactionTurnComplete(FactionTag);
+// }

@@ -7,6 +7,7 @@
 #include "Subsystems/WorldSubsystem.h"
 #include "CombatWorldSubsystem.generated.h"
 
+DECLARE_LOG_CATEGORY_EXTERN(Log_Combat, Log, All);
 
 class UGameplayAbility;
 class UCombatCalculator_Basic;
@@ -33,6 +34,9 @@ public:
 	UPROPERTY(BlueprintAssignable, Category="Combat")
 	FCombatWorldSubsystemEventDelegate OnCombatEnd;
 
+	UFUNCTION(BlueprintCallable, Category="Combat")
+	bool IsCombatActive() { return CombatPrediction.CombatOrder.IsEmpty() && CombatPredictionAI.CombatOrder.IsEmpty(); }
+	
 	UFUNCTION()
 	void InitiateCombat(FCombatPrediction InCombatPrediction);
 	
@@ -43,11 +47,11 @@ protected:
 	UPROPERTY()
 	const UCombatCalculator_Basic* CombatCalculator = nullptr;
 
-	UPROPERTY()
-	AGridUnit* ActiveUnit = nullptr;
-
+	// UPROPERTY()
+	// AGridUnit* ActiveUnit_Combat = nullptr;
+	
 	UFUNCTION()
-	void DoCombatTurn();
+	void SendCombatEventToNextUnit();
 	
 	UFUNCTION()
 	void OnGridUnitAbilityActivated(UGameplayAbility* InGameplayAbility);
@@ -55,15 +59,33 @@ protected:
 	FDelegateHandle DelegateHandle;
 
 	// AI ~ start
+	FDelegateHandle DelegateHandleAI;
+	
 	UPROPERTY()
 	UActionEvaluator_Combat* CombatEvaluator = nullptr;
 
 	UPROPERTY()
-	TArray<AGridUnit*> UnitsToExecuteTurns;
+	TArray<AGridUnit*> AIUnitsToExecuteTurns;
+
+	UPROPERTY()
+	FCombatPrediction CombatPredictionAI;
+
 	UFUNCTION()
-	void ExecuteEnemyTurn(FGameplayTag FactionTag);
-	UFUNCTION()
-	void InitiateUnitCombat(const FCombatPrediction& InCombatPrediction);
+	void OnCombatCompleteAI(UGameplayAbility* InGameplayAbility);
 	
+	UFUNCTION()
+	void SendCombatEventAI();
+
+	UFUNCTION()
+	void SetupCombatAI();
+	
+	UFUNCTION()
+	void GetNextCombatPredictionAI();
+	
+	UFUNCTION()
+	void StartTurnAI(FGameplayTag FactionTag);
+
+	UPROPERTY()
+	FGameplayTag ActiveFactionAI;
 	// AI ~ end
 };

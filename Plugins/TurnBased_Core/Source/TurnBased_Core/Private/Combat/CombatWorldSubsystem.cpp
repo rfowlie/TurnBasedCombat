@@ -10,11 +10,14 @@
 #include "GameMode/GameMode_TurnBased_Combat.h"
 #include "Grid/GridHelper.h"
 #include "Grid/GridWorldSubsystem.h"
+#include "Pawn/APawn_FollowCursor.h"
+#include "PlayerController/PlayerController_TurnBased.h"
 #include "Turn/TurnWorldSubsystem.h"
 #include "Unit/GridUnit.h"
 #include "Unit/Components/GridUnitBehaviourComponent.h"
 
 
+DEFINE_LOG_CATEGORY(Log_Combat);
 
 void UCombatWorldSubsystem::PostInitialize()
 {
@@ -24,7 +27,7 @@ void UCombatWorldSubsystem::PostInitialize()
 
 	// bind to turn change so we can tell when enemy factions turn...
 	UTurnWorldSubsystem* TurnWorldSubsystem = GetWorld()->GetSubsystem<UTurnWorldSubsystem>();
-	TurnWorldSubsystem->OnFactionStart.AddUniqueDynamic(this, &ThisClass::ExecuteEnemyTurn);
+	TurnWorldSubsystem->OnFactionStart.AddUniqueDynamic(this, &ThisClass::StartTurnAI);
 }
 
 void UCombatWorldSubsystem::InitiateCombat(FCombatPrediction InCombatPrediction)
@@ -36,20 +39,23 @@ void UCombatWorldSubsystem::InitiateCombat(FCombatPrediction InCombatPrediction)
 	// TODO: for now... just move units here...
 	CombatPrediction.CombatInformation.InstigatorUnit->SetActorLocation(CombatPrediction.CombatInformation.InstigatorTile->GetPlacementLocation());
 	
+	CombatPrediction.CombatInformation.InstigatorUnit->GetAbilitySystemComponent()->AbilityEndedCallbacks.AddUObject(this, &ThisClass::OnGridUnitAbilityActivated);
+	CombatPrediction.CombatInformation.TargetUnit->GetAbilitySystemComponent()->AbilityEndedCallbacks.AddUObject(this, &ThisClass::OnGridUnitAbilityActivated);
+	
 	if (OnCombatStart.IsBound()) { OnCombatStart.Broadcast(
 		InCombatPrediction.CombatInformation.InstigatorUnit,
 		InCombatPrediction.CombatInformation.TargetUnit
 		); }
 	
-	DoCombatTurn();
+	SendCombatEventToNextUnit();
 }
 
-void UCombatWorldSubsystem::DoCombatTurn()
+void UCombatWorldSubsystem::SendCombatEventToNextUnit()
 {
-	ActiveUnit = CombatPrediction.CombatOrder[0];
-	CombatPrediction.CombatOrder.RemoveAt(0);
+	AGridUnit* ActiveUnit = CombatPrediction.CombatOrder[0];
+	// CombatPrediction.CombatOrder.RemoveAt(0);
 
-	DelegateHandle = ActiveUnit->GetAbilitySystemComponent()->AbilityEndedCallbacks.AddUObject(this, &ThisClass::OnGridUnitAbilityActivated);
+	// DelegateHandle = ActiveUnit->GetAbilitySystemComponent()->AbilityEndedCallbacks.AddUObject(this, &ThisClass::OnGridUnitAbilityActivated);
 
 	// send gameplay event
 	FGameplayEventData EventData;
@@ -66,64 +72,136 @@ void UCombatWorldSubsystem::DoCombatTurn()
 }
 
 void UCombatWorldSubsystem::OnGridUnitAbilityActivated(UGameplayAbility* InGameplayAbility)
-{
+{	
 	// remove delegate otherwise odd behaviour
-	if (InGameplayAbility->GetAvatarActorFromActorInfo() == ActiveUnit)
+	if (InGameplayAbility->GetAvatarActorFromActorInfo() == CombatPrediction.CombatOrder[0])
 	{
-		ActiveUnit->GetAbilitySystemComponent()->AbilityEndedCallbacks.Remove(DelegateHandle);
-		
+		float GameTime = GetWorld()->GetTimeSeconds();
+		UE_LOG(Log_Combat, Log, TEXT("Game Time: %f"), GameTime);
+		UE_LOG(Log_Combat, Log, TEXT("OnCombatComplete - %s, %s"), *CombatPrediction.CombatOrder[0]->GetName(), *CombatPrediction.Id.ToString());
+		// CombatPrediction.CombatOrder[0]->GetAbilitySystemComponent()->AbilityEndedCallbacks.Remove(DelegateHandle);
+		CombatPrediction.CombatOrder.RemoveAt(0);
+
 		if (!CombatPrediction.CombatOrder.IsEmpty() &&
-		 CombatPrediction.CombatInformation.InstigatorUnit->GetHealth() > 0 && CombatPrediction.CombatInformation.TargetUnit->GetHealth() > 0)
+			CombatPrediction.CombatInformation.InstigatorUnit->GetHealth() > 0 &&
+			CombatPrediction.CombatInformation.TargetUnit->GetHealth() > 0)
 		{
-			DoCombatTurn();
+			SendCombatEventToNextUnit();
 		}
 		else
 		{
-			// zero out values???
-			// ActiveUnit = nullptr;
-			// CombatPrediction = FCombatPrediction();
+			CombatPrediction.CombatInformation.InstigatorUnit->GetAbilitySystemComponent()->AbilityEndedCallbacks.RemoveAll(this);
+			CombatPrediction.CombatInformation.TargetUnit->GetAbilitySystemComponent()->AbilityEndedCallbacks.RemoveAll(this);
+
+			AGridUnit* InstigatorUnit = CombatPrediction.CombatInformation.InstigatorUnit;
 			
 			// should call this every time a combat finishes, not just when all units finished (AI)
 			if (OnCombatEnd.IsBound()) { OnCombatEnd.Broadcast(CombatPrediction); }
-			
-			// TODO: a bit odd, we want the turn manager to still function properly
-			// ALREADY HAPPENING TURN MANAGER HAS CALLBACK
-			// Lets try manually doing this for better control???
-			UTurnWorldSubsystem* TurnWorldSubsystem = GetWorld()->GetSubsystem<UTurnWorldSubsystem>();
-			TurnWorldSubsystem->SetUnitTurnOver(CombatPrediction.CombatInformation.InstigatorUnit);
 
-			if (!UnitsToExecuteTurns.IsEmpty())
+			// zero out...
+			CombatPrediction = FCombatPrediction();
+			
+			// Update unit that attacked
+			UTurnWorldSubsystem* TurnWorldSubsystem = GetWorld()->GetSubsystem<UTurnWorldSubsystem>();
+			TurnWorldSubsystem->SetUnitTurnOver(InstigatorUnit);
+			TurnWorldSubsystem->CheckFactionTurnComplete(InstigatorUnit->Execute_GetFaction(InstigatorUnit));
+		}
+	}
+}
+
+void UCombatWorldSubsystem::OnCombatCompleteAI(UGameplayAbility* InGameplayAbility)
+{
+	// remove delegate otherwise odd behaviour
+	if (InGameplayAbility->GetAvatarActorFromActorInfo() == CombatPredictionAI.CombatOrder[0])
+	{
+		float GameTime = GetWorld()->GetTimeSeconds();
+		UE_LOG(Log_Combat, Log, TEXT("Game Time AI: %f"), GameTime);
+		UE_LOG(Log_Combat, Log, TEXT("OnCombatCompleteAI - %s, %s"), *CombatPredictionAI.CombatOrder[0]->GetName(), *CombatPredictionAI.Id.ToString());
+		// CombatPredictionAI.CombatOrder[0]->GetAbilitySystemComponent()->AbilityEndedCallbacks.Remove(DelegateHandleAI);
+		CombatPredictionAI.CombatOrder.RemoveAt(0);
+		
+		if (!CombatPredictionAI.CombatOrder.IsEmpty() &&
+			CombatPredictionAI.CombatInformation.InstigatorUnit->GetHealth() > 0 &&
+			CombatPredictionAI.CombatInformation.TargetUnit->GetHealth() > 0)
+		{
+			SendCombatEventAI();
+		}
+		else
+		{
+			CombatPredictionAI.CombatInformation.InstigatorUnit->GetAbilitySystemComponent()->AbilityEndedCallbacks.RemoveAll(this);
+			CombatPredictionAI.CombatInformation.TargetUnit->GetAbilitySystemComponent()->AbilityEndedCallbacks.RemoveAll(this);
+			
+			// should call this every time a combat finishes, not just when all units finished (AI)
+			if (OnCombatEnd.IsBound()) { OnCombatEnd.Broadcast(CombatPredictionAI); }
+
+			// TODO: seems a bit hacky right now...
+			// UTurnWorldSubsystem* TurnWorldSubsystem = GetWorld()->GetSubsystem<UTurnWorldSubsystem>();
+			// TurnWorldSubsystem->SetUnitTurnOver(CombatPredictionAI.CombatInformation.InstigatorUnit);
+
+			if (!AIUnitsToExecuteTurns.IsEmpty())
 			{
-				InitiateUnitCombat(FCombatPrediction());
-				// // just add some delay so it's not so crazy fast
-				// FTimerHandle TimerHandle;
-				// FTimerDelegate TimerDelegate;
-				// TimerDelegate.BindLambda([this]()
-				// {
-				// 	InitiateUnitCombat(FCombatPrediction());
-				// });
-				//
-				// GetWorld()->GetTimerManager().SetTimer(TimerHandle, TimerDelegate, 2.0f, false, 2.0f);
+				GetNextCombatPredictionAI();
+			}
+			else
+			{
+				UTurnWorldSubsystem* TurnWorldSubsystem = GetWorld()->GetSubsystem<UTurnWorldSubsystem>();
+				TurnWorldSubsystem->SetFactionTurnComplete(ActiveFactionAI);
 			}
 		}
 	}
 }
 
-void UCombatWorldSubsystem::ExecuteEnemyTurn(FGameplayTag FactionTag)
+void UCombatWorldSubsystem::SendCombatEventAI()
 {
-	UTurnWorldSubsystem* TurnWorldSubsystem = GetWorld()->GetSubsystem<UTurnWorldSubsystem>();
-	if (FactionTag == TurnWorldSubsystem->GetPlayerFactionTag()) { return; }
+	// send gameplay event to instigator
+	AGridUnit* ActiveUnit = CombatPredictionAI.CombatOrder[0];
+	// CombatPrediction.CombatOrder.RemoveAt(0);
+
+	// DelegateHandleAI = ActiveUnit->GetAbilitySystemComponent()->AbilityEndedCallbacks.AddUObject(this, &ThisClass::OnCombatCompleteAI);
+
+	// send gameplay event
+	FGameplayEventData EventData;
+	EventData.Instigator = ActiveUnit;
+	EventData.Target = ActiveUnit == CombatPredictionAI.CombatInformation.InstigatorUnit ?
+		CombatPredictionAI.CombatInformation.TargetUnit : CombatPredictionAI.CombatInformation.InstigatorUnit;
 	
-	UnitsToExecuteTurns.Empty();
-	UnitsToExecuteTurns = TurnWorldSubsystem->GetUnitsInFaction(FactionTag);
-	// OnCombatEnd.AddUniqueDynamic(this, &ThisClass::InitiateUnitCombat);
-	// TODO: THIS IS HACKYYYYYYYYY... need a better way than to pass this...
-	InitiateUnitCombat(FCombatPrediction());
+	UCombatEventWrapper* EventWrapper = NewObject<UCombatEventWrapper>();
+	EventWrapper->InstigatorSnapShotAdvanced = ActiveUnit == CombatPredictionAI.CombatInformation.InstigatorUnit ?
+		CombatPredictionAI.TargetSnapshotAdvanced : CombatPredictionAI.InstigatorSnapShotAdvanced;
+	EventData.OptionalObject = EventWrapper;
+	
+	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(ActiveUnit, TAG_Event_Grid_Attack, EventData);
 }
 
-void UCombatWorldSubsystem::InitiateUnitCombat(const FCombatPrediction& InCombatPrediction)
+// moving units to tiles and broadcasting events
+void UCombatWorldSubsystem::SetupCombatAI()
 {
-	if (UnitsToExecuteTurns.IsEmpty())
+	if (CombatPredictionAI.CombatOrder.IsEmpty()) { return; }
+
+	// make camera follow
+	if (APawn_FollowCursor* Pawn = Cast<APawn_FollowCursor>(GetWorld()->GetFirstPlayerController()->GetPawn()))
+	{
+		Pawn->SetFollowTarget(CombatPredictionAI.CombatInformation.InstigatorUnit);
+	}
+	
+	// TODO: for now... just move units here...
+	CombatPredictionAI.CombatInformation.InstigatorUnit->SetActorLocation(CombatPredictionAI.CombatInformation.InstigatorTile->GetPlacementLocation());
+
+	CombatPredictionAI.CombatInformation.InstigatorUnit->GetAbilitySystemComponent()->AbilityEndedCallbacks.AddUObject(this, &ThisClass::OnCombatCompleteAI);
+	CombatPredictionAI.CombatInformation.TargetUnit->GetAbilitySystemComponent()->AbilityEndedCallbacks.AddUObject(this, &ThisClass::OnCombatCompleteAI);
+	
+	// broadcast combat start
+	if (OnCombatStart.IsBound()) { OnCombatStart.Broadcast(
+		CombatPredictionAI.CombatInformation.InstigatorUnit,
+		CombatPredictionAI.CombatInformation.TargetUnit
+		); }
+
+	SendCombatEventAI();
+}
+
+void UCombatWorldSubsystem::GetNextCombatPredictionAI()
+{
+	if (AIUnitsToExecuteTurns.IsEmpty())
 	{
 		// TODO: what goes here...
 		return;
@@ -131,8 +209,9 @@ void UCombatWorldSubsystem::InitiateUnitCombat(const FCombatPrediction& InCombat
 
 	AGameMode_TurnBased_Combat* GameMode = Cast<AGameMode_TurnBased_Combat>(GetWorld()->GetAuthGameMode());
 	UGridWorldSubsystem* GridWorldSubsystem = GetWorld()->GetSubsystem<UGridWorldSubsystem>();
-	
-	ActiveUnit = UnitsToExecuteTurns.Pop();
+
+	AGridUnit* ActiveUnit = AIUnitsToExecuteTurns[0];
+	AIUnitsToExecuteTurns.RemoveAt(0);
 	TArray<FCombatPrediction> CombatPredictions;
 	TMap<AGridUnit*, FGridTileArray> PossibleAttacksMap = GridWorldSubsystem->GetEnemiesInRangeWithAttackTiles(ActiveUnit);
 
@@ -180,12 +259,30 @@ void UCombatWorldSubsystem::InitiateUnitCombat(const FCombatPrediction& InCombat
 
 		// CombatPredictions.Sort();
 		Algo::Sort(CombatPredictions);
-		InitiateCombat(CombatPredictions[0]);
+		CombatPredictionAI = CombatPredictions[0];
+		SetupCombatAI();
 	}
 	// no combat predictions... skip turn???
 	else
 	{
+		// end unit turn if no attack options available otherwise will sit...
+		UTurnWorldSubsystem* TurnWorldSubsystem = GetWorld()->GetSubsystem<UTurnWorldSubsystem>();
+		TurnWorldSubsystem->SetUnitTurnOver(ActiveUnit);
+		
 		// TODO: hacky for the same above reasons...
-		InitiateUnitCombat(FCombatPrediction());
+		GetNextCombatPredictionAI();
 	}	
+}
+
+void UCombatWorldSubsystem::StartTurnAI(FGameplayTag FactionTag)
+{
+	UTurnWorldSubsystem* TurnWorldSubsystem = GetWorld()->GetSubsystem<UTurnWorldSubsystem>();
+	if (FactionTag == TurnWorldSubsystem->GetPlayerFactionTag()) { return; }
+
+	ActiveFactionAI = FactionTag;
+	AIUnitsToExecuteTurns.Empty();
+	AIUnitsToExecuteTurns = TurnWorldSubsystem->GetAliveUnitsInFaction(FactionTag);
+	
+	// TODO: THIS IS HACKYYYYYYYYY... need a better way than to pass this...
+	GetNextCombatPredictionAI();
 }

@@ -28,8 +28,8 @@ void APlayerController_TurnBased::BeginPlay()
 	
 	if (UCombatWorldSubsystem* CombatSubsystem = GetWorld()->GetSubsystem<UCombatWorldSubsystem>())
 	{
-		CombatSubsystem->OnCombatStart.AddUniqueDynamic(this, &ThisClass::OnCombatStart);
-		CombatSubsystem->OnCombatEnd.AddUniqueDynamic(this, &ThisClass::OnCombatEnd);
+		// CombatSubsystem->OnCombatStart.AddUniqueDynamic(this, &ThisClass::OnCombatStart);
+		// CombatSubsystem->OnCombatEnd.AddUniqueDynamic(this, &ThisClass::OnCombatEnd);
 	}
 	if (UTurnWorldSubsystem* TurnWorldSubsystem = GetWorld()->GetSubsystem<UTurnWorldSubsystem>())
 	{

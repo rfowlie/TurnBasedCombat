@@ -154,22 +154,22 @@ struct FCombatInformation
 {
 	GENERATED_BODY()
 
-	UPROPERTY()
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	AGridUnit* InstigatorUnit = nullptr;
 
-	UPROPERTY()
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	AGridTile* InstigatorTile = nullptr;
 
-	UPROPERTY()
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	FName InstigatorWeapon;
 	
-	UPROPERTY()
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	AGridUnit* TargetUnit = nullptr;
 
-	UPROPERTY()
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	AGridTile* TargetTile = nullptr;
 
-	UPROPERTY()
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	FName TargetWeapon;
 };
 
@@ -236,13 +236,23 @@ struct FCombatPrediction
 {
 	GENERATED_BODY()
 
-	UPROPERTY()
+	// testing
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ID")
+	FGuid Id;
+
+	// Constructor that generates a new GUID when the struct is created
+	FCombatPrediction()
+	{
+		Id = FGuid::NewGuid();
+	}
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	FCombatInformation CombatInformation;
 	
-	UPROPERTY()
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	FCombatSnapshot_Basic InstigatorSnapshotBasic;
 
-	UPROPERTY()
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	FCombatSnapshot_Advanced InstigatorSnapShotAdvanced;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)

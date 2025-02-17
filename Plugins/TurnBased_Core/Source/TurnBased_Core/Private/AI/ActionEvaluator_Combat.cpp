@@ -62,7 +62,7 @@ float UActionEvaluator_Combat::CriticalChanceTarget(const FCombatPrediction& InC
 
 float UActionEvaluator_Combat::HealthChangePercentageInstigator(const FCombatPrediction& InCombatPrediction) const
 {
-	if (InCombatPrediction.InstigatorSnapshotBasic.Health == 0)
+	if (InCombatPrediction.InstigatorSnapshotBasic.Health <= 0)
 	{
 		UE_LOG(LogTemp, Error, TEXT("UActionEvaluator_Combat::HealthChangePercentageInstigator - health zero"))
 		return 0.f;
@@ -72,7 +72,7 @@ float UActionEvaluator_Combat::HealthChangePercentageInstigator(const FCombatPre
 
 float UActionEvaluator_Combat::HealthChangePercentageTarget(const FCombatPrediction& InCombatPrediction) const
 {
-	if (InCombatPrediction.InstigatorSnapshotBasic.Health == 0)
+	if (InCombatPrediction.TargetSnapshotBasic.Health <= 0)
 	{
 		UE_LOG(LogTemp, Error, TEXT("ActionEvaluator_Combat::HealthChangePercentageTarget - health zero"))
 		return 0.f;

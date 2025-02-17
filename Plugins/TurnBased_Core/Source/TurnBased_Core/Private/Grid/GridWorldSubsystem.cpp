@@ -515,10 +515,10 @@ TMap<AGridUnit*, FGridTileArray> UGridWorldSubsystem::GetEnemiesInRangeWithAttac
 	TArray<FGridMovement> GridMovements;
 	CalculateGridMovement(GridMovements, InstigatorUnit, InstigatorUnit->GetAvailableMovement());
 	
-	// get enemies of instigator
+	// get enemies of instigator, FOW NOW only target alive units
 	UTurnWorldSubsystem* TurnSubsystem = GetWorld()->GetSubsystem<UTurnWorldSubsystem>();
 	TArray<AGridUnit*> TargetUnits;
-	TurnSubsystem->GetFactionEnemies(InstigatorUnit, TargetUnits);
+	TurnSubsystem->GetAliveFactionEnemies(InstigatorUnit, TargetUnits);
 	
 	// for every enemy, get tiles from which instigator can attack the target from
 	for (auto Target : TargetUnits)

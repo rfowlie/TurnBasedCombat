@@ -137,6 +137,19 @@ struct TURNBASED_CORE_API FFactionInfo
 		GridUnits.GetKeys(OutGridUnits);
 		return OutGridUnits;
 	}
+	
+	TArray<AGridUnit*> GetAliveGridUnits() const
+	{		
+		TArray<AGridUnit*> OutGridUnits;
+		for (auto Pair : GridUnits)
+		{
+			if (Pair.Key->GetHealth() > 0)
+			{
+				OutGridUnits.Add(Pair.Key);
+			}
+		}
+		return OutGridUnits;
+	}
 
 	void ActivateUnits()
 	{
@@ -147,6 +160,19 @@ struct TURNBASED_CORE_API FFactionInfo
 			if (IsValid(GridUnit); GridUnit->GetHealth() > 0)
 			{
 				GridUnits[GridUnit] = true;
+			}
+		}
+	}
+
+	void DeactivateUnits()
+	{
+		TArray<AGridUnit*> Units;
+		GridUnits.GetKeys(Units);
+		for (const AGridUnit* GridUnit : Units)
+		{
+			if (IsValid(GridUnit))
+			{
+				GridUnits[GridUnit] = false;
 			}
 		}
 	}

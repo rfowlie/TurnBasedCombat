@@ -68,12 +68,13 @@ public:
 	TArray<FGameplayTag> GetAllFactions(bool IncludeDefeated = true);
 	bool IsFactionValid(FGameplayTag FactionTag) const;
 	FGameplayTag GetActiveFaction();
-	TArray<AGridUnit*> GetUnitsInFaction(const FGameplayTag FactionTag);
+	TArray<AGridUnit*> GetAliveUnitsInFaction(const FGameplayTag FactionTag);
 	bool IsFactionActive(FGameplayTag FactionTag);
 	bool IsFactionDefeated(FGameplayTag FactionTag);
 	UFUNCTION()
 	void CheckFactionDefeated(AGridUnit* GridUnit);
 	void CheckFactionTurnComplete(const FGameplayTag& FactionTag);
+	void SetFactionTurnComplete(const FGameplayTag& FactionTag);
 	
 	// unit
 	bool RegisterGridUnit(AGridUnit* InGridUnit);
@@ -81,9 +82,10 @@ public:
 	int32 GetRemainingUnitActions();
 	AGridUnit* GetNextUnit(AGridUnit* InGridUnit);
 	void GetFactionEnemies(AGridUnit* InGridUnit, TArray<AGridUnit*>& EnemyGridUnits);
+	void GetAliveFactionEnemies(AGridUnit* InGridUnit, TArray<AGridUnit*>& EnemyGridUnits);
 	void SetUnitTurnOver(AGridUnit* InGridUnit);
-	UFUNCTION()
-	void OnCombatEnd(const FCombatPrediction& InCombatPrediction);
+	// UFUNCTION()
+	// void OnCombatEnd(const FCombatPrediction& InCombatPrediction);
 
 protected:
 

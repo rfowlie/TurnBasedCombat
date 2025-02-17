@@ -2,14 +2,10 @@
 
 
 #include "PlayerController/ControllerState_OnUnitCombat.h"
-
-#include "Combat/CombatCalculator_Basic.h"
 #include "Combat/CombatWorldSubsystem.h"
-#include "GameMode/GameMode_TurnBased_Combat.h"
-#include "Grid/GridHelper.h"
-#include "Grid/GridWorldSubsystem.h"
 #include "Pawn/APawn_FollowCursor.h"
 #include "PlayerController/ControllerState_Idle.h"
+#include "Turn/TurnWorldSubsystem.h"
 #include "Unit/GridUnit.h"
 
 
@@ -17,12 +13,10 @@ UControllerState_OnUnitCombat::UControllerState_OnUnitCombat()
 {
 }
 
-UControllerState_OnUnitCombat* UControllerState_OnUnitCombat::Create(
-	AGridUnit* InInstigatorUnit, AGridUnit* InTargetUnit)
+UControllerState_OnUnitCombat* UControllerState_OnUnitCombat::Create(const FCombatPrediction& InCombatPrediction)
 {
 	UControllerState_OnUnitCombat* Object = NewObject<UControllerState_OnUnitCombat>();
-	Object->InstigatorUnit = InInstigatorUnit;
-	Object->TargetUnit = InTargetUnit;
+	Object->CombatPrediction = InCombatPrediction;
 	
 	return Object;
 }
@@ -33,30 +27,27 @@ void UControllerState_OnUnitCombat::OnEnter(APlayerController* InPlayerControlle
 	
 	Super::OnEnter(InPlayerController, InInputMappingContextPriority);
 
-	UCombatWorldSubsystem* CombatSubsystem = PlayerController->GetWorld()->GetSubsystem<UCombatWorldSubsystem>();	
-	CombatSubsystem->OnCombatEnd.AddUniqueDynamic(this, &ThisClass::OnCombatEnd);
-	UGridWorldSubsystem* GridWorldSubsystem = PlayerController->GetWorld()->GetSubsystem<UGridWorldSubsystem>();
-	AGameMode_TurnBased_Combat* GameMode = Cast<AGameMode_TurnBased_Combat>(PlayerController->GetWorld()->GetAuthGameMode());
-
-	FCombatPrediction OutCombatPrediction;
-	FCombatInformation CombatInformation;
-	CombatInformation.InstigatorUnit = InstigatorUnit;
-	CombatInformation.InstigatorTile = GridWorldSubsystem->GetGridTileOfUnit(InstigatorUnit);
-	CombatInformation.InstigatorWeapon = InstigatorUnit->GetEquippedWeaponName();
-	CombatInformation.TargetUnit = TargetUnit;
-	CombatInformation.TargetTile = GridWorldSubsystem->GetGridTileOfUnit(TargetUnit);
-	CombatInformation.TargetWeapon = TargetUnit->GetEquippedWeaponName();
-	GameMode->GetCombatCalculator()->GetCombatPrediction(OutCombatPrediction, CombatInformation);
-
-	CombatSubsystem->InitiateCombat(OutCombatPrediction);
-	APawn_FollowCursor* Pawn = Cast<APawn_FollowCursor>(PlayerController->GetPawn());
-	if (Pawn)
+	if (APawn_FollowCursor* Pawn = Cast<APawn_FollowCursor>(PlayerController->GetPawn()))
 	{
-		Pawn->SetFollowTarget(TargetUnit);
+		Pawn->SetFollowTarget(CombatPrediction.CombatInformation.TargetUnit);
 	}
+	
+	UCombatWorldSubsystem* CombatWorldSubsystem = PlayerController->GetWorld()->GetSubsystem<UCombatWorldSubsystem>();
+	CombatWorldSubsystem->OnCombatEnd.AddUniqueDynamic(this, &ThisClass::OnCombatEnd);
+	CombatWorldSubsystem->InitiateCombat(CombatPrediction);	
 }
 
 void UControllerState_OnUnitCombat::OnCombatEnd(const FCombatPrediction& InCombatPrediction)
 {
-	PlayerController->SetBaseState(UControllerState_Idle::Create());
+	if (InCombatPrediction == CombatPrediction)
+	{
+		// // Update unit that attacked
+		// UTurnWorldSubsystem* TurnWorldSubsystem = PlayerController->GetWorld()->GetSubsystem<UTurnWorldSubsystem>();
+		// TurnWorldSubsystem->SetUnitTurnOver(CombatPrediction.CombatInformation.InstigatorUnit);
+
+		// reset prediction so it does not fire again...
+		CombatPrediction = FCombatPrediction();
+		// reset controller state
+		PlayerController->SetBaseState(UControllerState_Idle::Create());
+	}	
 }

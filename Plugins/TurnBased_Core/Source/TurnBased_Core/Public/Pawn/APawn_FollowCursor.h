@@ -22,6 +22,9 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void SetMapBounds(FVector2D MinBounds, FVector2D MaxBounds);
 
+	UFUNCTION()
+	void SetCursorCanTick(const bool bActive) { bCursorCanTick = bActive; }
+	
 	UFUNCTION(BlueprintCallable)
 	void SetFollowCursor();
 	
@@ -32,6 +35,10 @@ public:
 	float FollowThreshold = 0.25f;
 	
 	FFollowPawnDelegate OnFollowTargetComplete;
+
+protected:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bCursorCanTick = false;
 	
 private:
 	UPROPERTY(VisibleAnywhere, Category = "Camera")

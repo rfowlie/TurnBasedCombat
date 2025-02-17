@@ -29,8 +29,8 @@ APawn_FollowCursor::APawn_FollowCursor()
 void APawn_FollowCursor::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
-	if (FollowDelegate.IsBound()) { FollowDelegate.Execute(DeltaTime); }	
+	
+	if (bCursorCanTick && FollowDelegate.IsBound()) { FollowDelegate.Execute(DeltaTime); }	
 }
 
 void APawn_FollowCursor::SetMapBounds(FVector2D MinBounds, FVector2D MaxBounds)
@@ -43,6 +43,7 @@ void APawn_FollowCursor::SetFollowCursor()
 {
 	FollowDelegate.Unbind();
 	FollowDelegate.BindUObject(this, &ThisClass::HandleFollowCursor);
+	SetCursorCanTick(true);
 }
 
 void APawn_FollowCursor::HandleFollowCursor(float DeltaTime)
@@ -83,7 +84,7 @@ void APawn_FollowCursor::SetFollowTarget(AActor* InTarget)
 	FollowTarget = InTarget;
 	FollowDelegate.Unbind();
 	FollowDelegate.BindUObject(this, &ThisClass::HandleFollowTarget);
-	
+	SetCursorCanTick(true);
 }
 
 void APawn_FollowCursor::HandleFollowTarget(float DeltaTime)

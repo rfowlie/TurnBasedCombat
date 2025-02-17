@@ -22,15 +22,12 @@ class TURNBASED_CORE_API UControllerState_OnUnitCombat : public UControllerState
 	UControllerState_OnUnitCombat();
 	
 	public:
-	static UControllerState_OnUnitCombat* Create(AGridUnit* InInstigatorUnit, AGridUnit* InTargetUnit);	
+	static UControllerState_OnUnitCombat* Create(const FCombatPrediction& InCombatPrediction);	
 	virtual void OnEnter(APlayerController* InPlayerController, const int32 InInputMappingContextPriority) override;
 
 protected:
 	UPROPERTY()
-	AGridUnit* InstigatorUnit = nullptr;
-
-	UPROPERTY()
-	AGridUnit* TargetUnit = nullptr;
+	FCombatPrediction CombatPrediction;
 	
 	UFUNCTION()
 	void OnCombatEnd(const FCombatPrediction& InCombatPrediction);
