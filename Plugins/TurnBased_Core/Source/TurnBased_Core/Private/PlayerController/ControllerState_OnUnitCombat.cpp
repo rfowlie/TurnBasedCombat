@@ -37,17 +37,36 @@ void UControllerState_OnUnitCombat::OnEnter(APlayerController* InPlayerControlle
 	CombatWorldSubsystem->InitiateCombat(CombatPrediction);	
 }
 
+void UControllerState_OnUnitCombat::OnExit()
+{
+	Super::OnExit();
+
+	UCombatWorldSubsystem* CombatWorldSubsystem = PlayerController->GetWorld()->GetSubsystem<UCombatWorldSubsystem>();
+	CombatWorldSubsystem->OnCombatEnd.RemoveAll(this);
+}
+
 void UControllerState_OnUnitCombat::OnCombatEnd(const FCombatPrediction& InCombatPrediction)
 {
-	if (InCombatPrediction == CombatPrediction)
+	if (CombatPrediction.Id == InCombatPrediction.Id)
 	{
 		// // Update unit that attacked
 		// UTurnWorldSubsystem* TurnWorldSubsystem = PlayerController->GetWorld()->GetSubsystem<UTurnWorldSubsystem>();
 		// TurnWorldSubsystem->SetUnitTurnOver(CombatPrediction.CombatInformation.InstigatorUnit);
-
+		
+		// Update unit that attacked
+		UTurnWorldSubsystem* TurnWorldSubsystem = PlayerController->GetWorld()->GetSubsystem<UTurnWorldSubsystem>();
+		TurnWorldSubsystem->SetUnitTurnOver(CombatPrediction.CombatInformation.InstigatorUnit);
+		TurnWorldSubsystem->CheckFactionTurnComplete(
+			CombatPrediction.CombatInformation.InstigatorUnit->Execute_GetFaction(CombatPrediction.CombatInformation.InstigatorUnit));
+		
 		// reset prediction so it does not fire again...
 		CombatPrediction = FCombatPrediction();
+		
 		// reset controller state
 		PlayerController->SetBaseState(UControllerState_Idle::Create());
-	}	
+	}
+	else
+	{
+		UE_LOG(Log_Combat, Error, TEXT("UControllerState_OnUnitCombat::OnCombatEnd - received different combat prediction"));
+	}
 }

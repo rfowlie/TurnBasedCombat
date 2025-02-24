@@ -2,8 +2,6 @@
 
 
 #include "Turn/TurnWorldSubsystem.h"
-
-#include "Combat/CombatWorldSubsystem.h"
 #include "Grid/GridStructs.h"
 
 
@@ -27,7 +25,10 @@ void UTurnWorldSubsystem::EnableTurns()
 
 		FactionIndex = 0;		
 		FactionMap[FactionOrder[FactionIndex]].ActivateUnits();
-		if (OnFactionStart.IsBound()) { OnFactionStart.Broadcast(FactionOrder[FactionIndex]); }
+		if (OnFactionStart.IsBound())
+		{
+			OnFactionStart.Broadcast(FactionOrder[FactionIndex]);
+		}
 	}
 	else
 	{		
@@ -74,8 +75,12 @@ void UTurnWorldSubsystem::IncrementFaction()
 			FactionIndex = 0;
 		}
 	} while (FactionMap[FactionOrder[FactionIndex]].IsFactionDefeated());
+	
 	FactionMap[FactionOrder[FactionIndex]].ActivateUnits();
-	if (OnFactionStart.IsBound()) { OnFactionStart.Broadcast(FactionOrder[FactionIndex]); }
+	if (OnFactionStart.IsBound())
+	{
+		OnFactionStart.Broadcast(FactionOrder[FactionIndex]);
+	}
 }
 
 TArray<FGameplayTag> UTurnWorldSubsystem::GetAllFactions(const bool IncludeDefeated)
@@ -174,7 +179,7 @@ bool UTurnWorldSubsystem::RegisterGridUnit(AGridUnit* InGridUnit)
 	// check faction defeated when unit defeated
 	InGridUnit->OnDefeat.AddDynamic(this, &ThisClass::CheckFactionDefeated);
 	
-	FGameplayTag FactionTag = InGridUnit->Execute_GetFaction(InGridUnit);
+	FGameplayTag FactionTag = InGridUnit->Execute_GetFactionOther(InGridUnit);
 	if (FactionMap.Contains(FactionTag))
 	{
 		FactionMap[FactionTag].GridUnits.Add(InGridUnit);

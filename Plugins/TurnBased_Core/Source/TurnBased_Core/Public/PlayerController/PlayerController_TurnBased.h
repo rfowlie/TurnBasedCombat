@@ -8,10 +8,10 @@
 #include "GameFramework/PlayerController.h"
 #include "PlayerController_TurnBased.generated.h"
 
+
 class UUserWidget_ActionOptions;
 class UControllerState_Abstract;
 class AGridTile;
-
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FControllerStateBroadcastDelegate, const FGameplayTag, State);
 DECLARE_DELEGATE_OneParam(FControllerStateChangedDelegate, UControllerState_Abstract*)
@@ -78,7 +78,6 @@ protected:
 	// State ~ end
 
 	// Combat ~ start
-	// UFUNCTION(BlueprintImplementableEvent, BlueprintCallable, Category="Combat")
 	UFUNCTION(BlueprintCallable, Category="Combat")
 	void OnCombatStart(AGridUnit* InInstigator, AGridUnit* InTarget);
 	

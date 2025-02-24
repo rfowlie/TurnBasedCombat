@@ -75,16 +75,6 @@ protected:
 	UAbilityAsync_WaitAttributeChanged* WaitForHealthZero;
 	UFUNCTION()
 	void NotifyHealthZero();
-	UFUNCTION()
-	void OnHealthZero(FGameplayAttribute Attribute, float NewValue, float OldValue)
-	{
-		UE_LOG(LogTemp, Log, TEXT("On Health Zero"));
-		if (NewValue == 0)
-		{
-			EventOnDefeat();
-			if (OnDefeat.IsBound()) { OnDefeat.Broadcast(this); }
-		}		
-	}
 	// Ability System ~ end
 
 public:

@@ -35,57 +35,30 @@ public:
 	FCombatWorldSubsystemEventDelegate OnCombatEnd;
 
 	UFUNCTION(BlueprintCallable, Category="Combat")
-	bool IsCombatActive() { return CombatPrediction.CombatOrder.IsEmpty() && CombatPredictionAI.CombatOrder.IsEmpty(); }
-	
-	UFUNCTION()
-	void InitiateCombat(FCombatPrediction InCombatPrediction);
-	
+	bool IsCombatActive() const { return bCombatActive; }
+
 protected:
 	UPROPERTY()
-	FCombatPrediction CombatPrediction;
+	bool bCombatActive = false;
+
+	UPROPERTY()
+	int32 CombatOrderIndex = 0;
 	
 	UPROPERTY()
-	const UCombatCalculator_Basic* CombatCalculator = nullptr;
+	FCombatPrediction CombatPrediction;	
 
-	// UPROPERTY()
-	// AGridUnit* ActiveUnit_Combat = nullptr;
-	
+public:
+	UFUNCTION()
+	void InitiateCombat(const FCombatPrediction& InCombatPrediction);
+
+protected:
 	UFUNCTION()
 	void SendCombatEventToNextUnit();
 	
 	UFUNCTION()
 	void OnGridUnitAbilityActivated(UGameplayAbility* InGameplayAbility);
-	
-	FDelegateHandle DelegateHandle;
 
-	// AI ~ start
-	FDelegateHandle DelegateHandleAI;
-	
+private:
 	UPROPERTY()
-	UActionEvaluator_Combat* CombatEvaluator = nullptr;
-
-	UPROPERTY()
-	TArray<AGridUnit*> AIUnitsToExecuteTurns;
-
-	UPROPERTY()
-	FCombatPrediction CombatPredictionAI;
-
-	UFUNCTION()
-	void OnCombatCompleteAI(UGameplayAbility* InGameplayAbility);
-	
-	UFUNCTION()
-	void SendCombatEventAI();
-
-	UFUNCTION()
-	void SetupCombatAI();
-	
-	UFUNCTION()
-	void GetNextCombatPredictionAI();
-	
-	UFUNCTION()
-	void StartTurnAI(FGameplayTag FactionTag);
-
-	UPROPERTY()
-	FGameplayTag ActiveFactionAI;
-	// AI ~ end
+	const UCombatCalculator_Basic* CombatCalculator = nullptr;
 };

@@ -24,6 +24,7 @@ class TURNBASED_CORE_API UControllerState_OnUnitCombat : public UControllerState
 	public:
 	static UControllerState_OnUnitCombat* Create(const FCombatPrediction& InCombatPrediction);	
 	virtual void OnEnter(APlayerController* InPlayerController, const int32 InInputMappingContextPriority) override;
+	virtual void OnExit() override;
 
 protected:
 	UPROPERTY()

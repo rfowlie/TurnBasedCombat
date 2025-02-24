@@ -6,6 +6,7 @@
 #include "UObject/Object.h"
 #include "NativeGameplayTags.h"
 #include "Tile/GridTile.h"
+#include "Unit/GridUnit.h"
 #include "Weapon/WeaponData.h"
 #include "CombatData.generated.h"
 
@@ -276,5 +277,25 @@ struct FCombatPrediction
 	bool operator<(const FCombatPrediction& Other) const
 	{
 		return CombatEvaluation.GetScore() < Other.CombatEvaluation.GetScore();
+	}
+
+	// debug
+	FString GetString() const
+	{
+		FString Output;
+		// Output.Append(Id.ToString());
+		if (IsValid(CombatInformation.InstigatorUnit))
+		{
+			Output.Append(CombatInformation.InstigatorUnit->GetActorNameOrLabel());
+		}
+		Output.Append(" - ");
+		if (IsValid(CombatInformation.InstigatorUnit))
+		{
+			Output.Append(CombatInformation.TargetUnit->GetActorNameOrLabel());
+		}
+		Output.Append(" - ");
+		Output.Append(Id.ToString());
+
+		return Output;
 	}
 };

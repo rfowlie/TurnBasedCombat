@@ -89,7 +89,7 @@ void AGridUnit::BeginPlay()
 	// SetEquippedWeaponName(WeaponNames[0]);
 	TArray<FName> Keys;
 	WeaponInventoryMap.GetKeys(Keys);
-	SetEquippedWeaponName(Keys[0]);
+	if (!Keys.IsEmpty()){ SetEquippedWeaponName(Keys[0]); }
 }
 
 void AGridUnit::NotifyHealthZero()

@@ -2,7 +2,6 @@
 
 
 #include "PlayerController/PlayerController_TurnBased.h"
-
 #include "Combat/CombatWorldSubsystem.h"
 #include "Engine/StaticMeshActor.h"
 #include "Grid/GridWorldSubsystem.h"
@@ -139,24 +138,29 @@ void APlayerController_TurnBased::OnCombatStart(AGridUnit* InInstigator, AGridUn
 void APlayerController_TurnBased::OnCombatEnd(const FCombatPrediction& InCombatPrediction)
 {
 	SetShowMouseCursor(true);
-	// APawn_FollowCursor* Pawn = Cast<APawn_FollowCursor>(GetPawn());
-	// if (Pawn)
-	// {
-	// 	Pawn->SetFollowCursor();
-	// }
 }
 
 void APlayerController_TurnBased::OnFactionStart(FGameplayTag FactionTag)
 {
 	if (FactionTag == TAG_TBCore_Faction_Player)
 	{
+		CursorVisible = true;
+		
 		// set controller on, Idle will enable the cursor...
 		SetBaseState(UControllerState_Idle::Create());
 	}
 	else
 	{
+		CursorVisible = false;
+		
 		// turn of controller
-		EmptyStack();
+		EmptyStack();		
 		SetShowMouseCursor(false);
+
+		// don't allow player to move cursor
+		if (APawn_FollowCursor* FollowPawn = Cast<APawn_FollowCursor>(GetPawn()))
+		{
+			FollowPawn->SetCursorCanTick(false);
+		}
 	}
 }
