@@ -3,6 +3,7 @@
 
 #include "Turn/TurnWorldSubsystem.h"
 #include "Grid/GridStructs.h"
+#include "Turn/GameEventTaskManager.h"
 
 
 void UTurnWorldSubsystem::PostInitialize()
@@ -25,10 +26,7 @@ void UTurnWorldSubsystem::EnableTurns()
 
 		FactionIndex = 0;		
 		FactionMap[FactionOrder[FactionIndex]].ActivateUnits();
-		if (OnFactionStart.IsBound())
-		{
-			OnFactionStart.Broadcast(FactionOrder[FactionIndex]);
-		}
+		DoOnFactionStart();
 	}
 	else
 	{		
@@ -76,11 +74,7 @@ void UTurnWorldSubsystem::IncrementFaction()
 		}
 	} while (FactionMap[FactionOrder[FactionIndex]].IsFactionDefeated());
 	
-	FactionMap[FactionOrder[FactionIndex]].ActivateUnits();
-	if (OnFactionStart.IsBound())
-	{
-		OnFactionStart.Broadcast(FactionOrder[FactionIndex]);
-	}
+	DoOnFactionStart();
 }
 
 TArray<FGameplayTag> UTurnWorldSubsystem::GetAllFactions(const bool IncludeDefeated)
@@ -277,12 +271,24 @@ void UTurnWorldSubsystem::SetUnitTurnOver(AGridUnit* InGridUnit)
 	// CheckFactionTurnComplete(FactionTag);
 }
 
-// void UTurnWorldSubsystem::OnCombatEnd(const FCombatPrediction& InCombatPrediction)
-// {
-// 	AGridUnit* InInstigator = InCombatPrediction.CombatInformation.InstigatorUnit;
-// 	if (!IsValid(InInstigator)) { return; }
-// 	const FGameplayTag FactionTag = InInstigator->Execute_GetFaction(InInstigator);
-// 	FactionMap[FactionTag].GridUnits[InInstigator] = false;
-// 	
-// 	CheckFactionTurnComplete(FactionTag);
-// }
+void UTurnWorldSubsystem::DoOnFactionStart()
+{
+	if (OnFactionStart.IsBound())
+	{
+		OnFactionStartTaskManager = UGameEventTaskManager::Create();
+		OnFactionStart.Broadcast(FactionOrder[FactionIndex], OnFactionStartTaskManager);
+		OnFactionStartTaskManager->OnAllTasksCompleted.Unbind();
+		OnFactionStartTaskManager->OnAllTasksCompleted.BindDynamic(this, &ThisClass::FactionStartAllTasksComplete);
+		OnFactionStartTaskManager->InitiateAsyncTasks();
+	}
+	else if (OnFactionStartPost.IsBound())
+	{
+		OnFactionStartPost.Broadcast(FactionOrder[FactionIndex]);
+	}
+}
+
+void UTurnWorldSubsystem::FactionStartAllTasksComplete()
+{
+	FactionMap[FactionOrder[FactionIndex]].ActivateUnits();
+	if (OnFactionStartPost.IsBound()) { OnFactionStartPost.Broadcast(FactionOrder[FactionIndex]); }
+}

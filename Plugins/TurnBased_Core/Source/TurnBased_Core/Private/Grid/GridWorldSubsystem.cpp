@@ -407,7 +407,7 @@ void UGridWorldSubsystem::OnGridUnitAbilityEnded(UGameplayAbility* InGameplayAbi
 	// }
 }
 
-void UGridWorldSubsystem::DisplayAttackHeatMap(FGameplayTag InFactionTag)
+void UGridWorldSubsystem::DisplayAttackHeatMap(FGameplayTag InFactionTag, UGameEventTaskManager* TaskManager)
 {
 	TMap<AGridTile*, FGridUnitArray> AttackHeatMap;
 	CalculateMovementScores(AttackHeatMap);

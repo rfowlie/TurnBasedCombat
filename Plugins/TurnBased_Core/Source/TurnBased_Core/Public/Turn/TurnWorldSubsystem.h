@@ -10,8 +10,10 @@
 #include "TurnWorldSubsystem.generated.h"
 
 
+class UGameEventTaskManager;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FTurnChangedDelegate, int32, TurnNumber);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FFactionChangedDelegate, FGameplayTag, FactionTag);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FFactionChangedTaskDelegate, FGameplayTag, FactionTag, UGameEventTaskManager*, TaskManager);
 
 /**
  * 
@@ -43,11 +45,16 @@ public:
 	UPROPERTY(BlueprintAssignable, Category="Turn Based | Turn")
 	FTurnChangedDelegate OnTurnEnd;
 	UPROPERTY(BlueprintAssignable, Category="Turn Based | Turn")
-	FFactionChangedDelegate OnFactionStart;
+	FFactionChangedTaskDelegate OnFactionStart;
+	UPROPERTY(BlueprintAssignable, Category="Turn Based | Turn")
+	FFactionChangedDelegate OnFactionStartPost;
 	UPROPERTY(BlueprintAssignable, Category="Turn Based | Turn")
 	FFactionChangedDelegate OnFactionEnd;
 	UPROPERTY(BlueprintAssignable, Category="Turn Based | Turn")
 	FFactionChangedDelegate OnFactionDefeated;
+
+	UPROPERTY()
+	UGameEventTaskManager* OnFactionStartTaskManager = nullptr;
 
 	// turn
 	UPROPERTY()
@@ -89,5 +96,9 @@ public:
 
 protected:
 
-	
+	void DoOnFactionStart();
+
+private:
+	UFUNCTION()
+	void FactionStartAllTasksComplete();
 };

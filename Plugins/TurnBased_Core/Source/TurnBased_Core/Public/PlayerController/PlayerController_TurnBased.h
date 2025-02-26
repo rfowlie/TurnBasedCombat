@@ -85,6 +85,6 @@ protected:
 	void OnCombatEnd(const FCombatPrediction& InCombatPrediction);
 
 	UFUNCTION()
-	void OnFactionStart(FGameplayTag FactionTag);
+	void OnFactionStart(FGameplayTag FactionTag, UGameEventTaskManager* TaskManager);
 	// Combat ~ end
 };

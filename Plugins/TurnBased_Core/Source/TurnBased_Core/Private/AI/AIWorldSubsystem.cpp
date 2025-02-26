@@ -21,10 +21,10 @@ void UAIWorldSubsystem::PostInitialize()
 	
 	// bind to turn change so we can tell when enemy factions turn...
 	UTurnWorldSubsystem* TurnWorldSubsystem = GetWorld()->GetSubsystem<UTurnWorldSubsystem>();
-	TurnWorldSubsystem->OnFactionStart.AddUniqueDynamic(this, &ThisClass::StartTurn);
+	TurnWorldSubsystem->OnFactionStartPost.AddUniqueDynamic(this, &ThisClass::InitiateTurn);
 }
 
-void UAIWorldSubsystem::StartTurn(FGameplayTag FactionTag)
+void UAIWorldSubsystem::InitiateTurn(const FGameplayTag FactionTag)
 {
 	UTurnWorldSubsystem* TurnWorldSubsystem = GetWorld()->GetSubsystem<UTurnWorldSubsystem>();
 	if (FactionTag == TurnWorldSubsystem->GetPlayerFactionTag()) { return; }

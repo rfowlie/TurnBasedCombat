@@ -9,6 +9,7 @@
 #include "AIWorldSubsystem.generated.h"
 
 
+class UGameEventTaskManager;
 class UActionEvaluator_Combat;
 class AGridUnit;
 
@@ -27,7 +28,7 @@ protected:
 	bool bTurnActive = false;
 	
 	UFUNCTION()
-	void StartTurn(FGameplayTag FactionTag);
+	void InitiateTurn(const FGameplayTag FactionTag);
 
 	void EndTurn(FGameplayTag FactionTag);
 

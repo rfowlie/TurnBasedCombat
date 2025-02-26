@@ -54,17 +54,16 @@ public:
 protected:
 	UFUNCTION()
 	void SendCombatEventToNextUnit();
-	
-	UFUNCTION()
-	// void OnGridUnitAbilityActivated(UGameplayAbility* InGameplayAbility);
-	void OnGridUnitAbilityActivated(const FAbilityEndedData& AbilityEndedData);
 
 	UPROPERTY()
 	AGridUnit* ActiveUnit = nullptr;
+	
 	UPROPERTY()
 	UGameplayAbility* ActiveGameplayAbility = nullptr;
+	
 	UFUNCTION()
 	void CacheGameplayAbility(UGameplayAbility* InGameplayAbility);
+	
 	UFUNCTION()
 	void CheckGameplayAbility(UGameplayAbility* InGameplayAbility);
 

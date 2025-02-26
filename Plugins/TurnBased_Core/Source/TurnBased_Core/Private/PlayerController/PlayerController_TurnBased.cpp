@@ -140,7 +140,7 @@ void APlayerController_TurnBased::OnCombatEnd(const FCombatPrediction& InCombatP
 	SetShowMouseCursor(true);
 }
 
-void APlayerController_TurnBased::OnFactionStart(FGameplayTag FactionTag)
+void APlayerController_TurnBased::OnFactionStart(FGameplayTag FactionTag, UGameEventTaskManager* TaskManager)
 {
 	if (FactionTag == TAG_TBCore_Faction_Player)
 	{

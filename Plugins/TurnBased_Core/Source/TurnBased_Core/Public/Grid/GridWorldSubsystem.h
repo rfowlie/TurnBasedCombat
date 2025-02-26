@@ -129,7 +129,7 @@ public:
 
 	// Utility Based AI	
 	UFUNCTION()
-	void DisplayAttackHeatMap(FGameplayTag InFactionTag);
+	void DisplayAttackHeatMap(FGameplayTag InFactionTag, UGameEventTaskManager* TaskManager);
 	void CalculateMovementScores(TMap<AGridTile*, FGridUnitArray>& AttackHeatMap);
 	void CalculateCombatScores(TArray<FCombatScore>& CombatScores, AGridUnit* InstigatorUnit);
 	TMap<AGridUnit*, FGridTileArray> GetEnemiesInRangeWithAttackTiles(AGridUnit* InstigatorUnit);
