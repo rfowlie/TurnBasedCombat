@@ -95,7 +95,7 @@ void AGridUnit::BeginPlay()
 void AGridUnit::NotifyHealthZero()
 {
 	UE_LOG(LogTemp, Error, TEXT("On Health Zero"));
-	EventOnDefeat();
+	OnUnitDefeated();
 	if (OnDefeat.IsBound()) { OnDefeat.Broadcast(this); }
 }
 

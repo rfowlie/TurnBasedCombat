@@ -7,6 +7,9 @@
 #include "UObject/Object.h"
 #include "CombatEventWrapper.generated.h"
 
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FCombatEvent);
+
 /**
  * 
  */
@@ -15,7 +18,10 @@ class TURNBASED_CORE_API UCombatEventWrapper : public UObject
 {
 	GENERATED_BODY()
 
-public:
+public:	
 	UPROPERTY(BlueprintReadOnly)
 	FCombatSnapshot_Advanced InstigatorSnapShotAdvanced;
+
+	UFUNCTION(BlueprintCallable)
+	void CalculateDamage();
 };

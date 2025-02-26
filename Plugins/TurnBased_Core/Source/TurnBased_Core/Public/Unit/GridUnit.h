@@ -70,7 +70,7 @@ public:
 	
 protected:
 	UFUNCTION(BlueprintImplementableEvent)
-	void EventOnDefeat();
+	void OnUnitDefeated();
 	UPROPERTY()
 	UAbilityAsync_WaitAttributeChanged* WaitForHealthZero;
 	UFUNCTION()

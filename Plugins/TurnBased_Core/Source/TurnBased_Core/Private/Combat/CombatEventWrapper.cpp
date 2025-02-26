@@ -2,3 +2,7 @@
 
 
 #include "Combat/CombatEventWrapper.h"
+
+void UCombatEventWrapper::CalculateDamage()
+{
+}
