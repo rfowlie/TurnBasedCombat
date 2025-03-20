@@ -16,7 +16,7 @@ void UTurnWorldSubsystem::EnableTurns()
 {
 	if (!FactionMap.Contains(GetPlayerFactionTag()))
 	{
-		UE_LOG(LogTemp, Error, TEXT("ALERT: no player units in level"));
+		UE_LOG(LogTemp, Error, TEXT("ALERT: no player units in level, cannot begin"));
 	}
 	
 	if (TurnNumber == 0)

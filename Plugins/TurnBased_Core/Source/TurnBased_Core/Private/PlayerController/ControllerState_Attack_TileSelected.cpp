@@ -43,6 +43,12 @@ void UControllerState_Attack_TileSelected::OnEnter(APlayerController* InPlayerCo
 	
 	UE_LOG(LogTemp, Error, TEXT("UControllerState_Attack_TileSelected"));
 
+	PlayerController->ShowTileCursor(false);
+	if (APawn_FollowCursor* Pawn = Cast<APawn_FollowCursor>(PlayerController->GetPawn()))
+	{
+		Pawn->SetFollowTarget(TargetUnit);		
+	}	
+	
 	// cache previous position
 	UGridWorldSubsystem* GridWorldSubsystem = PlayerController->GetWorld()->GetSubsystem<UGridWorldSubsystem>();
 	if (!GridWorldSubsystem) { return; }	
@@ -58,7 +64,7 @@ void UControllerState_Attack_TileSelected::OnEnter(APlayerController* InPlayerCo
 	// update cursor
 	if (APawn_FollowCursor* Pawn = Cast<APawn_FollowCursor>(PlayerController->GetPawn()))
 	{
-		Pawn->SetFollowTarget(TileSelected);
+		Pawn->SetFollowTarget(TargetUnit);
 	}
 }
 
@@ -70,18 +76,11 @@ void UControllerState_Attack_TileSelected::OnExit()
 	// NOTE: reverting state should not be handled most of the time, should rely on
 	// other controller states to set state in OnEnter!!
 	// revert state of instigator and selected tile?
-
-	if (Widget)
-	{
-		Widget->OnComplete.RemoveDynamic(this, &ThisClass::CombatInitiated);
-		Widget = nullptr;
-	}
-
-	// update cursor
-	if (APawn_FollowCursor* Pawn = Cast<APawn_FollowCursor>(PlayerController->GetPawn()))
-	{
-		Pawn->SetCursorCanTick(true);
-	}
+	
+	RemovePredictionWidget();
+	
+	InstigatorUnit->SetActorLocation(InstigatorInitialTile->GetPlacementLocation());
+	InstigatorUnit->SetActorRotation(InstigatorInitialRotation);
 }
 
 UInputMappingContext* UControllerState_Attack_TileSelected::CreateInputMappingContext()
@@ -129,9 +128,7 @@ void UControllerState_Attack_TileSelected::OnSelect()
 
 void UControllerState_Attack_TileSelected::OnDeselect()
 {
-	InstigatorUnit->SetActorLocation(InstigatorInitialTile->GetPlacementLocation());
-	InstigatorUnit->SetActorRotation(InstigatorInitialRotation);
-	
+	// this will then trigger OnExit...
 	PlayerController->PopState();
 }
 
@@ -217,6 +214,21 @@ void UControllerState_Attack_TileSelected::SetPredictionWidget()
 		{
 			HUD->UpdateCombatPredictionWidget(CombatPrediction);
 		}
+	}
+}
+
+void UControllerState_Attack_TileSelected::RemovePredictionWidget()
+{
+	if (Widget)
+	{
+		Widget->OnComplete.RemoveDynamic(this, &ThisClass::CombatInitiated);
+		Widget = nullptr;
+	}
+
+	// call only if widget not null???
+	if (AHUD_TurnBased* HUD = Cast<AHUD_TurnBased>(PlayerController->GetHUD()))
+	{
+		HUD->RemoveCombatPredictionWidget();
 	}
 }
 

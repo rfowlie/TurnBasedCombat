@@ -8,6 +8,7 @@
 #include "Pawn/APawn_FollowCursor.h"
 #include "PlayerController/ControllerState_Abstract.h"
 #include "PlayerController/ControllerState_Idle.h"
+#include "PlayerController/ControllerState_Wait.h"
 #include "Tile/GridTile.h"
 #include "Turn/TurnWorldSubsystem.h"
 
@@ -24,19 +25,17 @@ void APlayerController_TurnBased::BeginPlay()
 	{
 		GridSubsystem->OnGridTileHoveredStart.AddUniqueDynamic(this, &ThisClass::UpdateCursor);
 	}
-	
-	if (UCombatWorldSubsystem* CombatSubsystem = GetWorld()->GetSubsystem<UCombatWorldSubsystem>())
-	{
-		// CombatSubsystem->OnCombatStart.AddUniqueDynamic(this, &ThisClass::OnCombatStart);
-		// CombatSubsystem->OnCombatEnd.AddUniqueDynamic(this, &ThisClass::OnCombatEnd);
-	}
+
+	// control cursor and pawn functions when faction changing and whether player turn
 	if (UTurnWorldSubsystem* TurnWorldSubsystem = GetWorld()->GetSubsystem<UTurnWorldSubsystem>())
 	{
 		TurnWorldSubsystem->OnFactionStart.AddUniqueDynamic(this, &ThisClass::OnFactionStart);
+		TurnWorldSubsystem->OnFactionStartPost.AddUniqueDynamic(this, &ThisClass::OnFactionStartPost);
 	}
 
 	// create initial state idle
-	PushState(NewObject<UControllerState_Idle>(), false);
+	// PushState(NewObject<UControllerState_Idle>(), false);
+	SetBaseState(NewObject<UControllerState_Wait>());
 }
 
 APlayerController_TurnBased::APlayerController_TurnBased()
@@ -55,21 +54,31 @@ void APlayerController_TurnBased::CreateCursor()
 	FActorSpawnParameters SpawnParameters;
 	SpawnParameters.Name = TEXT("FUCKING CURSOR");
 	SpawnParameters.Owner = this;
-	Cursor = GetWorld()->SpawnActor(AStaticMeshActor::StaticClass(), &SpawnTransform, SpawnParameters);
-	UStaticMeshComponent* StaticMeshComponent = Cast<AStaticMeshActor>(Cursor)->GetStaticMeshComponent();
+	TileCursor = GetWorld()->SpawnActor(AStaticMeshActor::StaticClass(), &SpawnTransform, SpawnParameters);
+	UStaticMeshComponent* StaticMeshComponent = Cast<AStaticMeshActor>(TileCursor)->GetStaticMeshComponent();
 	StaticMeshComponent->SetStaticMesh(CursorMesh);
 	StaticMeshComponent->SetMobility(EComponentMobility::Movable);
 	StaticMeshComponent->SetAffectDistanceFieldLighting(false);
 	StaticMeshComponent->SetAffectDynamicIndirectLighting(false);
-	// TODO: better way to do this???
-	StaticMeshComponent->SetWorldScale3D(FVector(2.f, 2.f, 1.f));
+	TileCursorScale = TileCursorScale.GetAbs();
+	StaticMeshComponent->SetWorldScale3D(TileCursorScale);
+
+	// start with cursor hidden
+	ShowTileCursor(false);
+}
+
+void APlayerController_TurnBased::ShowTileCursor(bool bShow)
+{
+	TileCursorVisible = bShow;
+	TileCursor->SetActorHiddenInGame(!bShow);
 }
 
 void APlayerController_TurnBased::UpdateCursor(AGridTile* GridTile)
 {
-	if (CursorVisible)
+	// only update if cursor visible
+	if (TileCursorVisible)
 	{
-		Cursor->SetActorLocation(GridTile->GetActorLocation() + Cursor_ExtraHeight);
+		TileCursor->SetActorLocation(GridTile->GetActorLocation() + Cursor_ExtraHeight);
 	}	
 }
 
@@ -108,8 +117,8 @@ void APlayerController_TurnBased::PushState(UControllerState_Abstract* InState, 
 }
 
 void APlayerController_TurnBased::PopState()
-{	
-	auto State = StateStack.Pop();
+{
+	const auto State = StateStack.Pop();
 	State->OnExit();
 
 	if (!StateStack.IsEmpty())
@@ -125,42 +134,16 @@ void APlayerController_TurnBased::PopPushState(UControllerState_Abstract* InStat
 	// call OnEnter on bottom state?
 }
 
-void APlayerController_TurnBased::OnCombatStart(AGridUnit* InInstigator, AGridUnit* InTarget)
-{
-	SetShowMouseCursor(false);
-	APawn_FollowCursor* Pawn_FollowCursor = Cast<APawn_FollowCursor>(GetPawn());
-	if (Pawn_FollowCursor)
-	{
-		Pawn_FollowCursor->SetFollowTarget(InInstigator);
-	}
-}
-
-void APlayerController_TurnBased::OnCombatEnd(const FCombatPrediction& InCombatPrediction)
-{
-	SetShowMouseCursor(true);
-}
-
 void APlayerController_TurnBased::OnFactionStart(FGameplayTag FactionTag, UGameEventTaskManager* TaskManager)
 {
-	if (FactionTag == TAG_TBCore_Faction_Player)
-	{
-		CursorVisible = true;
-		
-		// set controller on, Idle will enable the cursor...
-		SetBaseState(UControllerState_Idle::Create());
-	}
-	else
-	{
-		CursorVisible = false;
-		
-		// turn of controller
-		EmptyStack();		
-		SetShowMouseCursor(false);
+	SetBaseState(UControllerState_Wait::Create());
+}
 
-		// don't allow player to move cursor
-		if (APawn_FollowCursor* FollowPawn = Cast<APawn_FollowCursor>(GetPawn()))
-		{
-			FollowPawn->SetCursorCanTick(false);
-		}
+void APlayerController_TurnBased::OnFactionStartPost(FGameplayTag FactionTag)
+{
+	// if player turn set idle
+	if (FactionTag == TAG_TBCore_Faction_Player)
+	{		
+		SetBaseState(UControllerState_Idle::Create());
 	}
 }

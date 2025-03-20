@@ -82,4 +82,5 @@ private:
 
 	void SetInstigatorPositionAndRotation(AGridTile* GridTileHovered);
 	void SetPredictionWidget();
+	void RemovePredictionWidget();
 };

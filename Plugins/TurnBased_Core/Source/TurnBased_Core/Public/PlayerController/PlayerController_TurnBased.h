@@ -9,6 +9,7 @@
 #include "PlayerController_TurnBased.generated.h"
 
 
+class UGameEventTaskManager;
 class UUserWidget_ActionOptions;
 class UControllerState_Abstract;
 class AGridTile;
@@ -23,6 +24,7 @@ UCLASS(Blueprintable, BlueprintType)
 class TURNBASED_CORE_API APlayerController_TurnBased : public APlayerController
 {
 	GENERATED_BODY()
+
 	
 protected:
 	virtual void BeginPlay() override;
@@ -38,23 +40,29 @@ public:
 	TObjectPtr<UStaticMesh> CursorMesh;
 	
 	UPROPERTY(BlueprintReadOnly, Category = "TurnBased | Cursor")
-	TObjectPtr<AActor> Cursor;
+	TObjectPtr<AActor> TileCursor;
+
+	UPROPERTY(BlueprintReadOnly, Category = "TurnBased | Cursor")
+	FVector TileCursorScale = FVector::OneVector;
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "TurnBased | Cursor")
 	FVector Cursor_ExtraHeight = FVector(0.f, 0.f, 5.f);
 
+	UFUNCTION()
+	void ShowTileCursor(bool bShow);
+	
 protected:
 	void CreateCursor();
 	
 	UPROPERTY(BlueprintReadWrite, Category="TurnBased | Cursor")
-	bool CursorVisible = true;
+	bool TileCursorVisible = true;
 
 	UFUNCTION()
 	void UpdateCursor(AGridTile* GridTile);
 	// Cursor ~ end
 
 public:
-	// State ~ start
+	// Controller State ~ start
 	void EmptyStack();
 	
 	// walk backwards through array and do exit for each state, then push new state
@@ -75,16 +83,12 @@ public:
 protected:
 	UPROPERTY(BlueprintReadOnly, Category = "TurnBased | State")
 	TArray<UControllerState_Abstract*> StateStack;
-	// State ~ end
+	// Controller State ~ end
 
-	// Combat ~ start
-	UFUNCTION(BlueprintCallable, Category="Combat")
-	void OnCombatStart(AGridUnit* InInstigator, AGridUnit* InTarget);
-	
-	UFUNCTION(BlueprintCallable, Category="Combat")
-	void OnCombatEnd(const FCombatPrediction& InCombatPrediction);
-
+	// Faction ~ start
 	UFUNCTION()
 	void OnFactionStart(FGameplayTag FactionTag, UGameEventTaskManager* TaskManager);
-	// Combat ~ end
+	UFUNCTION()
+    void OnFactionStartPost(FGameplayTag FactionTag);
+	// Faction ~ end
 };

@@ -36,16 +36,23 @@ public:
 
 	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
 	UUserWidget_TurnBased* ActivateWinLevelWidget();
+
+	// Options ~ start
 	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
 	UUserWidget_ActionOptions* ActivateActionOptionsWidget(AGridUnit* TargetUnit, const TArray<FGameplayTag>& ActionTags);
+
 	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
 	UUserWidget_ActionOptions* RemoveActionOptionsWidget();
-	// UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
-	// UUserWidget_TurnBased* ActivateCombatPredictionWidget(AGridUnit* InInstigator, AGridUnit* InTarget);
-	// new way
+	// Options ~ end
+
+	// Combat ~ start
 	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
 	UUserWidget_TurnBased* ActivateCombatPredictionWidget(const FCombatPrediction& InCombatPrediction);
+
 	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
 	void UpdateCombatPredictionWidget(const FCombatPrediction& InCombatPrediction);
-	
+
+	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
+	UUserWidget_TurnBased* RemoveCombatPredictionWidget();
+	// Combat ~ end
 };

@@ -39,10 +39,37 @@ void APawn_FollowCursor::SetMapBounds(FVector2D MinBounds, FVector2D MaxBounds)
 	MapMaxBounds = MaxBounds;
 }
 
+void APawn_FollowCursor::SetCursorCanTick(const bool bActive)
+{
+	bCursorCanTick = bActive;
+}
+
 void APawn_FollowCursor::SetFollowCursor()
 {
 	FollowDelegate.Unbind();
 	FollowDelegate.BindUObject(this, &ThisClass::HandleFollowCursor);
+	SetCursorCanTick(true);
+}
+
+void APawn_FollowCursor::SetFollowTarget(AActor* InTarget)
+{
+	if (!IsValid(InTarget))
+	{
+		if (OnFollowTargetComplete.IsBound()) { OnFollowTargetComplete.Broadcast(); }
+		return;
+	}
+
+	FollowTarget = InTarget;
+	FollowDelegate.Unbind();
+	FollowDelegate.BindUObject(this, &ThisClass::HandleFollowTarget);
+	SetCursorCanTick(true);
+}
+
+void APawn_FollowCursor::SetMoveToLocation(FVector Location)
+{
+	MoveToLocation = Location;
+	FollowDelegate.Unbind();
+	FollowDelegate.BindUObject(this, &ThisClass::HandleMoveToLocation);
 	SetCursorCanTick(true);
 }
 
@@ -73,20 +100,6 @@ void APawn_FollowCursor::HandleFollowCursor(float DeltaTime)
 	SetActorLocation(NewLocation);
 }
 
-void APawn_FollowCursor::SetFollowTarget(AActor* InTarget)
-{
-	if (!IsValid(InTarget))
-	{
-		if (OnFollowTargetComplete.IsBound()) { OnFollowTargetComplete.Broadcast(); }
-		return;
-	}
-
-	FollowTarget = InTarget;
-	FollowDelegate.Unbind();
-	FollowDelegate.BindUObject(this, &ThisClass::HandleFollowTarget);
-	SetCursorCanTick(true);
-}
-
 void APawn_FollowCursor::HandleFollowTarget(float DeltaTime)
 {
 	if (IsValid(FollowTarget))
@@ -95,8 +108,8 @@ void APawn_FollowCursor::HandleFollowTarget(float DeltaTime)
 		NewLocation.Z = GetActorLocation().Z;
 		SetActorLocation(NewLocation);
 
-		FVector2D Self = FVector2D(GetActorLocation());
-		FVector2D Target = FVector2D(FollowTarget->GetActorLocation());
+		const FVector2D Self = FVector2D(GetActorLocation());
+		const FVector2D Target = FVector2D(FollowTarget->GetActorLocation());
 		if (FMath::Abs((Target - Self).Size()) < FollowThreshold)
 		{
 			if (OnFollowTargetComplete.IsBound()) { OnFollowTargetComplete.Broadcast(); }
@@ -106,6 +119,20 @@ void APawn_FollowCursor::HandleFollowTarget(float DeltaTime)
 	{
 		FollowTarget = nullptr;
 		FollowDelegate.BindUObject(this, &ThisClass::HandleFollowCursor);
+	}
+}
+
+void APawn_FollowCursor::HandleMoveToLocation(float DeltaTime)
+{
+	FVector NewLocation = FMath::VInterpTo(GetActorLocation(), MoveToLocation, DeltaTime, TargetFollowSpeed);
+	NewLocation.Z = GetActorLocation().Z;
+	SetActorLocation(NewLocation);
+
+	const FVector2D Self = FVector2D(NewLocation);
+	const FVector2D Target = FVector2D(MoveToLocation);
+	if (FMath::Abs((Target - Self).Size()) < FollowThreshold)
+	{
+		if (OnFollowTargetComplete.IsBound()) { OnFollowTargetComplete.Broadcast(); }
 	}
 }
 

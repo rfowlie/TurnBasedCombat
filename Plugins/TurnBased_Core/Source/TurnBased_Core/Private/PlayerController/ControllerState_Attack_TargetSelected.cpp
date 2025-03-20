@@ -7,6 +7,7 @@
 #include "InputMappingContext.h"
 #include "TurnBased_Core_Tags.h"
 #include "Grid/GridWorldSubsystem.h"
+#include "Pawn/APawn_FollowCursor.h"
 #include "PlayerController/ControllerState_Attack_TileSelected.h"
 #include "Tile/GridTile.h"
 #include "Turn/TurnWorldSubsystem.h"
@@ -49,6 +50,12 @@ void UControllerState_Attack_TargetSelected::OnEnter(APlayerController* InPlayer
 		{
 			Pair.Key->SetState(TAG_TBCore_Grid_Tile_CanAttack);
 		}
+	}
+	
+	// update cursor
+	if (APawn_FollowCursor* Pawn = Cast<APawn_FollowCursor>(PlayerController->GetPawn()))
+	{
+		Pawn->SetFollowTarget(TargetUnit);
 	}
 }
 

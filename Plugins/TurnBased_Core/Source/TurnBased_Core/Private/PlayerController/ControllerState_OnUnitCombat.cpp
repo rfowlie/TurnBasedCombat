@@ -48,11 +48,7 @@ void UControllerState_OnUnitCombat::OnExit()
 void UControllerState_OnUnitCombat::OnCombatEnd(const FCombatPrediction& InCombatPrediction)
 {
 	if (CombatPrediction.Id == InCombatPrediction.Id)
-	{
-		// // Update unit that attacked
-		// UTurnWorldSubsystem* TurnWorldSubsystem = PlayerController->GetWorld()->GetSubsystem<UTurnWorldSubsystem>();
-		// TurnWorldSubsystem->SetUnitTurnOver(CombatPrediction.CombatInformation.InstigatorUnit);
-		
+	{		
 		// Update unit that attacked
 		UTurnWorldSubsystem* TurnWorldSubsystem = PlayerController->GetWorld()->GetSubsystem<UTurnWorldSubsystem>();
 		TurnWorldSubsystem->SetUnitTurnOver(CombatPrediction.CombatInformation.InstigatorUnit);
@@ -67,6 +63,6 @@ void UControllerState_OnUnitCombat::OnCombatEnd(const FCombatPrediction& InComba
 	}
 	else
 	{
-		UE_LOG(Log_Combat, Error, TEXT("UControllerState_OnUnitCombat::OnCombatEnd - received different combat prediction"));
+		UE_LOG(Log_Combat, Error, TEXT("UControllerState_OnUnitCombat::OnCombatEnd - received different combat prediction than expected"));
 	}
 }
