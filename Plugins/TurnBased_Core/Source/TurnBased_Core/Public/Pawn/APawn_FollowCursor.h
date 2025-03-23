@@ -7,6 +7,8 @@
 #include "APawn_FollowCursor.generated.h"
 
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FFollowPawnDelegate);
+
 UCLASS(Blueprintable, BlueprintType)
 class TURNBASED_CORE_API APawn_FollowCursor : public APawn
 {
@@ -20,8 +22,26 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void SetMapBounds(FVector2D MinBounds, FVector2D MaxBounds);
 
+	UFUNCTION()
+	void SetCursorCanTick(const bool bActive);
+	
+	UFUNCTION(BlueprintCallable)
+	void SetFollowCursor();
+	
 	UFUNCTION(BlueprintCallable)
 	void SetFollowTarget(AActor* InTarget);
+
+	UFUNCTION(BlueprintCallable)
+	void SetMoveToLocation(FVector Location);
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float FollowThreshold = 0.25f;
+	
+	FFollowPawnDelegate OnFollowTargetComplete;
+
+protected:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bCursorCanTick = false;
 	
 private:
 	UPROPERTY(VisibleAnywhere, Category = "Camera")
@@ -47,6 +67,7 @@ private:
 	UPROPERTY(EditAnywhere, Category="_Settings")
 	FVector2D MapMaxBounds = FVector2D(5000, 5000);
 
+	// Handle
 	UFUNCTION()
 	void HandleFollowCursor(float DeltaTime);
 	
@@ -58,15 +79,13 @@ private:
 	
 	UFUNCTION()
 	void HandleFollowTarget(float DeltaTime);
-	
-	enum EFollowMode
-	{
-		Cursor,
-		Target
-	};	
-	
-	EFollowMode FollowMode = EFollowMode::Cursor;
 
 	DECLARE_DELEGATE_OneParam(FFollowDelegate, float);
 	FFollowDelegate FollowDelegate;
+
+	UFUNCTION()
+	void HandleMoveToLocation(float DeltaTime);
+
+	UPROPERTY()
+	FVector MoveToLocation;
 };

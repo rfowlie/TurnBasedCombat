@@ -9,6 +9,7 @@
 #include "PlayerController/ControllerState_Attack_TargetSelected.h"
 #include "UI/UserWidget_ActionOptions.h"
 #include "TurnBased_Core_Tags.h"
+#include "Pawn/APawn_FollowCursor.h"
 #include "PlayerController/ControllerState_OnUnitMove.h"
 #include "UI/HUD_TurnBased.h"
 
@@ -53,24 +54,35 @@ void UControllerState_UnitChooseAction::OnEnter(APlayerController* InPlayerContr
 		}
 		else
 		{
+			Widget_ActionOptions->SetVisibility(ESlateVisibility::Visible);
 			Widget_ActionOptions->OnActionSelected.AddUniqueDynamic(this, &ThisClass::OnActionSelected);
-		}	
+		}
+
+		// update cursor
+		if (APawn_FollowCursor* Pawn = Cast<APawn_FollowCursor>(PlayerController->GetPawn()))
+		{
+			Pawn->SetCursorCanTick(false);
+		}
 	}
 }
 
 void UControllerState_UnitChooseAction::OnExit()
 {
 	Super::OnExit();
-
-	// have HUD fire callback for other listeners
-	// if (AHUD_TurnBased* HUD = Cast<AHUD_TurnBased>(PlayerController->GetHUD()))
-	// {
-	// 	HUD->RemoveActionOptionsWidget();
-	// }
+	
 	if (Widget_ActionOptions)
 	{
 		Widget_ActionOptions->OnActionSelected.RemoveDynamic(this, &ThisClass::OnActionSelected);
-	}	
+
+		// TODO: this is a bit hacky, should call up to HUD
+		Widget_ActionOptions->SetVisibility(ESlateVisibility::Collapsed);
+	}
+	
+	// update cursor
+	if (APawn_FollowCursor* Pawn = Cast<APawn_FollowCursor>(PlayerController->GetPawn()))
+	{
+		Pawn->SetCursorCanTick(true);
+	}
 }
 
 void UControllerState_UnitChooseAction::OnActionSelected(FGameplayTag ActionTag)

@@ -75,6 +75,12 @@ private:
 	TArray<AGridTile*> AttackTileOrder;
 
 	UPROPERTY()
-	UUserWidget_TurnBased* Widget;
+	UUserWidget_TurnBased* Widget = nullptr;
 
+	UPROPERTY()
+	FCombatPrediction CombatPrediction;
+
+	void SetInstigatorPositionAndRotation(AGridTile* GridTileHovered);
+	void SetPredictionWidget();
+	void RemovePredictionWidget();
 };

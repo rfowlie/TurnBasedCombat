@@ -2,17 +2,23 @@
 
 
 #include "Grid/GridWorldSubsystem.h"
-
-#include "Combat/CombatCalculator_Basic.h"
 #include "Engine/World.h"
 #include "GameFramework/Actor.h"
-#include "GameMode/GameMode_TurnBased_Combat.h"
 #include "Grid/GridHelper.h"
 #include "Tile/GridTile.h"
-#include "Turn/TurnWorldSubsystem.h"
 #include "Unit/GridUnit.h"
+#include "Turn/TurnWorldSubsystem.h"
+#include "GameMode/GameMode_TurnBased_Combat.h"
+#include "Combat/CombatCalculator_Basic.h"
 
 
+void UGridWorldSubsystem::PostInitialize()
+{
+	Super::PostInitialize();
+
+	UTurnWorldSubsystem* TurnWorldSubsystem = GetWorld()->GetSubsystem<UTurnWorldSubsystem>();
+	TurnWorldSubsystem->OnFactionStart.AddUniqueDynamic(this, &ThisClass::DisplayAttackHeatMap);
+}
 
 void UGridWorldSubsystem::RegisterGridTile(AGridTile* GridTile)
 {
@@ -285,7 +291,7 @@ void UGridWorldSubsystem::CalculateGridAttacks(
 		MovementMap.Add(GridTileLocationMap[GridMovement.GridTile], false);
 	}
 
-	// TODO: for now... need to figure out better way to gain access ot weapon information
+	// TODO: for now... need to figure out better way to gain access to weapon information
 	AGameMode_TurnBased_Combat* GameMode = Cast<AGameMode_TurnBased_Combat>(GetWorld()->GetAuthGameMode());
 	if (!GameMode) { return; }
 	
@@ -328,13 +334,7 @@ void UGridWorldSubsystem::CalculateGridAttackTiles(TMap<AGridTile*, int32>& OutW
 		TArray<FGridPosition> OutWeaponRangePositions;
 		UGridHelper::GetGridPositionsAtRange(UGridHelper::CalculateGridPosition(TargetUnit), WeaponRange, OutWeaponRangePositions);
 		for (const FGridPosition GridPosition : OutWeaponRangePositions)
-		{
-			// // don't add tile of instigator
-			// if (GridPosition == UGridHelper::CalculateGridPosition(GetGridTileOfUnit(InstigatorUnit)))
-			// {
-			// 	continue;
-			// }
-			
+		{			
 			for (auto GridMovement : InGridMovements)
 			{
 				if (GridTileLocationMap[GridMovement.GridTile] == GridPosition)
@@ -372,32 +372,168 @@ void UGridWorldSubsystem::OnGridUnitAbilityEnded(UGameplayAbility* InGameplayAbi
 {
 	AGridUnit* InGridUnit = Cast<AGridUnit>(InGameplayAbility->GetAvatarActorFromActorInfo());
 	if (!IsValid(InGridUnit)) { return; }
+
+	// update positioning of unit
+	UpdateUnitMapping(InGridUnit);
+		
+		
+	// TODO: this was for PC control flow before, might be deprecated now???
+	// TPair<AActor*, UGameplayAbility*> FoundPair;
+	// for (TPair<AActor*, UGameplayAbility*> Pair : GridUnitsTakingActions)
+	// {
+	// 	if (Pair.Key == InGridUnit && Pair.Value == InGameplayAbility)
+	// 	{
+	// 		FoundPair = Pair;
+	// 		break;
+	// 	}
+	// }
+	//
+	// if (FoundPair.Key == InGridUnit && FoundPair.Value == InGameplayAbility)
+	// {
+	// 	GridUnitsTakingActions.Remove(FoundPair);
+	//
+	// 	// if this array is empty then no units are taking actions and it is safe to return PC control
+	// 	if (GridUnitsTakingActions.IsEmpty())
+	// 	{
+	// 		UpdateUnitMappingsAll();
+	// 		if (OnGridUnitAbilityEnd.IsBound()) { OnGridUnitAbilityEnd.Broadcast(); }
+	//
+	// 		UE_LOG(LogTemp, Log, TEXT("On Grid Unit Ability Ended: no more units taking actions"));
+	// 	}
+	// }
+	// else
+	// {
+	// 	UE_LOG(LogTemp, Log, TEXT("On Grid Unit Ability Ended: %d"), GridUnitsTakingActions.Num());
+	// }
+}
+
+void UGridWorldSubsystem::DisplayAttackHeatMap(FGameplayTag InFactionTag, UGameEventTaskManager* TaskManager)
+{
+	TMap<AGridTile*, FGridUnitArray> AttackHeatMap;
+	CalculateMovementScores(AttackHeatMap);
+	for (auto Pair : AttackHeatMap)
+	{		
+		Pair.Key->SetAttackHeatMapValues(Pair.Value.GridUnits.Num(), 0, 0);
+	}
+}
+
+void UGridWorldSubsystem::CalculateMovementScores(TMap<AGridTile*, FGridUnitArray>& AttackHeatMap)
+{
+	AGameMode_TurnBased_Combat* GameMode = Cast<AGameMode_TurnBased_Combat>(GetWorld()->GetAuthGameMode());
 	
-	TPair<AActor*, UGameplayAbility*> FoundPair;
-	for (TPair<AActor*, UGameplayAbility*> Pair : GridUnitsTakingActions)
+	// get every attackable tile of every unit, and create a master map...
+	for (auto GridUnit : GridUnitsAll)
 	{
-		if (Pair.Key == InGridUnit && Pair.Value == InGameplayAbility)
+		TArray<FGridMovement> GridMovements;
+		CalculateGridMovement(GridMovements, GridUnit, GridUnit->GetAvailableMovement());
+
+		// get all weapon ranges
+		TArray<int32> WeaponRanges;
+		for (auto Weapon : GridUnit->GetWeaponsInMap())
 		{
-			FoundPair = Pair;
-			break;
+			FWeaponTraits WeaponTrait;
+			GameMode->GetCombatCalculator()->GetWeaponTraitsByName(WeaponTrait, Weapon);
+			WeaponRanges.AddUnique(WeaponTrait.Range);
+		}
+
+		// loop over all movement tiles and get tiles at range
+		TSet<AGridTile*> AttackableTiles;
+		for (auto GridMovement : GridMovements)
+		{
+			AttackableTiles.Append(
+				GetGridTilesAtRanges(GridTileLocationMap[GridMovement.GridTile], WeaponRanges));
+		}
+
+		for (auto AttackableTile : AttackableTiles)
+		{
+			if (!AttackHeatMap.Contains(AttackableTile))
+			{
+				AttackHeatMap.Add(AttackableTile, FGridUnitArray());
+			}
+
+			AttackHeatMap[AttackableTile].GridUnits.AddUnique(GridUnit);
 		}
 	}
+}
+
+// find all possible combats a unit can do (enemies in range)
+void UGridWorldSubsystem::CalculateCombatScores(TArray<FCombatScore>& CombatScores, AGridUnit* InstigatorUnit)
+{
+	AGameMode_TurnBased_Combat* GameMode = Cast<AGameMode_TurnBased_Combat>(GetWorld()->GetAuthGameMode());
+		
+	// get instigator movement
+	TArray<FGridMovement> GridMovements;
+	CalculateGridMovement(GridMovements, InstigatorUnit, InstigatorUnit->GetAvailableMovement());
 	
-	if (FoundPair.Key == InGridUnit && FoundPair.Value == InGameplayAbility)
+	// get enemies of instigator
+	UTurnWorldSubsystem* TurnSubsystem = GetWorld()->GetSubsystem<UTurnWorldSubsystem>();
+	TArray<AGridUnit*> TargetUnits;
+	TurnSubsystem->GetFactionEnemies(InstigatorUnit, TargetUnits);
+	
+	// for every enemy, get tiles from which instigator can attack the target from
+	for (const auto Target : TargetUnits)
 	{
-		GridUnitsTakingActions.Remove(FoundPair);
+		TMap<AGridTile*, int32> AttackTiles;
+		CalculateGridAttackTiles(AttackTiles, GridMovements, InstigatorUnit, Target);
 
-		// if this array is empty then no units are taking actions and it is safe to return PC control
-		if (GridUnitsTakingActions.IsEmpty())
+		// check if not able to attack this enemy
+		if (AttackTiles.IsEmpty()) { continue; }
+		
+		for (auto Tile : AttackTiles)
 		{
-			UpdateUnitMappingsAll();
-			if (OnGridUnitAbilityEnd.IsBound()) { OnGridUnitAbilityEnd.Broadcast(); }
-
-			UE_LOG(LogTemp, Log, TEXT("On Grid Unit Ability Ended: no more units taking actions"));
+			for (auto Weapon : InstigatorUnit->WeaponInventoryMap)
+			{
+				FWeaponTraits WeaponTraits;
+				GameMode->GetCombatCalculator()->GetWeaponTraitsByName(WeaponTraits, Weapon.Key);
+				if (WeaponTraits.Range == Tile.Value)
+				{
+					FCombatScore CombatScore;
+					CombatScore.InstigatorUnit = InstigatorUnit;
+					CombatScore.InstigatorTile = Tile.Key;
+					CombatScore.InstigatorWeapon = Weapon.Key;
+					CombatScore.TargetUnit = Target;
+					CombatScore.TargetTile = nullptr;
+					CombatScore.TargetWeapon = Target->GetEquippedWeaponName();
+					GameMode->GetCombatCalculator()->CalculateCombatScore(CombatScore);
+					CombatScores.Add(CombatScore);
+				}				
+			}
 		}
 	}
-	else
+
+	// sort scores
+	CombatScores.Sort();
+}
+
+TMap<AGridUnit*, FGridTileArray> UGridWorldSubsystem::GetEnemiesInRangeWithAttackTiles(AGridUnit* InstigatorUnit)
+{
+	TMap<AGridUnit*, FGridTileArray> OutMap;
+	
+	AGameMode_TurnBased_Combat* GameMode = Cast<AGameMode_TurnBased_Combat>(GetWorld()->GetAuthGameMode());
+		
+	// get instigator movement
+	TArray<FGridMovement> GridMovements;
+	CalculateGridMovement(GridMovements, InstigatorUnit, InstigatorUnit->GetAvailableMovement());
+	
+	// get enemies of instigator, FOW NOW only target alive units
+	UTurnWorldSubsystem* TurnSubsystem = GetWorld()->GetSubsystem<UTurnWorldSubsystem>();
+	TArray<AGridUnit*> TargetUnits;
+	TurnSubsystem->GetAliveFactionEnemies(InstigatorUnit, TargetUnits);
+	
+	// for every enemy, get tiles from which instigator can attack the target from
+	for (auto Target : TargetUnits)
 	{
-		UE_LOG(LogTemp, Log, TEXT("On Grid Unit Ability Ended: %d"), GridUnitsTakingActions.Num());
+		TMap<AGridTile*, int32> AttackTiles;
+		CalculateGridAttackTiles(AttackTiles, GridMovements, InstigatorUnit, Target);
+
+		// check if not able to attack this enemy
+		if (AttackTiles.IsEmpty()) { continue; }
+
+		// add target and tiles to map
+		FGridTileArray GridTileArray;
+		AttackTiles.GetKeys(GridTileArray.GridTiles);
+		OutMap.Add(Target, GridTileArray);
 	}
+
+	return OutMap;
 }

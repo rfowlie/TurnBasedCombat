@@ -2,14 +2,16 @@
 
 
 #include "PlayerController/ControllerState_Attack_TileSelected.h"
-
 #include "EnhancedActionKeyMapping.h"
 #include "EnhancedInputComponent.h"
 #include "InputAction.h"
 #include "InputMappingContext.h"
 #include "TurnBased_Core_Tags.h"
+#include "Combat/CombatCalculator_Basic.h"
+#include "GameMode/GameMode_TurnBased_Combat.h"
 #include "Grid/GridWorldSubsystem.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "Pawn/APawn_FollowCursor.h"
 #include "PlayerController/ControllerState_OnUnitCombat.h"
 #include "Tile/GridTile.h"
 #include "UI/HUD_TurnBased.h"
@@ -41,35 +43,29 @@ void UControllerState_Attack_TileSelected::OnEnter(APlayerController* InPlayerCo
 	
 	UE_LOG(LogTemp, Error, TEXT("UControllerState_Attack_TileSelected"));
 
+	PlayerController->ShowTileCursor(false);
+	if (APawn_FollowCursor* Pawn = Cast<APawn_FollowCursor>(PlayerController->GetPawn()))
+	{
+		Pawn->SetFollowTarget(TargetUnit);		
+	}	
+	
 	// cache previous position
 	UGridWorldSubsystem* GridWorldSubsystem = PlayerController->GetWorld()->GetSubsystem<UGridWorldSubsystem>();
-	if (!GridWorldSubsystem) { return; }
+	if (!GridWorldSubsystem) { return; }	
 	InstigatorInitialTile = GridWorldSubsystem->GetGridTileOfUnit(InstigatorUnit);
 	InstigatorInitialRotation = InstigatorUnit->GetActorRotation();
-	
-	// move instigator to selected tile
-	InstigatorUnit->SetActorLocation(TileSelected->GetPlacementLocation());
-	
-	// rotate to face
-	FRotator LookAtRotation = UKismetMathLibrary::FindLookAtRotation(
-		TileSelected->GetActorLocation(), TargetUnit->GetActorLocation());
-	LookAtRotation.Pitch = 0.f;
-	LookAtRotation.Roll = 0.f;
-	InstigatorUnit->SetActorRotation(LookAtRotation);
-	
-	// set state of instigator and selected tile
-	InstigatorUnit->SetState(TAG_TBCore_Grid_Tile_Combat);
-	TileSelected->SetState(TAG_TBCore_Grid_Tile_Combat);
-	
-	// pass units to combat UI, OR to combat subsystem (which will then take on passing all the relevant info?)
-	if (AHUD_TurnBased* HUD = Cast<AHUD_TurnBased>(PlayerController->GetHUD()))
+
+	// set position, rotation and state
+	SetInstigatorPositionAndRotation(TileSelected);
+
+	// create prediction
+	SetPredictionWidget();
+
+	// update cursor
+	if (APawn_FollowCursor* Pawn = Cast<APawn_FollowCursor>(PlayerController->GetPawn()))
 	{
-		Widget = HUD->ActivateCombatPredictionWidget(InstigatorUnit, TargetUnit);
-		if (Widget)
-		{
-			Widget->OnComplete.AddUniqueDynamic(this, &ThisClass::CombatInitiated);
-		}
-	}	
+		Pawn->SetFollowTarget(TargetUnit);
+	}
 }
 
 void UControllerState_Attack_TileSelected::OnExit()
@@ -80,12 +76,11 @@ void UControllerState_Attack_TileSelected::OnExit()
 	// NOTE: reverting state should not be handled most of the time, should rely on
 	// other controller states to set state in OnEnter!!
 	// revert state of instigator and selected tile?
-
-	if (Widget)
-	{
-		Widget->OnComplete.RemoveDynamic(this, &ThisClass::CombatInitiated);
-	}
 	
+	RemovePredictionWidget();
+	
+	InstigatorUnit->SetActorLocation(InstigatorInitialTile->GetPlacementLocation());
+	InstigatorUnit->SetActorRotation(InstigatorInitialRotation);
 }
 
 UInputMappingContext* UControllerState_Attack_TileSelected::CreateInputMappingContext()
@@ -125,27 +120,15 @@ void UControllerState_Attack_TileSelected::OnSelect()
 		if (GridTileHovered && GridTileHovered != TileSelected && AttackTileRangeMap.Contains(GridTileHovered))
 		{
 			// undo previous, do new
-			TileSelected->SetState(TAG_TBCore_Grid_Tile_CanAttack);
-			TileSelected = GridTileHovered;
-			TileSelected->SetState(TAG_TBCore_Grid_Tile_Combat);
-			// update instigator position
-			InstigatorUnit->SetActorLocation(TileSelected->GetPlacementLocation());
-			
-			// rotate to face
-			FRotator LookAtRotation = UKismetMathLibrary::FindLookAtRotation(
-				TileSelected->GetActorLocation(), TargetUnit->GetActorLocation());
-			LookAtRotation.Pitch = 0.f;
-			LookAtRotation.Roll = 0.f;
-			InstigatorUnit->SetActorRotation(LookAtRotation);
+			SetInstigatorPositionAndRotation(GridTileHovered);
+			SetPredictionWidget();
 		}
 	}
 }
 
 void UControllerState_Attack_TileSelected::OnDeselect()
 {
-	InstigatorUnit->SetActorLocation(InstigatorInitialTile->GetPlacementLocation());
-	InstigatorUnit->SetActorRotation(InstigatorInitialRotation);
-	
+	// this will then trigger OnExit...
 	PlayerController->PopState();
 }
 
@@ -173,6 +156,79 @@ void UControllerState_Attack_TileSelected::OnCycleTile(const FInputActionValue& 
 void UControllerState_Attack_TileSelected::CombatInitiated()
 {
 	// receive complete callback from combat widget indicating that combat is going to happen
-	PlayerController->PushState(UControllerState_OnUnitCombat::Create(InstigatorUnit, TargetUnit), true);
+	PlayerController->PushState(UControllerState_OnUnitCombat::Create(CombatPrediction), true);
+}
+
+void UControllerState_Attack_TileSelected::SetInstigatorPositionAndRotation(AGridTile* GridTileHovered)
+{
+	// undo previous, do new
+	if (TileSelected)
+	{
+		TileSelected->SetState(TAG_TBCore_Grid_Tile_CanAttack);
+	}	
+	TileSelected = GridTileHovered;
+	TileSelected->SetState(TAG_TBCore_Grid_Tile_Combat);
+	// update instigator position
+	InstigatorUnit->SetActorLocation(TileSelected->GetPlacementLocation());
+			
+	// rotate to face
+	FRotator LookAtRotation = UKismetMathLibrary::FindLookAtRotation(
+		TileSelected->GetActorLocation(), TargetUnit->GetActorLocation());
+	LookAtRotation.Pitch = 0.f;
+	LookAtRotation.Roll = 0.f;
+	InstigatorUnit->SetActorRotation(LookAtRotation);
+}
+
+void UControllerState_Attack_TileSelected::SetPredictionWidget()
+{
+	AGameMode_TurnBased_Combat* GameMode = Cast<AGameMode_TurnBased_Combat>(PlayerController->GetWorld()->GetAuthGameMode());
+	UGridWorldSubsystem* GridWorldSubsystem = PlayerController->GetWorld()->GetSubsystem<UGridWorldSubsystem>();
+	
+	FCombatInformation CombatInformation;
+	CombatInformation.InstigatorUnit = InstigatorUnit;
+	CombatInformation.InstigatorTile = TileSelected;
+	CombatInformation.InstigatorWeapon = InstigatorUnit->GetEquippedWeaponName();
+	CombatInformation.TargetUnit = TargetUnit;
+	CombatInformation.TargetTile = GridWorldSubsystem->GetGridTileOfUnit(TargetUnit);
+	CombatInformation.TargetWeapon = TargetUnit->GetEquippedWeaponName();
+
+	// reset the struct every time???
+	CombatPrediction = FCombatPrediction();
+	GameMode->GetCombatCalculator()->GetCombatPrediction(CombatPrediction, CombatInformation);
+
+	// TODO: this is hacky as fuckkkkkkk
+	if (!Widget)
+	{
+		if (AHUD_TurnBased* HUD = Cast<AHUD_TurnBased>(PlayerController->GetHUD()))
+		{
+			Widget = HUD->ActivateCombatPredictionWidget(CombatPrediction);
+			if (Widget)
+			{
+				Widget->OnComplete.AddUniqueDynamic(this, &ThisClass::CombatInitiated);
+			}
+		}	
+	}
+	else
+	{
+		if (AHUD_TurnBased* HUD = Cast<AHUD_TurnBased>(PlayerController->GetHUD()))
+		{
+			HUD->UpdateCombatPredictionWidget(CombatPrediction);
+		}
+	}
+}
+
+void UControllerState_Attack_TileSelected::RemovePredictionWidget()
+{
+	if (Widget)
+	{
+		Widget->OnComplete.RemoveDynamic(this, &ThisClass::CombatInitiated);
+		Widget = nullptr;
+	}
+
+	// call only if widget not null???
+	if (AHUD_TurnBased* HUD = Cast<AHUD_TurnBased>(PlayerController->GetHUD()))
+	{
+		HUD->RemoveCombatPredictionWidget();
+	}
 }
 

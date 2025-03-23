@@ -8,9 +8,21 @@
 #include "GameEventTaskManager.generated.h"
 
 
+class UGameEventTask_Async;
+
 DECLARE_DYNAMIC_DELEGATE(FGameEventTaskDelegate);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnTaskCompleted);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnAllTasksCompleted);
+
+
+USTRUCT()
+struct FAsyncTaskArray
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	TArray<UGameEventTask_Async*> Tasks;
+};
 
 /**
  * we want this manager to allow the sequential execution of registered code,
@@ -23,11 +35,21 @@ class TURNBASED_CORE_API UGameEventTaskManager : public UObject
 {
 	GENERATED_BODY()
 
+	UGameEventTaskManager();
+	
 public:
+	static UGameEventTaskManager* Create();
+	
 	// Event triggered when all registered objects have completed
 	UPROPERTY()
 	FGameEventTaskDelegate OnAllTasksCompleted;
 
+	UFUNCTION(BlueprintCallable, Category = "GameEventTaskManager")
+	void RegisterAsyncTask(UGameEventTask_Async* InAsyncTask, int32 Phase = 0);
+
+	UFUNCTION()
+	void InitiateAsyncTasks();
+	
 	// Add an object to the wait list
 	UFUNCTION(BlueprintCallable, Category = "Turn Completion")
 	void RegisterTask(UObject* Object);
@@ -43,6 +65,9 @@ public:
 	void StartNextTaskInQueue();
 
 private:
+	UPROPERTY()
+	bool bAsyncTasksInitiated = false;
+	
 	// The set of objects that need to complete before moving forward
 	UPROPERTY()
 	TSet<UObject*> TaskSet;
@@ -54,5 +79,20 @@ private:
 
 	// Check if all objects are done
 	void CheckTasksComplete() const;
+
+	UPROPERTY()
+	// TMap<UGameEventTask_Async*, int32> AsyncTaskMap;
+	TMap<int32, FAsyncTaskArray> AsyncTaskMap;
+
+	UPROPERTY()
+	TArray<int32> PhaseOrder;
+
+	UPROPERTY()
+	int32 PhaseIndex = -1;
+
+	UFUNCTION()
+	void ExecuteNextPhase();
 	
+	UFUNCTION()
+	void CheckPhaseComplete(UGameEventTask_Async* AsyncTask);
 };

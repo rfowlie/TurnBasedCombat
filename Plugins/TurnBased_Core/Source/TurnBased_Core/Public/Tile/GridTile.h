@@ -51,4 +51,9 @@ protected:
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	FVector PlacementLocation = FVector::ZeroVector;
+
+	// DEBUG
+public:
+	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
+	void SetAttackHeatMapValues(int32 Friendly, int32 Enemy, int32 Other);
 };

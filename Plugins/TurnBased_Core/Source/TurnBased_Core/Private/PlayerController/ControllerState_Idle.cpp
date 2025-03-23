@@ -5,6 +5,7 @@
 #include "EnhancedInputComponent.h"
 #include "InputMappingContext.h"
 #include "Grid/GridWorldSubsystem.h"
+#include "Pawn/APawn_FollowCursor.h"
 #include "Turn/TurnWorldSubsystem.h"
 #include "PlayerController/ControllerState_UnitSelected.h"
 
@@ -19,6 +20,17 @@ UControllerState_Idle* UControllerState_Idle::Create()
 {
 	UControllerState_Idle* Object = NewObject<UControllerState_Idle>();
 	return Object;
+}
+
+void UControllerState_Idle::OnEnter(APlayerController* InPlayerController, const int32 InInputMappingContextPriority)
+{
+	Super::OnEnter(InPlayerController, InInputMappingContextPriority);
+
+	PlayerController->ShowTileCursor(true);
+	if (APawn_FollowCursor* Pawn = Cast<APawn_FollowCursor>(PlayerController->GetPawn()))
+	{
+		Pawn->SetFollowCursor();		
+	}	
 }
 
 UInputMappingContext* UControllerState_Idle::CreateInputMappingContext()
@@ -42,10 +54,7 @@ void UControllerState_Idle::OnSelect()
 	{
 		if (AGridUnit* SelectedUnit = GridSubsystem->GetGridUnitOnTile(GridSubsystem->GetGridTileHovered()))
 		{
-			if (UTurnWorldSubsystem* TurnSubsystem = PlayerController->GetWorld()->GetSubsystem<UTurnWorldSubsystem>())
-			{
-				PlayerController->PushState(UControllerState_UnitSelected::Create(SelectedUnit, SelectedUnit->GetAvailableMovement()), true);
-			}
+			PlayerController->PushState(UControllerState_UnitSelected::Create(SelectedUnit, SelectedUnit->GetAvailableMovement()), true);
 		}
 	}
 }

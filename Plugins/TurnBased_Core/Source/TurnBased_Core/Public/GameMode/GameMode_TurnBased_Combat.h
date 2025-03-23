@@ -34,8 +34,8 @@ public:
 protected:
 	virtual void BeginPlay() override;
 
-	// UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "CombatCalculator")
-	// TSubclassOf<UCombatCalculator_Basic> CombatCalculatorClass;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "CombatCalculator")
+	TSubclassOf<UCombatCalculator_Basic> CombatCalculatorClass;
 	//
 	// UPROPERTY(BlueprintReadOnly)
 	// UCombatCalculator_Basic* CombatCalculator = nullptr;

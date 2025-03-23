@@ -8,6 +8,7 @@
 #include "InputMappingContext.h"
 #include "TurnBased_Core_Tags.h"
 #include "Grid/GridWorldSubsystem.h"
+#include "Pawn/APawn_FollowCursor.h"
 #include "PlayerController/ControllerState_Attack_TargetSelected.h"
 #include "PlayerController/ControllerState_Idle.h"
 #include "PlayerController/ControllerState_OnUnitMove.h"
@@ -44,6 +45,12 @@ void UControllerState_UnitSelected::OnEnter(APlayerController* InPlayerControlle
 	UGridWorldSubsystem* GridWorldSubsystem = PlayerController->GetWorld()->GetSubsystem<UGridWorldSubsystem>();
 	if (!GridWorldSubsystem) { PlayerController->PopState(); }
 	SelectedUnitTile = GridWorldSubsystem->GetGridTileOfUnit(ActiveUnit);
+
+	// update cursor
+	if (APawn_FollowCursor* Pawn = Cast<APawn_FollowCursor>(PlayerController->GetPawn()))
+	{
+		Pawn->SetFollowCursor();
+	}
 }
 
 void UControllerState_UnitSelected::OnExit()

@@ -23,6 +23,8 @@ UCLASS(Blueprintable)
 class TURNBASED_CORE_API UGridWorldSubsystem : public UWorldSubsystem
 {
 	GENERATED_BODY()
+
+	virtual void PostInitialize() override;
 	
 public:
 	// EVENTS	
@@ -123,4 +125,12 @@ public:
 public:
 	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
 	void TestFunction();
+
+
+	// Utility Based AI	
+	UFUNCTION()
+	void DisplayAttackHeatMap(FGameplayTag InFactionTag, UGameEventTaskManager* TaskManager);
+	void CalculateMovementScores(TMap<AGridTile*, FGridUnitArray>& AttackHeatMap);
+	void CalculateCombatScores(TArray<FCombatScore>& CombatScores, AGridUnit* InstigatorUnit);
+	TMap<AGridUnit*, FGridTileArray> GetEnemiesInRangeWithAttackTiles(AGridUnit* InstigatorUnit);
 };

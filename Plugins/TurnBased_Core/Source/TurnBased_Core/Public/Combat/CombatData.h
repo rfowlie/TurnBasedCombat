@@ -5,6 +5,8 @@
 #include "CoreMinimal.h"
 #include "UObject/Object.h"
 #include "NativeGameplayTags.h"
+#include "Tile/GridTile.h"
+#include "Unit/GridUnit.h"
 #include "Weapon/WeaponData.h"
 #include "CombatData.generated.h"
 
@@ -97,7 +99,7 @@ struct FCombatSnapshot_Advanced
 	GENERATED_BODY()
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	int32 HealthChange = 0;
+	int32 DamageDealt = 0;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int32 AttackPower = 0;
@@ -110,28 +112,190 @@ struct FCombatSnapshot_Advanced
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int32 CriticalChance = 0;
+
+	// instead of determining a hit beforehand, just provide the way to calculate
+	bool SimulateHit() const
+	{
+		return FMath::RandRange(0, 100) < HitChance;
+	}
 };
 
 USTRUCT(BlueprintType)
 struct FCombatSnapshot_Outcome
 {
 	GENERATED_BODY()
-	
-	FCombatSnapshot_Outcome(): InstigatorAttacks(0), TargetAttacks(0)
-	{
-	}
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	AGridUnit* Instigator = nullptr;
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FCombatSnapshot_Advanced InstigatorSnapshot;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	int32 InstigatorAttacks;
+	int32 InstigatorAttacks = 0;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	AGridUnit* Target = nullptr;
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FCombatSnapshot_Advanced TargetSnapshot;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	int32 TargetAttacks;
+	int32 TargetAttacks = 0;
 	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	TArray<AGridUnit*> CombatOrder = TArray<AGridUnit*>();
+};
+
+
+// hold all the relevant information about the combatants
+// any other potentially required information can be added here or found out using subsystems etc.
+USTRUCT(BlueprintType)
+struct FCombatInformation
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	AGridUnit* InstigatorUnit = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	AGridTile* InstigatorTile = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	FName InstigatorWeapon;
 	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	AGridUnit* TargetUnit = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	AGridTile* TargetTile = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	FName TargetWeapon;
+};
+
+
+USTRUCT(BlueprintType)
+struct FCombatEvaluation
+{
+	GENERATED_BODY()
+
+	UPROPERTY(BlueprintReadOnly)
+	float HitChanceInstigator = 1.f;
+	
+	UPROPERTY(BlueprintReadOnly)
+	float HitChanceTarget = 1.f;
+	
+	UPROPERTY(BlueprintReadOnly)
+	float CriticalChanceInstigator = 1.f;
+	
+	UPROPERTY(BlueprintReadOnly)
+	float CriticalChanceTarget = 1.f;
+	
+	UPROPERTY(BlueprintReadOnly)
+	float HealthChangePercentageInstigator = 1.f;
+	
+	UPROPERTY(BlueprintReadOnly)
+	float HealthChangePercentageTarget = 1.f;
+	
+	UPROPERTY(BlueprintReadOnly)
+	float DefeatedInstigator = 1.f;
+	
+	UPROPERTY(BlueprintReadOnly)
+	float DefeatedTarget = 1.f;
+
+	FCombatEvaluation operator*(const FCombatEvaluation& Other) const
+	{
+		FCombatEvaluation Result;
+		Result.HitChanceInstigator = HitChanceInstigator * Other.HitChanceInstigator;
+		Result.HitChanceTarget = HitChanceTarget * Other.HitChanceTarget;
+		Result.CriticalChanceInstigator = CriticalChanceInstigator * Other.CriticalChanceInstigator;
+		Result.CriticalChanceTarget = CriticalChanceTarget * Other.CriticalChanceTarget;
+		Result.HealthChangePercentageInstigator = HealthChangePercentageInstigator * Other.HealthChangePercentageInstigator;
+		Result.HealthChangePercentageTarget = HealthChangePercentageTarget * Other.HealthChangePercentageTarget;
+		Result.DefeatedInstigator = DefeatedInstigator * Other.DefeatedInstigator;
+		Result.DefeatedTarget = DefeatedTarget * Other.DefeatedTarget;
+
+		return Result;
+	}
+
+	float GetScore() const
+	{
+		return HitChanceInstigator +
+			HitChanceTarget +
+			CriticalChanceInstigator +
+			CriticalChanceTarget +
+			HealthChangePercentageInstigator +
+			HealthChangePercentageTarget +
+			DefeatedInstigator +
+			DefeatedTarget;
+	}
+};
+
+USTRUCT(BlueprintType)
+struct FCombatPrediction
+{
+	GENERATED_BODY()
+
+	// testing
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ID")
+	FGuid Id;
+
+	// Constructor that generates a new GUID when the struct is created
+	FCombatPrediction()
+	{
+		Id = FGuid::NewGuid();
+	}
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	FCombatInformation CombatInformation;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	FCombatSnapshot_Basic InstigatorSnapshotBasic;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	FCombatSnapshot_Advanced InstigatorSnapShotAdvanced;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FCombatSnapshot_Basic TargetSnapshotBasic;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FCombatSnapshot_Advanced TargetSnapshotAdvanced;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	TArray<AGridUnit*> CombatOrder = TArray<AGridUnit*>();
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	FCombatEvaluation CombatEvaluation;
+
+	// so that we can sort arrays of predictions
+	bool operator==(const FCombatPrediction& Other) const
+	{
+		return CombatEvaluation.GetScore() == Other.CombatEvaluation.GetScore();
+	}
+	
+	bool operator<(const FCombatPrediction& Other) const
+	{
+		return CombatEvaluation.GetScore() < Other.CombatEvaluation.GetScore();
+	}
+
+	// debug
+	FString GetString() const
+	{
+		FString Output;
+		// Output.Append(Id.ToString());
+		if (IsValid(CombatInformation.InstigatorUnit))
+		{
+			Output.Append(CombatInformation.InstigatorUnit->GetActorNameOrLabel());
+		}
+		Output.Append(" - ");
+		if (IsValid(CombatInformation.InstigatorUnit))
+		{
+			Output.Append(CombatInformation.TargetUnit->GetActorNameOrLabel());
+		}
+		Output.Append(" - ");
+		Output.Append(Id.ToString());
+
+		return Output;
+	}
 };

@@ -21,6 +21,8 @@ class TURNBASED_CORE_API UControllerState_Idle : public UControllerState_Abstrac
 
 public:
 	static UControllerState_Idle* Create();
+
+	virtual void OnEnter(APlayerController* InPlayerController, const int32 InInputMappingContextPriority) override;
 	
 protected:
 	virtual UInputMappingContext* CreateInputMappingContext() override;

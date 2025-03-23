@@ -4,9 +4,10 @@
 #include "Unit/GridUnit.h"
 #include "AbilitySystemComponent.h"
 #include "Combat/Weapon/WeaponDataAsset.h"
-#include "Grid/GridHelper.h"
 #include "Unit/GridUnitAttributeSet.h"
 #include "Unit/GridUnitUtility.h"
+#include "Unit/Components/GridUnitBehaviourComponent.h"
+
 
 
 AGridUnit::AGridUnit()
@@ -15,6 +16,7 @@ AGridUnit::AGridUnit()
 
 	AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
 	AttributeSet_GridUnit = CreateDefaultSubobject<UGridUnitAttributeSet>(TEXT("AttributeSet_GridUnit"));
+	CombatBehaviourComponent = CreateDefaultSubobject<UGridUnitBehaviourComponent>(TEXT("CombatBehaviourComponent"));
 }
 
 void AGridUnit::Tick(float DeltaTime)
@@ -87,13 +89,13 @@ void AGridUnit::BeginPlay()
 	// SetEquippedWeaponName(WeaponNames[0]);
 	TArray<FName> Keys;
 	WeaponInventoryMap.GetKeys(Keys);
-	SetEquippedWeaponName(Keys[0]);
+	if (!Keys.IsEmpty()){ SetEquippedWeaponName(Keys[0]); }
 }
 
 void AGridUnit::NotifyHealthZero()
 {
 	UE_LOG(LogTemp, Error, TEXT("On Health Zero"));
-	EventOnDefeat();
+	OnUnitDefeated();
 	if (OnDefeat.IsBound()) { OnDefeat.Broadcast(this); }
 }
 

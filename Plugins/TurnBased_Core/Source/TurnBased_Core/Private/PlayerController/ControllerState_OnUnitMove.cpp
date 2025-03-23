@@ -6,6 +6,7 @@
 #include "AbilitySystemBlueprintLibrary.h"
 #include "TurnBased_Core_Tags.h"
 #include "GameplayAbilities/MoveAbilityPayload.h"
+#include "Pawn/APawn_FollowCursor.h"
 #include "PlayerController/ControllerState_Idle.h"
 #include "Tile/GridTile.h"
 #include "Turn/TurnWorldSubsystem.h"
@@ -34,6 +35,12 @@ void UControllerState_OnUnitMove::OnEnter(APlayerController* InPlayerController,
 	if (!TurnWorldSubsystem) { return; }
 	if (!TurnWorldSubsystem->CanUnitTakeAction(ActiveUnit)) { return; }
 
+	APawn_FollowCursor* Pawn = Cast<APawn_FollowCursor>(PlayerController->GetPawn());
+	if (Pawn)
+	{
+		Pawn->SetFollowTarget(ActiveUnit);
+	}
+	
 	GameplayAbilityDelegateHandle = ActiveUnit->GetAbilitySystemComponent()->AbilityEndedCallbacks.AddUObject(
 			this, &ThisClass::OnGridUnitAbilityActivated);
 	
@@ -61,6 +68,9 @@ void UControllerState_OnUnitMove::OnGridUnitAbilityActivated(UGameplayAbility* I
 	// only end when active unit finished ability...
 	if (InGameplayAbility->GetAvatarActorFromActorInfo() == ActiveUnit)
 	{
+		UTurnWorldSubsystem* TurnWorldSubsystem = PlayerController->GetWorld()->GetSubsystem<UTurnWorldSubsystem>();
+		TurnWorldSubsystem->SetUnitTurnOver(ActiveUnit);
+		TurnWorldSubsystem->CheckFactionTurnComplete(ActiveUnit->Execute_GetFaction(ActiveUnit));
 		PlayerController->SetBaseState(UControllerState_Idle::Create());
 	}	
 }

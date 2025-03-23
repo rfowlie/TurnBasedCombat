@@ -2,9 +2,8 @@
 
 
 #include "PlayerController/ControllerState_OnUnitCombat.h"
-
-#include "AbilitySystemBlueprintLibrary.h"
-#include "TurnBased_Core_Tags.h"
+#include "Combat/CombatWorldSubsystem.h"
+#include "Pawn/APawn_FollowCursor.h"
 #include "PlayerController/ControllerState_Idle.h"
 #include "Turn/TurnWorldSubsystem.h"
 #include "Unit/GridUnit.h"
@@ -14,12 +13,10 @@ UControllerState_OnUnitCombat::UControllerState_OnUnitCombat()
 {
 }
 
-UControllerState_OnUnitCombat* UControllerState_OnUnitCombat::Create(
-	AGridUnit* InInstigatorUnit, AGridUnit* InTargetUnit)
+UControllerState_OnUnitCombat* UControllerState_OnUnitCombat::Create(const FCombatPrediction& InCombatPrediction)
 {
 	UControllerState_OnUnitCombat* Object = NewObject<UControllerState_OnUnitCombat>();
-	Object->InstigatorUnit = InInstigatorUnit;
-	Object->TargetUnit = InTargetUnit;
+	Object->CombatPrediction = InCombatPrediction;
 	
 	return Object;
 }
@@ -30,33 +27,42 @@ void UControllerState_OnUnitCombat::OnEnter(APlayerController* InPlayerControlle
 	
 	Super::OnEnter(InPlayerController, InInputMappingContextPriority);
 
-	if (!IsValid(InstigatorUnit)) { PlayerController->PopState(); }
-	UTurnWorldSubsystem* TurnWorldSubsystem = PlayerController->GetWorld()->GetSubsystem<UTurnWorldSubsystem>();
-	if (!TurnWorldSubsystem) { return; }
-	if (!TurnWorldSubsystem->CanUnitTakeAction(InstigatorUnit)) { return; }
-
-	DelegateHandle = InstigatorUnit->GetAbilitySystemComponent()->AbilityEndedCallbacks.AddUObject(this, &ThisClass::OnGridUnitAbilityActivated);
+	if (APawn_FollowCursor* Pawn = Cast<APawn_FollowCursor>(PlayerController->GetPawn()))
+	{
+		Pawn->SetFollowTarget(CombatPrediction.CombatInformation.TargetUnit);
+	}
 	
-	FGameplayEventData EventData;
-	EventData.Instigator = InstigatorUnit;
-	EventData.Target = TargetUnit;
-
-	// send gameplay event
-	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(InstigatorUnit, TAG_Event_Grid_Attack, EventData);
+	UCombatWorldSubsystem* CombatWorldSubsystem = PlayerController->GetWorld()->GetSubsystem<UCombatWorldSubsystem>();
+	CombatWorldSubsystem->OnCombatEnd.AddUniqueDynamic(this, &ThisClass::OnCombatEnd);
+	CombatWorldSubsystem->InitiateCombat(CombatPrediction);	
 }
 
 void UControllerState_OnUnitCombat::OnExit()
 {
 	Super::OnExit();
 
-	InstigatorUnit->GetAbilitySystemComponent()->AbilityEndedCallbacks.Remove(DelegateHandle);
+	UCombatWorldSubsystem* CombatWorldSubsystem = PlayerController->GetWorld()->GetSubsystem<UCombatWorldSubsystem>();
+	CombatWorldSubsystem->OnCombatEnd.RemoveAll(this);
 }
 
-void UControllerState_OnUnitCombat::OnGridUnitAbilityActivated(UGameplayAbility* InGameplayAbility)
+void UControllerState_OnUnitCombat::OnCombatEnd(const FCombatPrediction& InCombatPrediction)
 {
-	// only end when active unit finished ability...
-	if (InGameplayAbility->GetAvatarActorFromActorInfo() == InstigatorUnit)
-	{
+	if (CombatPrediction.Id == InCombatPrediction.Id)
+	{		
+		// Update unit that attacked
+		UTurnWorldSubsystem* TurnWorldSubsystem = PlayerController->GetWorld()->GetSubsystem<UTurnWorldSubsystem>();
+		TurnWorldSubsystem->SetUnitTurnOver(CombatPrediction.CombatInformation.InstigatorUnit);
+		TurnWorldSubsystem->CheckFactionTurnComplete(
+			CombatPrediction.CombatInformation.InstigatorUnit->Execute_GetFaction(CombatPrediction.CombatInformation.InstigatorUnit));
+		
+		// reset prediction so it does not fire again...
+		CombatPrediction = FCombatPrediction();
+		
+		// reset controller state
 		PlayerController->SetBaseState(UControllerState_Idle::Create());
+	}
+	else
+	{
+		UE_LOG(Log_Combat, Error, TEXT("UControllerState_OnUnitCombat::OnCombatEnd - received different combat prediction than expected"));
 	}
 }

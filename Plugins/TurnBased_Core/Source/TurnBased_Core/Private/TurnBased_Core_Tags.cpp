@@ -27,3 +27,7 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_TBCore_Action_Attack, "TBCore.Action.Attack");
 UE_DEFINE_GAMEPLAY_TAG(TAG_TBCore_Action_Skill, "TBCore.Action.Skill");
 UE_DEFINE_GAMEPLAY_TAG(TAG_TBCore_Action_Item, "TBCore.Action.Item");
 UE_DEFINE_GAMEPLAY_TAG(TAG_TBCore_Action_Wait, "TBCore.Action.Wait");
+
+// faction
+UE_DEFINE_GAMEPLAY_TAG(TAG_TBCore_Faction_Player, "TBCore.Faction.Player");
+

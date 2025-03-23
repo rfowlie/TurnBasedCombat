@@ -7,6 +7,9 @@
 #include "LevelManagerActor.generated.h"
 
 
+class UCombatCalculator_Basic;
+
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FLevelManagerEventDelegate, bool, bSuccess);
 
 /*
@@ -21,7 +24,14 @@ public:
 	// Sets default values for this actor's properties
 	ALevelManagerActor();
 
+	static ALevelManagerActor* Get(const UObject* WorldContext);
+
 	// return if player won level or lost
 	UPROPERTY(BlueprintAssignable)
 	FLevelManagerEventDelegate OnLevelComplete;
+
+	// Level Info ~ start
+	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category="Combat")
+	TSubclassOf<UCombatCalculator_Basic> CombatCalculatorClass;
+	// Level Info ~ end
 };
