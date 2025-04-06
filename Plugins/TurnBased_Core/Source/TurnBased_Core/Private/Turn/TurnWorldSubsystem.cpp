@@ -281,6 +281,7 @@ void UTurnWorldSubsystem::DoOnFactionStart()
 		OnFactionStartTaskManager->OnAllTasksCompleted.BindDynamic(this, &ThisClass::FactionStartAllTasksComplete);
 		OnFactionStartTaskManager->InitiateAsyncTasks();
 	}
+	// why this???
 	else if (OnFactionStartPost.IsBound())
 	{
 		OnFactionStartPost.Broadcast(FactionOrder[FactionIndex]);

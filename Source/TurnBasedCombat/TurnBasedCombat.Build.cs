@@ -19,7 +19,8 @@ public class TurnBasedCombat : ModuleRules
 			"GameplayTags",
 			"GameplayAbilities",
 			"GameplayTasks",
-			"TurnBased_Core"
+			"TurnBased_Core",
+			"Gigafire"
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[]

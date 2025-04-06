@@ -2,8 +2,8 @@
 	"FileVersion": 3,
 	"Version": 1,
 	"VersionName": "1.0",
-	"FriendlyName": "TurnBased_Core",
-	"Description": "A plugin to help facilitate the creation of classic turn based games",
+	"FriendlyName": "Gigafire",
+	"Description": "",
 	"Category": "Other",
 	"CreatedBy": "Robert Anthony Fowlie",
 	"CreatedByURL": "",
@@ -16,19 +16,9 @@
 	"Installed": false,
 	"Modules": [
 		{
-			"Name": "TurnBased_Core",
+			"Name": "Gigafire",
 			"Type": "Runtime",
 			"LoadingPhase": "Default"
 		}		
-	],
-	"Plugins": [
-		{
-			"Name": "EnhancedInput",
-			"Enabled": true
-		},
-		{
-			"Name": "GameplayAbilities",
-			"Enabled": true
-		}
 	]
 }
