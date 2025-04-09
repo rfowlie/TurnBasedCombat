@@ -159,7 +159,7 @@ struct FCombatInformation
 	AGridUnit* InstigatorUnit = nullptr;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	AGridTile* InstigatorTile = nullptr;
+	AGridTileBase* InstigatorTile = nullptr;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	FName InstigatorWeapon;
@@ -172,6 +172,9 @@ struct FCombatInformation
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	FName TargetWeapon;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	int32 CombatRange = 1;
 };
 
 

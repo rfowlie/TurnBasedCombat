@@ -3,7 +3,7 @@
 
 #include "Combat/CombatCalculator_Basic.h"
 #include "Combat/CombatData.h"
-#include "Grid/GridSystemsUtility.h"
+#include "GridSystemsUtility.h"
 #include "Grid/GridWorldSubsystem.h"
 #include "Tile/GridTile.h"
 #include "Unit/GridUnit.h"
@@ -18,7 +18,11 @@ void UCombatCalculator_Basic::GetCombatPrediction(FCombatPrediction& OutCombatPr
 	GetUnitSnapshotBasic(OutCombatPrediction.InstigatorSnapshotBasic, CombatInformation.InstigatorUnit, CombatInformation.InstigatorWeapon);
 	GetUnitSnapshotBasic(OutCombatPrediction.TargetSnapshotBasic, CombatInformation.TargetUnit, CombatInformation.TargetWeapon);
 	
-	const int32 CombatRange = UGridSystemsUtility::CalculateGridPosition(CombatInformation.InstigatorTile).GetDistance(UGridSystemsUtility::CalculateGridPosition(CombatInformation.TargetTile));
+	// const int32 CombatRange = UGridSystemsUtility::CalculateGridPosition(CombatInformation.InstigatorTile).GetDistance(UGridSystemsUtility::CalculateGridPosition(CombatInformation.TargetTile));
+	FWeaponContainer WeaponContainer;
+	GetWeaponByName(WeaponContainer, CombatInformation.InstigatorWeapon);
+	const int32 CombatRange = WeaponContainer.WeaponTraits.Range;	
+
 	OutCombatPrediction.CombatOrder.Empty();
 
 	// only calculate advanced information if unit has correct weapon range
@@ -140,7 +144,7 @@ void UCombatCalculator_Basic::GetUnitSnapshotBasic(
 {
 	if (!IsValid(InGridUnit)) { return; }
 
-	AGridTile* Tile = nullptr;
+	AGridTileBase* Tile = nullptr;
 	if (UGridWorldSubsystem* GridSubsystem = InGridUnit->GetWorld()->GetSubsystem<UGridWorldSubsystem>())
 	{
 		Tile = GridSubsystem->GetGridTileOfUnit(InGridUnit);

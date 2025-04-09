@@ -4,7 +4,7 @@
 #include "Grid/GridWorldSubsystem.h"
 #include "Engine/World.h"
 #include "GameFramework/Actor.h"
-#include "Grid/GridSystemsUtility.h"
+#include "GridSystemsUtility.h"
 #include "Tile/GridTile.h"
 #include "Unit/GridUnit.h"
 #include "Turn/TurnWorldSubsystem.h"
@@ -20,7 +20,7 @@ void UGridWorldSubsystem::PostInitialize()
 	TurnWorldSubsystem->OnFactionStart.AddUniqueDynamic(this, &ThisClass::DisplayAttackHeatMap);
 }
 
-void UGridWorldSubsystem::RegisterGridTile(AGridTile* GridTile)
+void UGridWorldSubsystem::RegisterGridTile(AGridTileBase* GridTile)
 {
 	if (IsValid(GridTile) && !GridTilesAll.Contains(GridTile))
 	{
@@ -60,7 +60,7 @@ void UGridWorldSubsystem::RegisterGridUnit(AGridUnit* GridUnit)
 
 void UGridWorldSubsystem::OnBeginCursorOverGridTile(AActor* Actor)
 {
-	if (AGridTile* GridTile = Cast<AGridTile>(Actor); IsValid(GridTile))
+	if (AGridTileBase* GridTile = Cast<AGridTileBase>(Actor); IsValid(GridTile))
 	{		
 		// update tile
 		if (IsValid(GridTileHovered))
@@ -70,12 +70,12 @@ void UGridWorldSubsystem::OnBeginCursorOverGridTile(AActor* Actor)
 				OnGridTileHoveredStop.Broadcast(GridTileHovered);
 			}
 			
-			GridTileHovered->SetHovered(false);
+			// GridTileHovered->SetHovered(false);
 			GridTileHovered = nullptr;
 		}
 		
 		GridTileHovered = GridTile;
-		GridTileHovered->SetHovered(true);
+		// GridTileHovered->SetHovered(true);
 		if (OnGridTileHoveredStart.IsBound())
 		{
 			OnGridTileHoveredStart.Broadcast(GridTileHovered);
@@ -106,7 +106,7 @@ void UGridWorldSubsystem::OnBeginCursorOverGridTile(AActor* Actor)
 	}
 }
 
-void UGridWorldSubsystem::UpdateTileMapping(AGridTile* GridTile)
+void UGridWorldSubsystem::UpdateTileMapping(AGridTileBase* GridTile)
 {
 }
 
@@ -136,7 +136,7 @@ void UGridWorldSubsystem::UpdateUnitMappingsAll()
 	}
 }
 
-AGridUnit* UGridWorldSubsystem::GetGridUnitOnTile(const AGridTile* GridTile) const
+AGridUnit* UGridWorldSubsystem::GetGridUnitOnTile(const AGridTileBase* GridTile) const
 {
 	if (GridTileLocationMap.Contains(GridTile))
 	{
@@ -149,7 +149,7 @@ AGridUnit* UGridWorldSubsystem::GetGridUnitOnTile(const AGridTile* GridTile) con
 	return nullptr;
 }
 
-AGridTile* UGridWorldSubsystem::GetGridTileOfUnit(const AGridUnit* GridUnit) const
+AGridTileBase* UGridWorldSubsystem::GetGridTileOfUnit(const AGridUnit* GridUnit) const
 {
 	if (GridUnitLocationMap.Contains(GridUnit))
 	{
@@ -162,11 +162,11 @@ AGridTile* UGridWorldSubsystem::GetGridTileOfUnit(const AGridUnit* GridUnit) con
 	return nullptr;
 }
 
-TArray<AGridTile*> UGridWorldSubsystem::GetGridTilesAtRange(FGridPosition StartGridPosition, int32 Range)
+TArray<AGridTileBase*> UGridWorldSubsystem::GetGridTilesAtRange(FGridPosition StartGridPosition, int32 Range)
 {
-	TArray<AGridTile*> Output;
+	TArray<AGridTileBase*> Output;
 	TArray<FGridPosition> Temp;
-	UGridSystemsUtility::GetGridPositionsAtRange(StartGridPosition, Range, Temp);
+	UGridSystemsUtility::GetManhattanDistance(StartGridPosition, Range, Temp);
 	for (FGridPosition GridLocation : Temp)
 	{
 		if (LocationGridTileMap.Contains(GridLocation))
@@ -178,7 +178,7 @@ TArray<AGridTile*> UGridWorldSubsystem::GetGridTilesAtRange(FGridPosition StartG
 	return Output;
 }
 
-TArray<AGridTile*> UGridWorldSubsystem::GetGridTilesAtRanges(
+TArray<AGridTileBase*> UGridWorldSubsystem::GetGridTilesAtRanges(
 	const FGridPosition StartGridPosition, TArray<int32> Ranges)
 {
 	TSet UniqueRanges(Ranges);
@@ -187,7 +187,7 @@ TArray<AGridTile*> UGridWorldSubsystem::GetGridTilesAtRanges(
 		UniqueRanges.Add(FMath::Abs(Range));
 	}
 
-	TSet<AGridTile*> Output;
+	TSet<AGridTileBase*> Output;
 	for (const int32 Range : UniqueRanges)
 	{
 		Output.Append(GetGridTilesAtRange(StartGridPosition, Range));
@@ -205,7 +205,7 @@ void UGridWorldSubsystem::CalculateGridMovement(TArray<FGridMovement>& OutMoveme
 		return;
 	}
 	
-	AGridTile* StartTile = LocationGridTileMap[GridUnitLocationMap[GridUnit]];    
+	AGridTileBase* StartTile = LocationGridTileMap[GridUnitLocationMap[GridUnit]];    
 	if (!IsValid(StartTile))
 	{
 		// UE_LOG(LogTemp, Error, TEXT("Tile Actor At Location (X:%d, Y:%d) is null!!"), StartGridPosition.X, StartGridPosition.Y);
@@ -231,7 +231,7 @@ void UGridWorldSubsystem::CalculateGridMovement(TArray<FGridMovement>& OutMoveme
 		ProcessingQueue.Dequeue(Current);
 		Processed.Add(Current);
     		
-		for (AGridTile* TargetTile : GetGridTilesAtRange(GridTileLocationMap[Current.GridTile], 1))
+		for (AGridTileBase* TargetTile : GetGridTilesAtRange(GridTileLocationMap[Current.GridTile], 1))
 		{
 			if (GetGridUnitOnTile(TargetTile)) { continue; }    	
 			const int32 CalculatedMovement = Current.Cost + TargetTile->GetMovementCost(); 
@@ -271,7 +271,7 @@ void UGridWorldSubsystem::CalculateGridAttacks(
 	if (!IsValid(GridUnit)) { return; }
 
 	// get enemy info
-	TArray<AGridUnit*> EnemyGridUnits;
+	TArray<AGridUnitBase*> EnemyGridUnits;
 	if (UTurnWorldSubsystem* TurnSubsystem = GetWorld()->GetSubsystem<UTurnWorldSubsystem>())
 	{
 		TurnSubsystem->GetFactionEnemies(GridUnit, EnemyGridUnits);
@@ -283,7 +283,7 @@ void UGridWorldSubsystem::CalculateGridAttacks(
 	}
 
 	// unit info
-	TMap<int32, TSet<AGridTile*>> RangeTileMap;
+	TMap<int32, TSet<AGridTileBase*>> RangeTileMap;
 	
 	TMap<FGridPosition, bool> MovementMap;
 	for (const auto GridMovement : InGridMovements)
@@ -296,12 +296,12 @@ void UGridWorldSubsystem::CalculateGridAttacks(
 	if (!GameMode) { return; }
 	
 	TArray<FGridPosition> TempPositions;
-	for (AGridUnit* EnemyUnit : EnemyGridUnits)
+	for (auto EnemyUnit : EnemyGridUnits)
 	{
 		for (const int32 WeaponRange : GameMode->GetCombatCalculator()->GetWeaponRangesByName(GridUnit->GetWeaponsInMap()))
 		{
 			TempPositions.Empty();
-			UGridSystemsUtility::GetGridPositionsAtRange(
+			UGridSystemsUtility::GetManhattanDistance(
 				UGridSystemsUtility::CalculateGridPosition(EnemyUnit), WeaponRange, TempPositions);
 			for (FGridPosition RangePosition : TempPositions)
 			{
@@ -319,7 +319,7 @@ void UGridWorldSubsystem::CalculateGridAttacks(
 
 // calculate attack tiles for a single enemy unit
 // TODO: we could make this more robust and have specific rules around weapon types and ranges, etc.
-void UGridWorldSubsystem::CalculateGridAttackTiles(TMap<AGridTile*, int32>& OutWeaponPositions,
+void UGridWorldSubsystem::CalculateGridAttackTiles(TMap<AGridTileBase*, int32>& OutWeaponPositions,
 	const TArray<FGridMovement>& InGridMovements, const AGridUnit* InstigatorUnit, const AGridUnit* TargetUnit)
 {
 	if (!IsValid(InstigatorUnit) || !IsValid(TargetUnit)) { return; }
@@ -409,7 +409,7 @@ void UGridWorldSubsystem::OnGridUnitAbilityEnded(UGameplayAbility* InGameplayAbi
 
 void UGridWorldSubsystem::DisplayAttackHeatMap(FGameplayTag InFactionTag, UGameEventTaskManager* TaskManager)
 {
-	TMap<AGridTile*, FGridUnitArray> AttackHeatMap;
+	TMap<AGridTileBase*, FGridUnitArray> AttackHeatMap;
 	CalculateMovementScores(AttackHeatMap);
 	for (auto Pair : AttackHeatMap)
 	{		
@@ -417,7 +417,7 @@ void UGridWorldSubsystem::DisplayAttackHeatMap(FGameplayTag InFactionTag, UGameE
 	}
 }
 
-void UGridWorldSubsystem::CalculateMovementScores(TMap<AGridTile*, FGridUnitArray>& AttackHeatMap)
+void UGridWorldSubsystem::CalculateMovementScores(TMap<AGridTileBase*, FGridUnitArray>& AttackHeatMap)
 {
 	AGameMode_TurnBased_Combat* GameMode = Cast<AGameMode_TurnBased_Combat>(GetWorld()->GetAuthGameMode());
 	
@@ -437,7 +437,7 @@ void UGridWorldSubsystem::CalculateMovementScores(TMap<AGridTile*, FGridUnitArra
 		}
 
 		// loop over all movement tiles and get tiles at range
-		TSet<AGridTile*> AttackableTiles;
+		TSet<AGridTileBase*> AttackableTiles;
 		for (auto GridMovement : GridMovements)
 		{
 			AttackableTiles.Append(
@@ -473,7 +473,7 @@ void UGridWorldSubsystem::CalculateCombatScores(TArray<FCombatScore>& CombatScor
 	// for every enemy, get tiles from which instigator can attack the target from
 	for (const auto Target : TargetUnits)
 	{
-		TMap<AGridTile*, int32> AttackTiles;
+		TMap<AGridTileBase*, int32> AttackTiles;
 		CalculateGridAttackTiles(AttackTiles, GridMovements, InstigatorUnit, Target);
 
 		// check if not able to attack this enemy
@@ -523,7 +523,7 @@ TMap<AGridUnit*, FGridTileArray> UGridWorldSubsystem::GetEnemiesInRangeWithAttac
 	// for every enemy, get tiles from which instigator can attack the target from
 	for (auto Target : TargetUnits)
 	{
-		TMap<AGridTile*, int32> AttackTiles;
+		TMap<AGridTileBase*, int32> AttackTiles;
 		CalculateGridAttackTiles(AttackTiles, GridMovements, InstigatorUnit, Target);
 
 		// check if not able to attack this enemy

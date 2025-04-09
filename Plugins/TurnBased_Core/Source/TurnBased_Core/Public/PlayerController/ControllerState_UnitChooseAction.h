@@ -25,7 +25,7 @@ class TURNBASED_CORE_API UControllerState_UnitChooseAction : public UControllerS
 
 public:
 	static UControllerState_UnitChooseAction* Create(
-		AGridUnit* InActiveUnit, AGridTile* InTargetTile);
+		AGridUnit* InActiveUnit, AGridTileBase* InTargetTile);
 
 	virtual void OnEnter(APlayerController* InPlayerController, const int32 InInputMappingContextPriority) override;
 	
@@ -36,7 +36,7 @@ protected:
 	AGridUnit* ActiveUnit = nullptr;
 
 	UPROPERTY()
-	AGridTile* TargetTile = nullptr;
+	AGridTileBase* TargetTile = nullptr;
 	
 	UPROPERTY()
 	UUserWidget_ActionOptions* Widget_ActionOptions = nullptr;

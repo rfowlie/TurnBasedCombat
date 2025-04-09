@@ -5,7 +5,20 @@
 #include "GridInfo.h"
 
 
-FGridPosition UGridSystemsUtility::CalculateGridPosition(const AGridInfo* GridInfo, const AActor* Actor)
+// TODO: this function is only temporary and for helping with the refactor
+FGridPosition UGridSystemsUtility::CalculateGridPosition(const AActor* Actor)
+{
+	FGridPosition GridPosition;
+	if (IsValid(Actor))
+	{
+		GridPosition.X = FMath::TruncToInt(Actor->GetActorLocation().X / 200.f);
+		GridPosition.Y = FMath::TruncToInt(Actor->GetActorLocation().Y / 200.f);
+	}	
+	
+	return GridPosition;
+}
+
+FGridPosition UGridSystemsUtility::CalculateGridPositionWithInfo(const AGridInfo* GridInfo, const AActor* Actor)
 {
 	FGridPosition GridPosition;
 	if (IsValid(Actor))

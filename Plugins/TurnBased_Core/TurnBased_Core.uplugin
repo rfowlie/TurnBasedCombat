@@ -23,6 +23,10 @@
 	],
 	"Plugins": [
 		{
+			"Name": "TurnBasedGridSystems",
+			"Enabled": true
+		},
+		{
 			"Name": "EnhancedInput",
 			"Enabled": true
 		},

@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GridStructs.h"
+#include "GridSystemsStructs.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "GridSystemsUtility.generated.h"
 
@@ -35,9 +35,12 @@ public:
 	
 	// UFUNCTION(BlueprintCallable)
 	// static int32 GetGridSize() { return 200; }
+
+	UFUNCTION(BlueprintCallable)
+	static FGridPosition CalculateGridPosition(const AActor* Actor);
 	
 	UFUNCTION(BlueprintCallable)
-	static FGridPosition CalculateGridPosition(const AGridInfo* GridInfo, const AActor* Actor);
+	static FGridPosition CalculateGridPositionWithInfo(const AGridInfo* GridInfo, const AActor* Actor);
 
 	// Grid Measurements
 	// This measures distance by only allowing movement in horizontal and vertical steps, form a diamond-shaped region

@@ -20,7 +20,7 @@ class TURNBASED_CORE_API UControllerState_OnUnitMove : public UControllerState_A
 	UControllerState_OnUnitMove();
 	
 public:
-	static UControllerState_OnUnitMove* Create(AGridUnit* InActiveUnit, AGridTile* InTargetTile);
+	static UControllerState_OnUnitMove* Create(AGridUnit* InActiveUnit, AGridTileBase* InTargetTile);
 	virtual void OnEnter(APlayerController* InPlayerController, const int32 InInputMappingContextPriority) override;
 	virtual void OnExit() override;
 

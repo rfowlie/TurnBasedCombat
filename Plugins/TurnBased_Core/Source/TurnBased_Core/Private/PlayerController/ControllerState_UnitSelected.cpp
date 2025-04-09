@@ -122,7 +122,7 @@ void UControllerState_UnitSelected::OnSelect()
 	UGridWorldSubsystem* GridSubsystem = PlayerController->GetWorld()->GetSubsystem<UGridWorldSubsystem>();
 	if (!GridSubsystem) { return; }
 
-	AGridTile* SelectedTile = GridSubsystem->GetGridTileHovered();
+	AGridTileBase* SelectedTile = GridSubsystem->GetGridTileHovered();
 
 	// check attack tile selected, ALLOW THIS EVEN FOR NON PLAYER UNITS, NEXT STATE WILL BLOCK
 	AGridUnit* TargetUnit = GridSubsystem->GetGridUnitOnTile(SelectedTile);
@@ -223,7 +223,7 @@ bool UControllerState_UnitSelected::SetMovementTiles()
 	TurnSubsystem->GetFactionEnemies(ActiveUnit, EnemyGridUnits);
 	for (const auto EnemyUnit : EnemyGridUnits)
 	{
-		TMap<AGridTile*, int32> AttackTiles;
+		TMap<AGridTileBase*, int32> AttackTiles;
 		GridSubsystem->CalculateGridAttackTiles(AttackTiles, GridMovements, ActiveUnit, EnemyUnit);
 
 		// if there are tiles in movement that can be used to attack this unit, set state

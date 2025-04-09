@@ -18,25 +18,25 @@ void AGridTile::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 }
 
-bool AGridTile::SetState_Implementation(const FGameplayTag State)
-{
-	return false;
-}
+// bool AGridTile::SetState_Implementation(const FGameplayTag State)
+// {
+// 	return false;
+// }
 
 FVector AGridTile::GetPlacementLocation_Implementation() const
 {
 	return GetActorLocation() + PlacementLocation;
 }
 
-int32 AGridTile::GetMovementCost_Implementation() const
-{
-	if (!TerrainDataAsset)
-	{
-		// UE_LOG(LogTemp, Warning, TEXT("No Terrain Data Asset Assigned To Tile: %s, movement cost = 1"), *this->GetName());
-		return 1;
-	}
-	return TerrainDataAsset->TerrainStats.MovementCost;
-}
+// int32 AGridTile::GetMovementCost_Implementation() const
+// {
+// 	if (!TerrainDataAsset)
+// 	{
+// 		// UE_LOG(LogTemp, Warning, TEXT("No Terrain Data Asset Assigned To Tile: %s, movement cost = 1"), *this->GetName());
+// 		return 1;
+// 	}
+// 	return TerrainDataAsset->TerrainStats.MovementCost;
+// }
 
 FTileStatsSnapshot AGridTile::GetSnapshot() const
 {

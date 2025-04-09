@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "UObject/Object.h"
 #include "GridMapBase.h"
-#include "GridStructs.h"
+#include "GridSystemsStructs.h"
 #include "GridMapper_FlatEqualSpacing.generated.h"
 
 

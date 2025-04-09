@@ -3,10 +3,9 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameplayTagContainer.h"
 #include "GameFramework/Actor.h"
 #include "GridTileBase.generated.h"
-
-struct FGridStatePayload;
 
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam( FGridTileBeginCursorOver, AGridTileBase*, GridTile );
@@ -25,9 +24,12 @@ public:
 	FGridTileBeginCursorOver OnGridTileBeginCursorOver;
 
 	// allow each tile to control how it updates it's state according to the game
-	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
-	void SetGridState(const FGridStatePayload Payload);
+	// UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
+	// void SetGridState(const FGameplayTag GameplayTag);
 
+	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
+	bool SetState(const FGameplayTag State);
+	
 	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
 	int32 GetMovementCost();
 	

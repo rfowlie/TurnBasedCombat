@@ -16,7 +16,7 @@ UControllerState_OnUnitMove::UControllerState_OnUnitMove()
 {
 }
 
-UControllerState_OnUnitMove* UControllerState_OnUnitMove::Create(AGridUnit* InActiveUnit, AGridTile* InTargetTile)
+UControllerState_OnUnitMove* UControllerState_OnUnitMove::Create(AGridUnit* InActiveUnit, AGridTileBase* InTargetTile)
 {
 	UControllerState_OnUnitMove* Object = NewObject<UControllerState_OnUnitMove>();
 	Object->ActiveUnit = InActiveUnit;

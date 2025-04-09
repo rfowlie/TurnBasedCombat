@@ -5,14 +5,15 @@
 #include "CoreMinimal.h"
 #include "Subsystems/WorldSubsystem.h"
 #include "GridStructs.h"
+#include "GridSystemsStructs.h"
 #include "GridWorldSubsystem.generated.h"
 
 class UGridRules;
 class UGameplayAbility;
 class AGridUnit;
-class AGridTile;
+class AGridTileBase;
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FGridTileDelegate, AGridTile*, GridTile);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FGridTileDelegate, AGridTileBase*, GridTile);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FGridUnitDelegate, AGridUnit*, GridUnit);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FGridUnitAbilityDelegate);
 
@@ -55,7 +56,7 @@ public:
 	
 	// FUNCTIONS
 	UFUNCTION(BlueprintCallable)
-	void RegisterGridTile(AGridTile* GridTile);
+	void RegisterGridTile(AGridTileBase* GridTile);
 	UFUNCTION(BlueprintCallable)
 	void RegisterGridUnit(AGridUnit* GridUnit);
 	UFUNCTION()
@@ -64,20 +65,20 @@ public:
 	// VARIABLES
 	// tile
 	UPROPERTY()
-	TArray<AGridTile*> GridTilesAll;
+	TArray<AGridTileBase*> GridTilesAll;
 	UPROPERTY()
-	TMap<AGridTile*, FGridPosition> GridTileLocationMap;
+	TMap<AGridTileBase*, FGridPosition> GridTileLocationMap;
 	UPROPERTY()
-	TMap<FGridPosition, AGridTile*> LocationGridTileMap;
+	TMap<FGridPosition, AGridTileBase*> LocationGridTileMap;
 	UPROPERTY()
-	AGridTile* GridTileHovered = nullptr;
+	AGridTileBase* GridTileHovered = nullptr;
 	UFUNCTION(BlueprintCallable)
-	AGridTile* GetGridTileHovered() const { return GridTileHovered; }
+	AGridTileBase* GetGridTileHovered() const { return GridTileHovered; }
 	UPROPERTY()
-	AGridTile* GridTileSelected = nullptr;
-	// AGridTile* GetGridTileSelected() const { return GridTileSelected; }
+	AGridTileBase* GridTileSelected = nullptr;
+	// AGridTileBase* GetGridTileSelected() const { return GridTileSelected; }
 	
-	void UpdateTileMapping(AGridTile* GridTile);
+	void UpdateTileMapping(AGridTileBase* GridTile);
 	void UpdateTileMappingsAll();
 	
 	// unit
@@ -97,15 +98,15 @@ public:
 	
 	void UpdateUnitMapping(AGridUnit* GridUnit);
 	void UpdateUnitMappingsAll();
-	AGridUnit* GetGridUnitOnTile(const AGridTile* GridTile) const;
-	AGridTile* GetGridTileOfUnit(const AGridUnit* GridUnit) const;
+	AGridUnit* GetGridUnitOnTile(const AGridTileBase* GridTile) const;
+	AGridTileBase* GetGridTileOfUnit(const AGridUnit* GridUnit) const;
 
 	// calculations (could set a class that does all this so that we can swap out calculation types)
-	TArray<AGridTile*> GetGridTilesAtRange(FGridPosition StartGridPosition, int32 Range);
-	TArray<AGridTile*> GetGridTilesAtRanges(const FGridPosition StartGridPosition, TArray<int32> Ranges);
+	TArray<AGridTileBase*> GetGridTilesAtRange(FGridPosition StartGridPosition, int32 Range);
+	TArray<AGridTileBase*> GetGridTilesAtRanges(const FGridPosition StartGridPosition, TArray<int32> Ranges);
 	void CalculateGridMovement(TArray<FGridMovement>& OutMovement, const AGridUnit* GridUnit, const int32 AvailableMovement);
 	void CalculateGridAttacks(TArray<FGridPair>& OutGridPairs, AGridUnit* GridUnit, const TArray<FGridMovement>& InGridMovements);
-	void CalculateGridAttackTiles(TMap<AGridTile*, int32>& OutWeaponPositions, const TArray<FGridMovement>& InGridMovements, const AGridUnit* InstigatorUnit, const AGridUnit* TargetUnit);
+	void CalculateGridAttackTiles(TMap<AGridTileBase*, int32>& OutWeaponPositions, const TArray<FGridMovement>& InGridMovements, const AGridUnit* InstigatorUnit, const AGridUnit* TargetUnit);
 	
 
 	///////////////////////////////////////////

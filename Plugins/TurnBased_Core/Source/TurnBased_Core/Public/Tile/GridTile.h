@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GridTileBase.h"
 #include "GameplayTagContainer.h"
 #include "TerrainDataAsset.h"
 #include "GameFramework/Actor.h"
@@ -12,7 +13,7 @@
 class UTerrainDataAsset;
 
 UCLASS(Blueprintable, BlueprintType)
-class TURNBASED_CORE_API AGridTile : public AActor
+class TURNBASED_CORE_API AGridTile : public AGridTileBase
 {
 	GENERATED_BODY()
 
@@ -26,15 +27,12 @@ public:
 
 	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
 	FGameplayTag GetState();
-	
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
-	bool SetState(const FGameplayTag State);
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	FVector GetPlacementLocation() const;
 
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
-	int32 GetMovementCost() const;
+	// UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	// int32 GetMovementCost() const;
 	
 	/////////////////////////////////////////////////////////////
 	// TEMP VARIABLES FOR EASE OF LOGIC

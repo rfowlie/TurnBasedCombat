@@ -1,9 +1,8 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
-
-#include "GridWorldSubsystem.h"
-#include "GridHelper.h"
+#include "GridSystemsWorldSubsystem.h"
 #include "GridInfo.h"
+#include "GridSystemsUtility.h"
 #include "GridTileBase.h"
 #include "GridUnitBase.h"
 #include "ObjectPool.h"
@@ -11,8 +10,7 @@
 #include "GameFramework/Actor.h"
 
 
-
-bool UGridWorldSubsystem::ShouldCreateSubsystem(UObject* Outer) const
+bool UGridSystemsWorldSubsystem::ShouldCreateSubsystem(UObject* Outer) const
 {
 	// // do not create this subsystem if the game mode does not implement this interface
 	// if (IGridInformationProvider* Interface = Cast<IGridInformationProvider>(GetWorld()->GetAuthGameMode()))
@@ -26,7 +24,7 @@ bool UGridWorldSubsystem::ShouldCreateSubsystem(UObject* Outer) const
 	return true;
 }
 
-void UGridWorldSubsystem::PostInitialize()
+void UGridSystemsWorldSubsystem::PostInitialize()
 {
 	Super::PostInitialize();
 
@@ -42,7 +40,7 @@ void UGridWorldSubsystem::PostInitialize()
 	// }
 }
 
-void UGridWorldSubsystem::RegisterGridInfo(AGridInfo* InGridInfo)
+void UGridSystemsWorldSubsystem::RegisterGridInfo(AGridInfo* InGridInfo)
 {
 	if (IsValid(InGridInfo) && GridInfo == nullptr)
 	{
@@ -50,7 +48,7 @@ void UGridWorldSubsystem::RegisterGridInfo(AGridInfo* InGridInfo)
 	}
 }
 
-void UGridWorldSubsystem::RegisterGridTile(AGridTileBase* GridTile)
+void UGridSystemsWorldSubsystem::RegisterGridTile(AGridTileBase* GridTile)
 {
 	// if (IsValid(GridTile) && GridMap != nullptr)
 	// {
@@ -82,21 +80,21 @@ void UGridWorldSubsystem::RegisterGridTile(AGridTileBase* GridTile)
 }
 
 // TODO: register will now forward items to the customizable grid manager
-void UGridWorldSubsystem::RegisterGridUnit(AGridUnitBase* GridUnit)
+void UGridSystemsWorldSubsystem::RegisterGridUnit(AGridUnitBase* GridUnit)
 {
 	if (IsValid(GridUnit) && !GridUnitsAll.Contains(GridUnit))
 	{
 		GridUnitsAll.AddUnique(GridUnit);
 		
 		// add to map
-		FGridPosition GridPosition = UGridHelper::CalculateGridPosition(GridInfo, GridUnit);
+		FGridPosition GridPosition = UGridSystemsUtility::CalculateGridPosition(GridInfo, GridUnit);
 		
 		LocationGridUnitMap.Add(GridPosition, GridUnit);
 		GridUnitLocationMap.Add(GridUnit, GridPosition);
 	}
 }
 
-void UGridWorldSubsystem::OnBeginCursorOverGridTile(AActor* Actor)
+void UGridSystemsWorldSubsystem::OnBeginCursorOverGridTile(AActor* Actor)
 {
 	if (AGridTileBase* GridTile = Cast<AGridTileBase>(Actor); IsValid(GridTile))
 	{		
@@ -149,15 +147,15 @@ void UGridWorldSubsystem::OnBeginCursorOverGridTile(AActor* Actor)
 	}
 }
 
-void UGridWorldSubsystem::UpdateTileMapping(AGridTileBase* GridTile)
+void UGridSystemsWorldSubsystem::UpdateTileMapping(AGridTileBase* GridTile)
 {
 }
 
-void UGridWorldSubsystem::UpdateTileMappingsAll()
+void UGridSystemsWorldSubsystem::UpdateTileMappingsAll()
 {
 }
 
-void UGridWorldSubsystem::UpdateUnitMapping(AGridUnitBase* GridUnit)
+void UGridSystemsWorldSubsystem::UpdateUnitMapping(AGridUnitBase* GridUnit)
 {
 	if (!IsValid(GridUnit)) { return; }
 	
@@ -166,12 +164,12 @@ void UGridWorldSubsystem::UpdateUnitMapping(AGridUnitBase* GridUnit)
 	GridUnitLocationMap.Remove(GridUnit);
 
 	// update the unit that has moved	
-	const FGridPosition GridPosition = UGridHelper::CalculateGridPosition(GridInfo, GridUnit);
+	const FGridPosition GridPosition = UGridSystemsUtility::CalculateGridPosition(GridInfo, GridUnit);
 	LocationGridUnitMap.Add(GridPosition, GridUnit);
 	GridUnitLocationMap.Add(GridUnit, GridPosition);
 }
 
-void UGridWorldSubsystem::UpdateUnitMappingsAll()
+void UGridSystemsWorldSubsystem::UpdateUnitMappingsAll()
 {
 	for (AGridUnitBase* GridUnit : GridUnitsAll)
 	{
@@ -179,7 +177,7 @@ void UGridWorldSubsystem::UpdateUnitMappingsAll()
 	}
 }
 
-AGridUnitBase* UGridWorldSubsystem::GetGridUnitOnTile(const AGridTileBase* GridTile) const
+AGridUnitBase* UGridSystemsWorldSubsystem::GetGridUnitOnTile(const AGridTileBase* GridTile) const
 {
 	if (GridTileLocationMap.Contains(GridTile))
 	{
@@ -192,7 +190,7 @@ AGridUnitBase* UGridWorldSubsystem::GetGridUnitOnTile(const AGridTileBase* GridT
 	return nullptr;
 }
 
-AGridTileBase* UGridWorldSubsystem::GetGridTileOfUnit(const AGridUnitBase* GridUnit) const
+AGridTileBase* UGridSystemsWorldSubsystem::GetGridTileOfUnit(const AGridUnitBase* GridUnit) const
 {
 	if (GridUnitLocationMap.Contains(GridUnit))
 	{
@@ -205,11 +203,11 @@ AGridTileBase* UGridWorldSubsystem::GetGridTileOfUnit(const AGridUnitBase* GridU
 	return nullptr;
 }
 
-TArray<AGridTileBase*> UGridWorldSubsystem::GetGridTilesAtRange(FGridPosition StartGridPosition, int32 Range)
+TArray<AGridTileBase*> UGridSystemsWorldSubsystem::GetGridTilesAtRange(FGridPosition StartGridPosition, int32 Range)
 {
 	TArray<AGridTileBase*> Output;
 	TArray<FGridPosition> Temp;
-	UGridHelper::GetManhattanDistance(StartGridPosition, Range, Temp);
+	UGridSystemsUtility::GetManhattanDistance(StartGridPosition, Range, Temp);
 	for (FGridPosition GridLocation : Temp)
 	{
 		if (LocationGridTileMap.Contains(GridLocation))
@@ -221,7 +219,7 @@ TArray<AGridTileBase*> UGridWorldSubsystem::GetGridTilesAtRange(FGridPosition St
 	return Output;
 }
 
-TArray<AGridTileBase*> UGridWorldSubsystem::GetGridTilesAtRanges(
+TArray<AGridTileBase*> UGridSystemsWorldSubsystem::GetGridTilesAtRanges(
 	const FGridPosition StartGridPosition, TArray<int32> Ranges)
 {
 	TSet UniqueRanges(Ranges);
@@ -239,7 +237,7 @@ TArray<AGridTileBase*> UGridWorldSubsystem::GetGridTilesAtRanges(
 	return Output.Array();
 }
 
-void UGridWorldSubsystem::CalculateGridMovement(TArray<FGridMovement>& OutMovement, const AGridUnitBase* GridUnit, const int32 AvailableMovement)
+void UGridSystemsWorldSubsystem::CalculateGridMovement(TArray<FGridMovement>& OutMovement, const AGridUnitBase* GridUnit, const int32 AvailableMovement)
 {
 	if (!GridUnitLocationMap.Contains(GridUnit))
 	{
@@ -309,7 +307,7 @@ void UGridWorldSubsystem::CalculateGridMovement(TArray<FGridMovement>& OutMoveme
 }
 
 # pragma region cursor
-TArray<AActor*> UGridWorldSubsystem::GetCursorByClass(TSubclassOf<AActor> CursorClass)
+TArray<AActor*> UGridSystemsWorldSubsystem::GetCursorByClass(TSubclassOf<AActor> CursorClass)
 {
 	TArray<AActor*> OutActors;
 	if (!CursorClass) return OutActors;
@@ -330,7 +328,7 @@ TArray<AActor*> UGridWorldSubsystem::GetCursorByClass(TSubclassOf<AActor> Cursor
 	return OutActors;
 }
 
-TArray<AActor*> UGridWorldSubsystem::GetCursorsByClass(const TSubclassOf<AActor> CursorClass, int32 Amount)
+TArray<AActor*> UGridSystemsWorldSubsystem::GetCursorsByClass(const TSubclassOf<AActor> CursorClass, int32 Amount)
 {
 	TArray<AActor*> OutActors;
 	if (!CursorClass) return OutActors;

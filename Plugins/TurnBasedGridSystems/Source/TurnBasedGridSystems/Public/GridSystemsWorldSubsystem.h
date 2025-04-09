@@ -4,8 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "Subsystems/WorldSubsystem.h"
-#include "GridStructs.h"
-#include "GridWorldSubsystem.generated.h"
+#include "GridSystemsStructs.h"
+#include "GridSystemsWorldSubsystem.generated.h"
 
 class UObjectPool;
 class AActorObjectPool;
@@ -22,7 +22,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE(FGridUnitAbilityDelegate);
  * organize, manage and broadcast all things related to the grid
  */
 UCLASS(Blueprintable)
-class TURNBASEDGRIDSYSTEMS_API UGridWorldSubsystem : public UWorldSubsystem
+class TURNBASEDGRIDSYSTEMS_API UGridSystemsWorldSubsystem : public UWorldSubsystem
 {
 	GENERATED_BODY()
 

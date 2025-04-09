@@ -4,13 +4,13 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "GridCursor.generated.h"
+#include "GridSystemsCursor.generated.h"
 
 
 class AGridTileBase;
 
 UCLASS()
-class TURNBASEDGRIDSYSTEMS_API AGridCursor : public AActor
+class TURNBASEDGRIDSYSTEMS_API AGridSystemsCursor : public AActor
 {
 	GENERATED_BODY()
 
@@ -18,7 +18,7 @@ protected:
 	virtual void BeginPlay() override;
 	
 public:
-	AGridCursor();
+	AGridSystemsCursor();
 
 	UFUNCTION()
 	void ShowTileCursor(bool bShow);

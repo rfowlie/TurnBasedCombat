@@ -19,7 +19,7 @@ UControllerState_UnitChooseAction::UControllerState_UnitChooseAction()
 }
 
 UControllerState_UnitChooseAction* UControllerState_UnitChooseAction::Create(
-	AGridUnit* InActiveUnit, AGridTile* InTargetTile)
+	AGridUnit* InActiveUnit, AGridTileBase* InTargetTile)
 {
 	UControllerState_UnitChooseAction* Object = NewObject<UControllerState_UnitChooseAction>();
 	Object->ActiveUnit = InActiveUnit;

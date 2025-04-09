@@ -31,7 +31,7 @@ void UCombatWorldSubsystem::InitiateCombat(const FCombatPrediction& InCombatPred
 	CombatOrderIndex = 0;
 
 	// TODO: for now... just move units here...
-	CombatPrediction.CombatInformation.InstigatorUnit->SetActorLocation(CombatPrediction.CombatInformation.InstigatorTile->GetPlacementLocation());	
+	CombatPrediction.CombatInformation.InstigatorUnit->SetActorLocation(CombatPrediction.CombatInformation.InstigatorTile->GetActorLocation() + FVector(0, 0, 5));	
 	bCombatActive = true;
 	if (OnCombatStart.IsBound()) { OnCombatStart.Broadcast(
 		InCombatPrediction.CombatInformation.InstigatorUnit,

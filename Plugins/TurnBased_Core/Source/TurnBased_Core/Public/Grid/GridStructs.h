@@ -11,114 +11,114 @@
 class AGridUnit;
 class AGridTile;
 class UWeapon;
+//
+// USTRUCT(BlueprintType)
+// struct TURNBASED_CORE_API FGridPosition
+// {
+// 	GENERATED_BODY()
+//
+// 	FGridPosition() : X(0), Y(0) {}
+// 	FGridPosition(const int32 ValX, const int32 ValY) : X(ValX), Y(ValY) {}
+// 	
+// 	UPROPERTY(BlueprintReadOnly)
+// 	int32 X;
+// 	
+// 	UPROPERTY(BlueprintReadOnly)
+// 	int32 Y;
+//
+// 	// FOR NOW
+// 	int32 GetDistance(const FGridPosition& Other) const
+// 	{
+// 		// Chebyshev distance
+// 		return FMath::Max(FMath::Abs(Other.X - X), FMath::Abs(Other.Y - Y));
+// 	}
+// 	
+// 	bool operator==(const FGridPosition& Other) const
+// 	{
+// 		return X == Other.X && Y == Other.Y;
+// 	}
+// 	
+// 	bool operator<(const FGridPosition& Other) const
+// 	{
+// 		return (X < Other.X) ? true : (Y < Other.Y) ? true : false;
+// 	}
+//
+// 	FGridPosition operator+(const FGridPosition& Other) const
+// 	{
+// 		return FGridPosition(X + Other.X, Y + Other.Y);
+// 	}
+//
+// 	FGridPosition operator-(const FGridPosition& Other) const
+// 	{
+// 		return FGridPosition(X - Other.X, Y - Other.Y);
+// 	}
+//
+// 	/*
+// 	 * LEARNING
+// 	 * you can have C++ functions on structs
+// 	 */
+// 	// int32 InRange(const FGridPosition& Other) const
+// 	// {
+// 	// 	return FMath::Abs((X - Other.X) + (Y - Other.Y));
+// 	// }
+// };
+//
+// // Define a custom GetTypeHash function for hashing
+// inline uint32 GetTypeHash(const FGridPosition& Struct)
+// {
+// 	// Use a combination of GetTypeHash for FString and int32
+// 	return HashCombineFast(GetTypeHash(Struct.X), GetTypeHash(Struct.Y));
+// }
 
-USTRUCT(BlueprintType)
-struct TURNBASED_CORE_API FGridPosition
-{
-	GENERATED_BODY()
+// USTRUCT(BlueprintType)
+// struct TURNBASED_CORE_API FGridMovement
+// {
+// 	GENERATED_BODY()
+//
+// 	UPROPERTY(BlueprintReadOnly)
+// 	TObjectPtr<AGridTile> GridTile = nullptr;
+//
+// 	UPROPERTY(BlueprintReadOnly)
+// 	TObjectPtr<AGridTile> ParentTile = nullptr;
+// 	
+// 	// UPROPERTY(EditAnywhere, BlueprintReadWrite)
+// 	// FGridPosition GridPosition;
+//
+// 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+// 	int32 Cost = 0;
+//
+// 	// UPROPERTY(BlueprintReadOnly)
+// 	// FGridMovement& ParentNode;
+// 	
+// 	
+// 	bool operator==(const FGridMovement& Other) const
+// 	{
+// 		return GridTile == Other.GridTile;
+// 	}
+// };
+//
+// // Define a custom GetTypeHash function for hashing
+// inline uint32 GetTypeHash(const FGridMovement& Struct)
+// {
+// 	// Use a combination of GetTypeHash for FString and int32
+// 	return GetTypeHash(Struct.GridTile);
+// }
 
-	FGridPosition() : X(0), Y(0) {}
-	FGridPosition(const int32 ValX, const int32 ValY) : X(ValX), Y(ValY) {}
-	
-	UPROPERTY(BlueprintReadOnly)
-	int32 X;
-	
-	UPROPERTY(BlueprintReadOnly)
-	int32 Y;
-
-	// FOR NOW
-	int32 GetDistance(const FGridPosition& Other) const
-	{
-		// Chebyshev distance
-		return FMath::Max(FMath::Abs(Other.X - X), FMath::Abs(Other.Y - Y));
-	}
-	
-	bool operator==(const FGridPosition& Other) const
-	{
-		return X == Other.X && Y == Other.Y;
-	}
-	
-	bool operator<(const FGridPosition& Other) const
-	{
-		return (X < Other.X) ? true : (Y < Other.Y) ? true : false;
-	}
-
-	FGridPosition operator+(const FGridPosition& Other) const
-	{
-		return FGridPosition(X + Other.X, Y + Other.Y);
-	}
-
-	FGridPosition operator-(const FGridPosition& Other) const
-	{
-		return FGridPosition(X - Other.X, Y - Other.Y);
-	}
-
-	/*
-	 * LEARNING
-	 * you can have C++ functions on structs
-	 */
-	// int32 InRange(const FGridPosition& Other) const
-	// {
-	// 	return FMath::Abs((X - Other.X) + (Y - Other.Y));
-	// }
-};
-
-// Define a custom GetTypeHash function for hashing
-inline uint32 GetTypeHash(const FGridPosition& Struct)
-{
-	// Use a combination of GetTypeHash for FString and int32
-	return HashCombineFast(GetTypeHash(Struct.X), GetTypeHash(Struct.Y));
-}
-
-USTRUCT(BlueprintType)
-struct TURNBASED_CORE_API FGridMovement
-{
-	GENERATED_BODY()
-
-	UPROPERTY(BlueprintReadOnly)
-	TObjectPtr<AGridTile> GridTile = nullptr;
-
-	UPROPERTY(BlueprintReadOnly)
-	TObjectPtr<AGridTile> ParentTile = nullptr;
-	
-	// UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	// FGridPosition GridPosition;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	int32 Cost = 0;
-
-	// UPROPERTY(BlueprintReadOnly)
-	// FGridMovement& ParentNode;
-	
-	
-	bool operator==(const FGridMovement& Other) const
-	{
-		return GridTile == Other.GridTile;
-	}
-};
-
-// Define a custom GetTypeHash function for hashing
-inline uint32 GetTypeHash(const FGridMovement& Struct)
-{
-	// Use a combination of GetTypeHash for FString and int32
-	return GetTypeHash(Struct.GridTile);
-}
-
-USTRUCT(BlueprintType)
-struct TURNBASED_CORE_API FGridPair
-{
-	GENERATED_BODY()
-	
-	FGridPair() {}
-	FGridPair(AGridTile* InGridTile, AGridUnit* InGridUnit) : GridTile(InGridTile), GridUnit(InGridUnit) {}
-	
-	UPROPERTY(BlueprintReadOnly)
-	AGridTile* GridTile = nullptr;
-
-	UPROPERTY(BlueprintReadOnly)
-	AGridUnit* GridUnit = nullptr;
-	
-};
+// USTRUCT(BlueprintType)
+// struct TURNBASED_CORE_API FGridPair
+// {
+// 	GENERATED_BODY()
+// 	
+// 	FGridPair() {}
+// 	FGridPair(AGridTile* InGridTile, AGridUnit* InGridUnit) : GridTile(InGridTile), GridUnit(InGridUnit) {}
+// 	
+// 	UPROPERTY(BlueprintReadOnly)
+// 	AGridTile* GridTile = nullptr;
+//
+// 	UPROPERTY(BlueprintReadOnly)
+// 	AGridUnit* GridUnit = nullptr;
+// 	
+// };
 
 USTRUCT(BlueprintType)
 struct TURNBASED_CORE_API FFactionInfo
@@ -290,22 +290,22 @@ struct FCombatScore
 	}
 };
 
-USTRUCT()
-struct FGridUnitArray
-{
-	GENERATED_BODY()
-
-	UPROPERTY()
-	TArray<AGridUnit*> GridUnits;
-	
-};
-
-USTRUCT()
-struct FGridTileArray
-{
-	GENERATED_BODY()
-	
-	UPROPERTY()
-	TArray<AGridTile*> GridTiles;
-	
-};
+// USTRUCT()
+// struct FGridUnitArray
+// {
+// 	GENERATED_BODY()
+//
+// 	UPROPERTY()
+// 	TArray<AGridUnit*> GridUnits;
+// 	
+// };
+//
+// USTRUCT()
+// struct FGridTileArray
+// {
+// 	GENERATED_BODY()
+// 	
+// 	UPROPERTY()
+// 	TArray<AGridTile*> GridTiles;
+// 	
+// };

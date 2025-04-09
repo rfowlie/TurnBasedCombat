@@ -31,7 +31,8 @@ public class TurnBased_Core : ModuleRules
 				"GameplayTags",
 				"GameplayAbilities",
 				"GameplayTasks",
-				"UMG"
+				"UMG",
+				"TurnBasedGridSystems"
 			}
 			);
 			

@@ -2,7 +2,6 @@
 
 
 #include "AI/AIWorldSubsystem.h"
-
 #include "AI/ActionEvaluator_Combat.h"
 #include "Combat/CombatCalculator_Basic.h"
 #include "Combat/CombatWorldSubsystem.h"
@@ -81,7 +80,7 @@ void UAIWorldSubsystem::GetCombatPrediction()
 	// get all possible combats (predictions)
 	for (auto GridUnitTilePair : PossibleAttacksMap)
 	{
-		AGridTile* TargetsGridTile = GridWorldSubsystem->GetGridTileOfUnit(GridUnitTilePair.Key);
+		AGridTileBase* TargetsGridTile = GridWorldSubsystem->GetGridTileOfUnit(GridUnitTilePair.Key);
 		FName TargetWeapon = GridUnitTilePair.Key->GetEquippedWeaponName();
 		for (auto GridTile : GridUnitTilePair.Value.GridTiles)
 		{

@@ -15,9 +15,6 @@ class UTurnManager;
 class AGridUnit;
 class AGridTile;
 struct FCombatDisplayInfo;
-struct FGridPair;
-struct FGridPosition;
-struct FGridMovement;
 
 
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Grid_State_Idle);

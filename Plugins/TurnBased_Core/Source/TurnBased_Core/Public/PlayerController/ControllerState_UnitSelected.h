@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "ControllerState_Abstract.h"
+#include "GridSystemsStructs.h"
 #include "Grid/GridStructs.h"
 #include "ControllerState_UnitSelected.generated.h"
 
@@ -54,7 +55,7 @@ protected:
 	AGridUnit* ActiveUnit = nullptr;
 
 	UPROPERTY()
-	AGridTile* SelectedUnitTile = nullptr;
+	AGridTileBase* SelectedUnitTile = nullptr;
 
 	UPROPERTY()
 	TArray<FGridMovement> GridMovements;
