@@ -2,10 +2,10 @@
 	"FileVersion": 3,
 	"Version": 1,
 	"VersionName": "1.0",
-	"FriendlyName": "Gigafire",
-	"Description": "",
+	"FriendlyName": "ChimeraObjectPooling",
+	"Description": "Object Pooling Utility Plugin",
 	"Category": "Other",
-	"CreatedBy": "Robert Anthony Fowlie",
+	"CreatedBy": "Robert Fowlie",
 	"CreatedByURL": "",
 	"DocsURL": "",
 	"MarketplaceURL": "",
@@ -16,15 +16,9 @@
 	"Installed": false,
 	"Modules": [
 		{
-			"Name": "Gigafire",
+			"Name": "ChimeraObjectPooling",
 			"Type": "Runtime",
 			"LoadingPhase": "Default"
 		}
-	],
-	"Plugins": [
-		{
-			"Name": "EnhancedInput",
-			"Enabled": true
-		}			
 	]
 }

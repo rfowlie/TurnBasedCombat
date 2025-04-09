@@ -2,7 +2,7 @@
 	"FileVersion": 3,
 	"Version": 1,
 	"VersionName": "1.0",
-	"FriendlyName": "Gigafire",
+	"FriendlyName": "TurnBasedGridSystems",
 	"Description": "",
 	"Category": "Other",
 	"CreatedBy": "Robert Anthony Fowlie",
@@ -16,15 +16,19 @@
 	"Installed": false,
 	"Modules": [
 		{
-			"Name": "Gigafire",
+			"Name": "TurnBasedGridSystems",
 			"Type": "Runtime",
 			"LoadingPhase": "Default"
 		}
 	],
 	"Plugins": [
 		{
-			"Name": "EnhancedInput",
+			"Name": "ChimeraObjectPooling",
 			"Enabled": true
-		}			
+		},
+		{
+			"Name": "GameplayAbilities",
+			"Enabled": true
+		}
 	]
 }

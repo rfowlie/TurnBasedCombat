@@ -3,7 +3,7 @@
 
 #include "Combat/CombatCalculator_Basic.h"
 #include "Combat/CombatData.h"
-#include "Grid/GridHelper.h"
+#include "Grid/GridSystemsUtility.h"
 #include "Grid/GridWorldSubsystem.h"
 #include "Tile/GridTile.h"
 #include "Unit/GridUnit.h"
@@ -18,7 +18,7 @@ void UCombatCalculator_Basic::GetCombatPrediction(FCombatPrediction& OutCombatPr
 	GetUnitSnapshotBasic(OutCombatPrediction.InstigatorSnapshotBasic, CombatInformation.InstigatorUnit, CombatInformation.InstigatorWeapon);
 	GetUnitSnapshotBasic(OutCombatPrediction.TargetSnapshotBasic, CombatInformation.TargetUnit, CombatInformation.TargetWeapon);
 	
-	const int32 CombatRange = UGridHelper::CalculateGridPosition(CombatInformation.InstigatorTile).GetDistance(UGridHelper::CalculateGridPosition(CombatInformation.TargetTile));
+	const int32 CombatRange = UGridSystemsUtility::CalculateGridPosition(CombatInformation.InstigatorTile).GetDistance(UGridSystemsUtility::CalculateGridPosition(CombatInformation.TargetTile));
 	OutCombatPrediction.CombatOrder.Empty();
 
 	// only calculate advanced information if unit has correct weapon range
@@ -85,7 +85,7 @@ void UCombatCalculator_Basic::GetCombatOutcome(
 	// Outcome.TargetAttacks *= TargetSnapshot.AttackSpeed - 4 > InstigatorSnapshot.Speed ? 2 : 1;
 
 	// attack order
-	const int32 CombatRange = UGridHelper::CalculateGridPosition(InstigatorUnit).GetDistance(UGridHelper::CalculateGridPosition(TargetUnit));
+	const int32 CombatRange = UGridSystemsUtility::CalculateGridPosition(InstigatorUnit).GetDistance(UGridSystemsUtility::CalculateGridPosition(TargetUnit));
 	Outcome.CombatOrder.Empty();
 	if (InstigatorSnapshot.WeaponTraits.Range == CombatRange)
 	{

@@ -9,7 +9,7 @@
 #include "Combat/CombatCalculator/CombatCalculator.h"
 #include "Combat/CombatCalculator/MoveAbility.h"
 #include "GameplayAbilities/MoveAbilityPayload.h"
-#include "Grid/GridHelper.h"
+#include "Grid/GridSystemsUtility.h"
 #include "Grid/GridStructs.h"
 #include "Grid/Manager/TurnManager.h"
 #include "Grid/Manager/GridRules.h"
@@ -44,7 +44,7 @@ void UGridManager::RegisterGridTile(AGridTile* GridTile)
 		GridTilesAll.AddUnique(GridTile);
 		
 		// add to map
-		FGridPosition GridPosition = UGridHelper::CalculateGridPosition(GridTile);
+		FGridPosition GridPosition = UGridSystemsUtility::CalculateGridPosition(GridTile);
 		LocationGridTileMap.Add(GridPosition, GridTile);
 		GridTileLocationMap.Add(GridTile, GridPosition);
 		
@@ -60,7 +60,7 @@ void UGridManager::RegisterGridUnit(AGridUnit* GridUnit)
 		GridUnitsAll.AddUnique(GridUnit);
 		
 		// add to map
-		FGridPosition GridPosition = UGridHelper::CalculateGridPosition(GridUnit);
+		FGridPosition GridPosition = UGridSystemsUtility::CalculateGridPosition(GridUnit);
 		
 		// TODO: why the double map???
 		LocationGridUnitMap.Add(GridPosition, GridUnit);
@@ -434,7 +434,7 @@ void UGridManager::OnBeginCursorOverGridTile(AActor* Actor)
 		}
 
 		// TODO: simplify this with better tile/unit setup or grid proxy
-		const FGridPosition GridPosition = UGridHelper::CalculateGridPosition(CurrentHoveredTile);
+		const FGridPosition GridPosition = UGridSystemsUtility::CalculateGridPosition(CurrentHoveredTile);
 		if (LocationGridUnitMap.Contains(GridPosition))
 		{
 			CurrentHoveredUnit = LocationGridUnitMap[GridPosition];
@@ -461,7 +461,7 @@ void UGridManager::UpdateUnitMapping(AGridUnit* GridUnit)
 	GridUnitLocationMap.Remove(GridUnit);
 
 	// update the unit that has moved	
-	const FGridPosition GridPosition = UGridHelper::CalculateGridPosition(GridUnit);
+	const FGridPosition GridPosition = UGridSystemsUtility::CalculateGridPosition(GridUnit);
 	LocationGridUnitMap.Add(GridPosition, GridUnit);
 	GridUnitLocationMap.Add(GridUnit, GridPosition);
 }
@@ -696,8 +696,8 @@ void UGridManager::CalculateGridAttacks(TArray<const AGridUnit*> OutGridUnitsInR
 		for (const int32 WeaponRange : WeaponRanges)
 		{
 			TempPositions.Empty();
-			UGridHelper::GetGridPositionsAtRange(
-				UGridHelper::CalculateGridPosition(EnemyUnit), WeaponRange, TempPositions);
+			UGridSystemsUtility::GetGridPositionsAtRange(
+				UGridSystemsUtility::CalculateGridPosition(EnemyUnit), WeaponRange, TempPositions);
 			for (FGridPosition RangePosition : TempPositions)
 			{
 				if (MovementMap.Contains(RangePosition) && MovementMap[RangePosition] == false)
@@ -733,8 +733,8 @@ TArray<FGridPair> UGridManager::CalculateGridAttacks(AGridUnit* GridUnit)
 		for (const int32 WeaponRange : WeaponRanges)
 		{
 			TempPositions.Empty();
-			UGridHelper::GetGridPositionsAtRange(
-				UGridHelper::CalculateGridPosition(EnemyUnit), WeaponRange, TempPositions);
+			UGridSystemsUtility::GetGridPositionsAtRange(
+				UGridSystemsUtility::CalculateGridPosition(EnemyUnit), WeaponRange, TempPositions);
 			for (FGridPosition RangePosition : TempPositions)
 			{
 				if (MovementMap.Contains(RangePosition) && MovementMap[RangePosition] == false)
@@ -770,7 +770,7 @@ TArray<FGridPosition> UGridManager::GetEnemyPositions(const AGridUnit* GridUnit)
 	{
 		if (GridUnit->Execute_GetFaction(GridUnit) != Unit->Execute_GetFaction(Unit))
 		{
-			Positions.AddUnique(UGridHelper::CalculateGridPosition(Unit));
+			Positions.AddUnique(UGridSystemsUtility::CalculateGridPosition(Unit));
 		}		
 	}
 	
@@ -781,7 +781,7 @@ TArray<AGridTile*> UGridManager::GetGridTilesAtRange(FGridPosition StartGridPosi
 {
 	TArray<AGridTile*> Output;
 	TArray<FGridPosition> Temp;
-	UGridHelper::GetGridPositionsAtRange(StartGridPosition, Range, Temp);
+	UGridSystemsUtility::GetGridPositionsAtRange(StartGridPosition, Range, Temp);
 	for (FGridPosition GridLocation : Temp)
 	{
 		if (LocationGridTileMap.Contains(GridLocation))

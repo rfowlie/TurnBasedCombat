@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "GridStructs.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
-#include "GridHelper.generated.h"
+#include "GridSystemsUtility.generated.h"
 
 class AATBGridTile;
 
@@ -13,7 +13,7 @@ class AATBGridTile;
  * 
  */
 UCLASS()
-class TURNBASED_CORE_API UGridHelper : public UBlueprintFunctionLibrary
+class TURNBASED_CORE_API UGridSystemsUtility : public UBlueprintFunctionLibrary
 {
 	GENERATED_BODY()
 

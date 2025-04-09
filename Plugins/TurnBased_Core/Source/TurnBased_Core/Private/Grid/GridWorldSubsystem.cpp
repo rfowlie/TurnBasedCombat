@@ -4,7 +4,7 @@
 #include "Grid/GridWorldSubsystem.h"
 #include "Engine/World.h"
 #include "GameFramework/Actor.h"
-#include "Grid/GridHelper.h"
+#include "Grid/GridSystemsUtility.h"
 #include "Tile/GridTile.h"
 #include "Unit/GridUnit.h"
 #include "Turn/TurnWorldSubsystem.h"
@@ -27,7 +27,7 @@ void UGridWorldSubsystem::RegisterGridTile(AGridTile* GridTile)
 		GridTilesAll.AddUnique(GridTile);
 		
 		// add to map
-		const FGridPosition GridPosition = UGridHelper::CalculateGridPosition(GridTile);
+		const FGridPosition GridPosition = UGridSystemsUtility::CalculateGridPosition(GridTile);
 		LocationGridTileMap.Add(GridPosition, GridTile);
 		GridTileLocationMap.Add(GridTile, GridPosition);
 		
@@ -45,7 +45,7 @@ void UGridWorldSubsystem::RegisterGridUnit(AGridUnit* GridUnit)
 		GridUnitsAll.AddUnique(GridUnit);
 		
 		// add to map
-		FGridPosition GridPosition = UGridHelper::CalculateGridPosition(GridUnit);
+		FGridPosition GridPosition = UGridSystemsUtility::CalculateGridPosition(GridUnit);
 		
 		LocationGridUnitMap.Add(GridPosition, GridUnit);
 		GridUnitLocationMap.Add(GridUnit, GridPosition);
@@ -93,7 +93,7 @@ void UGridWorldSubsystem::OnBeginCursorOverGridTile(AActor* Actor)
 			GridUnitHovered = nullptr;			
 		}
 		
-		const FGridPosition GridPosition = UGridHelper::CalculateGridPosition(GridTileHovered);
+		const FGridPosition GridPosition = UGridSystemsUtility::CalculateGridPosition(GridTileHovered);
 		if (LocationGridUnitMap.Contains(GridPosition))
 		{
 			GridUnitHovered = LocationGridUnitMap[GridPosition];
@@ -123,7 +123,7 @@ void UGridWorldSubsystem::UpdateUnitMapping(AGridUnit* GridUnit)
 	GridUnitLocationMap.Remove(GridUnit);
 
 	// update the unit that has moved	
-	const FGridPosition GridPosition = UGridHelper::CalculateGridPosition(GridUnit);
+	const FGridPosition GridPosition = UGridSystemsUtility::CalculateGridPosition(GridUnit);
 	LocationGridUnitMap.Add(GridPosition, GridUnit);
 	GridUnitLocationMap.Add(GridUnit, GridPosition);
 }
@@ -166,7 +166,7 @@ TArray<AGridTile*> UGridWorldSubsystem::GetGridTilesAtRange(FGridPosition StartG
 {
 	TArray<AGridTile*> Output;
 	TArray<FGridPosition> Temp;
-	UGridHelper::GetGridPositionsAtRange(StartGridPosition, Range, Temp);
+	UGridSystemsUtility::GetGridPositionsAtRange(StartGridPosition, Range, Temp);
 	for (FGridPosition GridLocation : Temp)
 	{
 		if (LocationGridTileMap.Contains(GridLocation))
@@ -279,7 +279,7 @@ void UGridWorldSubsystem::CalculateGridAttacks(
 	TArray<FGridPosition> EnemyPositions;
 	for (auto Unit : EnemyGridUnits)
 	{
-		EnemyPositions.Add(UGridHelper::CalculateGridPosition(Unit));
+		EnemyPositions.Add(UGridSystemsUtility::CalculateGridPosition(Unit));
 	}
 
 	// unit info
@@ -301,8 +301,8 @@ void UGridWorldSubsystem::CalculateGridAttacks(
 		for (const int32 WeaponRange : GameMode->GetCombatCalculator()->GetWeaponRangesByName(GridUnit->GetWeaponsInMap()))
 		{
 			TempPositions.Empty();
-			UGridHelper::GetGridPositionsAtRange(
-				UGridHelper::CalculateGridPosition(EnemyUnit), WeaponRange, TempPositions);
+			UGridSystemsUtility::GetGridPositionsAtRange(
+				UGridSystemsUtility::CalculateGridPosition(EnemyUnit), WeaponRange, TempPositions);
 			for (FGridPosition RangePosition : TempPositions)
 			{
 				if (MovementMap.Contains(RangePosition) && MovementMap[RangePosition] == false)
@@ -332,7 +332,7 @@ void UGridWorldSubsystem::CalculateGridAttackTiles(TMap<AGridTile*, int32>& OutW
 	{
 		if (WeaponRange == 0) { continue; }
 		TArray<FGridPosition> OutWeaponRangePositions;
-		UGridHelper::GetGridPositionsAtRange(UGridHelper::CalculateGridPosition(TargetUnit), WeaponRange, OutWeaponRangePositions);
+		UGridSystemsUtility::GetGridPositionsAtRange(UGridSystemsUtility::CalculateGridPosition(TargetUnit), WeaponRange, OutWeaponRangePositions);
 		for (const FGridPosition GridPosition : OutWeaponRangePositions)
 		{			
 			for (auto GridMovement : InGridMovements)

@@ -1,15 +1,15 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Grid/GridHelper.h"
+#include "Grid/GridSystemsUtility.h"
 
 
-int32 UGridHelper::GetDistanceBetweenGridPositions(const FGridPosition& positionA, const FGridPosition& positionB)
+int32 UGridSystemsUtility::GetDistanceBetweenGridPositions(const FGridPosition& positionA, const FGridPosition& positionB)
 {
 	return FMath::Abs(positionA.X - positionB.X) + FMath::Abs(positionA.Y - positionB.Y);
 }
 
-FGridPosition UGridHelper::CalculateGridPosition(const AActor* Actor)
+FGridPosition UGridSystemsUtility::CalculateGridPosition(const AActor* Actor)
 {
 	FGridPosition GridPosition;
 	if (IsValid(Actor))
@@ -21,7 +21,7 @@ FGridPosition UGridHelper::CalculateGridPosition(const AActor* Actor)
 	return GridPosition;
 }
 
-void UGridHelper::GetGridPositionsAtRange(const FGridPosition StartGridPosition, int32 Range, TArray<FGridPosition>& GridLocations)
+void UGridSystemsUtility::GetGridPositionsAtRange(const FGridPosition StartGridPosition, int32 Range, TArray<FGridPosition>& GridLocations)
 {
 	Range = FMath::Abs(Range);
 	TSet<FGridPosition> Tiles;
@@ -39,7 +39,7 @@ void UGridHelper::GetGridPositionsAtRange(const FGridPosition StartGridPosition,
 	GridLocations = Tiles.Array();
 }
 
-void UGridHelper::GetGridPositionsAtRanges(const FGridPosition StartGridPosition, TArray<int32> Ranges,
+void UGridSystemsUtility::GetGridPositionsAtRanges(const FGridPosition StartGridPosition, TArray<int32> Ranges,
 	TArray<FGridPosition>& GridLocations)
 {
 	TSet UniqueRanges(Ranges);
@@ -60,7 +60,7 @@ void UGridHelper::GetGridPositionsAtRanges(const FGridPosition StartGridPosition
 	GridLocations = GridLocationsSet.Array();
 }
 
-void UGridHelper::GetGridPositionsInRange(const FGridPosition StartGridPosition, int32 Range,
+void UGridSystemsUtility::GetGridPositionsInRange(const FGridPosition StartGridPosition, int32 Range,
                                            TArray<FGridPosition>& GridLocations)
 {
 	Range = FMath::Abs(Range);
