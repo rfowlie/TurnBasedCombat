@@ -11,7 +11,7 @@
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FCombatEvent);
 
 /**
- * 
+ * Object that will contain important information for fire emblem combat in a gameplay ability
  */
 UCLASS(BlueprintType)
 class TURNBASED_CORE_API UCombatEventWrapper : public UObject

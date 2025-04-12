@@ -143,7 +143,7 @@ struct TURNBASED_CORE_API FFactionInfo
 		TArray<AGridUnit*> OutGridUnits;
 		for (auto Pair : GridUnits)
 		{
-			if (Pair.Key->GetHealth() > 0)
+			if (Pair.Key->IsAlive())
 			{
 				OutGridUnits.Add(Pair.Key);
 			}
@@ -157,7 +157,7 @@ struct TURNBASED_CORE_API FFactionInfo
 		GridUnits.GetKeys(Units);
 		for (const AGridUnit* GridUnit : Units)
 		{
-			if (IsValid(GridUnit); GridUnit->GetHealth() > 0)
+			if (IsValid(GridUnit); GridUnit->IsAlive())
 			{
 				GridUnits[GridUnit] = true;
 			}
@@ -194,7 +194,7 @@ struct TURNBASED_CORE_API FFactionInfo
 		GridUnits.GetKeys(Units);
 		for (const AGridUnit* GridUnit : Units)
 		{
-			if (IsValid(GridUnit); GridUnit->GetHealth() > 0)
+			if (IsValid(GridUnit); GridUnit->IsAlive())
 			{
 				return false;
 			}

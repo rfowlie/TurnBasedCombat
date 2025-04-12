@@ -41,6 +41,12 @@ void UAIWorldSubsystem::InitiateTurn(const FGameplayTag FactionTag)
 	UnitsToExecuteTurnsIndex = 0;
 	UnitsToExecuteTurns.Empty();
 	UnitsToExecuteTurns = TurnWorldSubsystem->GetAliveUnitsInFaction(ActiveFaction);
+	if (UnitsToExecuteTurns.Num() == 0)
+	{
+		UE_LOG(LogTemp, Error, TEXT("No enemy units to take action!!"));
+		return;
+	}
+	
 	GetCombatPrediction();
 }
 
@@ -67,6 +73,7 @@ void UAIWorldSubsystem::GetCombatPrediction()
 {
 	if (!UnitsToExecuteTurns.IsValidIndex(UnitsToExecuteTurnsIndex))
 	{
+		// we have reached the end of the array or there are no units in the array
 		EndTurn(ActiveFaction);
 		return;
 	}
@@ -82,10 +89,12 @@ void UAIWorldSubsystem::GetCombatPrediction()
 	for (auto GridUnitTilePair : PossibleAttacksMap)
 	{
 		AGridTile* TargetsGridTile = GridWorldSubsystem->GetGridTileOfUnit(GridUnitTilePair.Key);
-		FName TargetWeapon = GridUnitTilePair.Key->GetEquippedWeaponName();
+		// FName TargetWeapon = GridUnitTilePair.Key->GetEquippedWeaponName();
+		FName TargetWeapon = FName("None");
 		for (auto GridTile : GridUnitTilePair.Value.GridTiles)
 		{
-			for (FName Weapon : ActiveUnit->GetWeaponsInMap())
+			// for (FName Weapon : ActiveUnit->GetWeaponsInMap())
+			for (FName Weapon : TArray<FName>{ "None", "Test" })
 			{
 				FCombatPrediction OutCombatPrediction;
 				FCombatInformation CombatInformation;
@@ -114,7 +123,7 @@ void UAIWorldSubsystem::GetCombatPrediction()
 			FCombatEvaluation ObjectiveCombatEvaluation;
 			CombatEvaluator->GetCombatEvaluation(ObjectiveCombatEvaluation, Prediction);
 			FCombatEvaluation UnitCombatEvaluation;
-			Prediction.CombatInformation.InstigatorUnit->CombatBehaviourComponent->GetCombatEvaluation(UnitCombatEvaluation, Prediction);
+			// Prediction.CombatInformation.InstigatorUnit->CombatBehaviourComponent->GetCombatEvaluation(UnitCombatEvaluation, Prediction);
 
 			// assign evaluation to prediction
 			Prediction.CombatEvaluation = ObjectiveCombatEvaluation * UnitCombatEvaluation;

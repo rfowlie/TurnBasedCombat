@@ -1,27 +1,17 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Combat/CombatWorldSubsystem.h"
-#include "TurnBased_Core_Tags.h"
-#include "Unit/GridUnit.h"
-#include "AI/ActionEvaluator_Combat.h"
-#include "Combat/CombatEventWrapper.h"
+#include "_FireEmblemLike/Combat/FireEmblemCombatFlow.h"
 #include "AbilitySystemBlueprintLibrary.h"
+#include "TurnBased_Core_Tags.h"
+#include "_FireEmblemLike/Combat/FireEmblemCombatGamplayAbilityPayload.h"
 
 
-DEFINE_LOG_CATEGORY(Log_Combat);
-
-void UCombatWorldSubsystem::PostInitialize()
-{
-	Super::PostInitialize();
-	
-}
-
-void UCombatWorldSubsystem::InitiateCombat(const FCombatPrediction& InCombatPrediction)
+void UFireEmblemCombatFlow::InitiateCombat(const FFireEmblemCombatPrediction& InCombatPrediction)
 {
 	if (bCombatActive)
 	{
-		UE_LOG(Log_Combat, Log, TEXT("Initiate Combat while active combat: %s"), *InCombatPrediction.GetString());
+		UE_LOG(LogTemp, Log, TEXT("Initiate Combat while active combat: %s"), *InCombatPrediction.GetString());
 		return;
 	}
 
@@ -33,17 +23,14 @@ void UCombatWorldSubsystem::InitiateCombat(const FCombatPrediction& InCombatPred
 	// TODO: for now... just move units here...
 	CombatPrediction.CombatInformation.InstigatorUnit->SetActorLocation(CombatPrediction.CombatInformation.InstigatorTile->GetPlacementLocation());	
 	bCombatActive = true;
-	if (OnCombatStart.IsBound()) { OnCombatStart.Broadcast(
-		InCombatPrediction.CombatInformation.InstigatorUnit,
-		InCombatPrediction.CombatInformation.TargetUnit
-		); }
+	if (OnCombatStartDelegate.IsBound()) { OnCombatStartDelegate.ExecuteIfBound(CombatPrediction); }
 	
 	SendCombatEventToNextUnit();
 }
 
-void UCombatWorldSubsystem::SendCombatEventToNextUnit()
+void UFireEmblemCombatFlow::SendCombatEventToNextUnit()
 {
-	UE_LOG(Log_Combat, Log, TEXT("Sending CombatEvent to NextUnit"));
+	UE_LOG(LogTemp, Log, TEXT("Sending CombatEvent to NextUnit"));
 	
 	ActiveUnit = CombatPrediction.CombatOrder[CombatOrderIndex];
 	ActiveUnit->GetAbilitySystemComponent()->AbilityActivatedCallbacks.AddUObject(this, &ThisClass::CacheGameplayAbility);
@@ -55,7 +42,7 @@ void UCombatWorldSubsystem::SendCombatEventToNextUnit()
 	EventData.Target = ActiveUnit == CombatPrediction.CombatInformation.InstigatorUnit ?
 		CombatPrediction.CombatInformation.TargetUnit : CombatPrediction.CombatInformation.InstigatorUnit;
 	
-	UCombatEventWrapper* EventWrapper = NewObject<UCombatEventWrapper>();
+	UFireEmblemCombatGamplayAbilityPayload* EventWrapper = NewObject<UFireEmblemCombatGamplayAbilityPayload>();
 	EventWrapper->InstigatorSnapShotAdvanced = ActiveUnit == CombatPrediction.CombatInformation.InstigatorUnit ?
 		CombatPrediction.TargetSnapshotAdvanced : CombatPrediction.InstigatorSnapShotAdvanced;
 	EventData.OptionalObject = EventWrapper;
@@ -63,7 +50,7 @@ void UCombatWorldSubsystem::SendCombatEventToNextUnit()
 	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(ActiveUnit, TAG_Event_Grid_Attack, EventData);
 }
 
-void UCombatWorldSubsystem::CacheGameplayAbility(UGameplayAbility* InGameplayAbility)
+void UFireEmblemCombatFlow::CacheGameplayAbility(UGameplayAbility* InGameplayAbility)
 {
 	/*
 	 * a bit janky, we are hoping that the first gameplay ability triggered on the unit we are
@@ -72,7 +59,7 @@ void UCombatWorldSubsystem::CacheGameplayAbility(UGameplayAbility* InGameplayAbi
 	ActiveGameplayAbility = InGameplayAbility;
 }
 
-void UCombatWorldSubsystem::CheckGameplayAbility(UGameplayAbility* InGameplayAbility)
+void UFireEmblemCombatFlow::CheckGameplayAbility(UGameplayAbility* InGameplayAbility)
 {
 	if (ActiveGameplayAbility == InGameplayAbility)
 	{
@@ -93,7 +80,7 @@ void UCombatWorldSubsystem::CheckGameplayAbility(UGameplayAbility* InGameplayAbi
 			
 			// should call this every time a combat finishes, not just when all units finished (AI)
 			bCombatActive = false;
-			if (OnCombatEnd.IsBound()) { OnCombatEnd.Broadcast(CombatPrediction); }
+			if (OnCombatEndDelegate.IsBound()) { OnCombatEndDelegate.ExecuteIfBound(CombatPrediction); }
 		}
 	}
 }
