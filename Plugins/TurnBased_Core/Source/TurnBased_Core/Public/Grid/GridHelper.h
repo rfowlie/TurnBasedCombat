@@ -43,7 +43,7 @@ public:
 	
 	// returns all grid coordinates that are at the given range
 	UFUNCTION(BlueprintCallable)
-	static void GetGridPositionsAtRange(const FGridPosition StartGridPosition, int32 Range, TArray<FGridPosition>& GridLocations);
+	static void GetGridPositionsAtRange(const FGridPosition StartGridPosition, int32 Range, TArray<FGridPosition>& OutGridPositions);
 
 	UFUNCTION(BlueprintCallable)
 	static void GetGridPositionsAtRanges(const FGridPosition StartGridPosition, TArray<int32> Ranges, TArray<FGridPosition>& GridLocations);

@@ -4,7 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "NativeGameplayTags.h"
-#include "GameplayTagContainer.h"
 
 
 // grid - state

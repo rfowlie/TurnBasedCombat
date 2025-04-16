@@ -204,7 +204,7 @@ bool UControllerState_UnitSelected::SetMovementTiles()
 	if (!GridSubsystem || !TurnSubsystem) { return false; }
 	
 	// calculate movement
-	GridSubsystem->CalculateGridMovement(GridMovements, ActiveUnit, AvailableMovement);
+	GridSubsystem->CalculateGridMovement(GridMovements, ActiveUnit);
 	for (auto GridMovement : GridMovements)
 	{
 		if (AGridUnit* GridUnit = GridSubsystem->GetGridUnitOnTile(GridMovement.GridTile))

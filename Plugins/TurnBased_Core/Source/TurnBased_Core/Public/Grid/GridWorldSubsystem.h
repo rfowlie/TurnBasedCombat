@@ -103,8 +103,8 @@ public:
 	// calculations (could set a class that does all this so that we can swap out calculation types)
 	TArray<AGridTile*> GetGridTilesAtRange(FGridPosition StartGridPosition, int32 Range);
 	TArray<AGridTile*> GetGridTilesAtRanges(const FGridPosition StartGridPosition, TArray<int32> Ranges);
-	void CalculateGridMovement(TArray<FGridMovement>& OutMovement, const AGridUnit* GridUnit, const int32 AvailableMovement);
-	void CalculateGridAttacks(TArray<FGridPair>& OutGridPairs, AGridUnit* GridUnit, const TArray<FGridMovement>& InGridMovements);
+	void CalculateGridMovement(TArray<FGridMovement>& OutMovement, const AGridUnit* GridUnit);
+	// void CalculateGridAttacks(TArray<FGridPair>& OutGridPairs, AGridUnit* GridUnit, const TArray<FGridMovement>& InGridMovements);
 	void CalculateGridAttackTiles(TMap<AGridTile*, int32>& OutWeaponPositions, const TArray<FGridMovement>& InGridMovements, const AGridUnit* InstigatorUnit, const AGridUnit* TargetUnit);
 	
 
@@ -129,8 +129,8 @@ public:
 
 	// Utility Based AI	
 	UFUNCTION()
-	void DisplayAttackHeatMap(FGameplayTag InFactionTag, UGameEventTaskManager* TaskManager);
-	void CalculateMovementScores(TMap<AGridTile*, FGridUnitArray>& AttackHeatMap);
-	void CalculateCombatScores(TArray<FCombatScore>& CombatScores, AGridUnit* InstigatorUnit);
+	// void DisplayAttackHeatMap(FGameplayTag InFactionTag, UGameEventTaskManager* TaskManager);
+	// void CalculateMovementScores(TMap<AGridTile*, FGridUnitArray>& AttackHeatMap);
+	// void CalculateCombatScores(TArray<FCombatScore>& CombatScores, AGridUnit* InstigatorUnit);
 	TMap<AGridUnit*, FGridTileArray> GetEnemiesInRangeWithAttackTiles(AGridUnit* InstigatorUnit);
 };

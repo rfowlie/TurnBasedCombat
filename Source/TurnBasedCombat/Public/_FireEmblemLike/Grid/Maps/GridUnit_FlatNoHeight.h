@@ -4,11 +4,11 @@
 
 #include "CoreMinimal.h"
 #include "UObject/Interface.h"
-#include "FireEmblemUnitInterface.generated.h"
+#include "GridUnit_FlatNoHeight.generated.h"
 
 // This class does not need to be modified.
 UINTERFACE()
-class UFireEmblemUnitInterface : public UInterface
+class UGridUnit_FlatNoHeight : public UInterface
 {
 	GENERATED_BODY()
 };
@@ -16,15 +16,14 @@ class UFireEmblemUnitInterface : public UInterface
 /**
  * 
  */
-class TURNBASEDCOMBAT_API IFireEmblemUnitInterface
+class TURNBASEDCOMBAT_API IGridUnit_FlatNoHeight
 {
 	GENERATED_BODY()
 
 	// Add interface functions to this class. This is the class that will be inherited to implement this interface.
 public:
-	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
-	TArray<FName> GetAllWeaponNames() const;
 	
-	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
-	FName GetEquippedWeaponName() const;
+	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable, meta = (Categories = "Grid User"))
+	int32 GetAvailableMovement() const;
+	
 };

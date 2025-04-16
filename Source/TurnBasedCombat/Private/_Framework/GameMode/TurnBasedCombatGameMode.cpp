@@ -131,7 +131,7 @@ void ATurnBasedCombatGameMode::RegisterGridUnit(AGridUnit* GridUnit)
 	// for example, if the main character in FE dies you lose the level automatically
 	if (WinCondition)
 	{
-		GridUnit->OnDefeat.AddDynamic(WinCondition, &UWinCondition_Abstract::CheckGridUnitDefeated);
+		// GridUnit->OnDefeat.AddDynamic(WinCondition, &UWinCondition_Abstract::CheckGridUnitDefeated);
 	}	
 }
 

@@ -17,7 +17,7 @@ void UGridWorldSubsystem::PostInitialize()
 	Super::PostInitialize();
 
 	UTurnWorldSubsystem* TurnWorldSubsystem = GetWorld()->GetSubsystem<UTurnWorldSubsystem>();
-	TurnWorldSubsystem->OnFactionStart.AddUniqueDynamic(this, &ThisClass::DisplayAttackHeatMap);
+	// TurnWorldSubsystem->OnFactionStart.AddUniqueDynamic(this, &ThisClass::DisplayAttackHeatMap);
 }
 
 void UGridWorldSubsystem::RegisterGridTile(AGridTile* GridTile)
@@ -196,7 +196,7 @@ TArray<AGridTile*> UGridWorldSubsystem::GetGridTilesAtRanges(
 	return Output.Array();
 }
 
-void UGridWorldSubsystem::CalculateGridMovement(TArray<FGridMovement>& OutMovement, const AGridUnit* GridUnit, const int32 AvailableMovement)
+void UGridWorldSubsystem::CalculateGridMovement(TArray<FGridMovement>& OutMovement, const AGridUnit* GridUnit)
 {
 	if (!GridUnitLocationMap.Contains(GridUnit))
 	{
@@ -212,7 +212,14 @@ void UGridWorldSubsystem::CalculateGridMovement(TArray<FGridMovement>& OutMoveme
 		UE_LOG(LogTemp, Error, TEXT("No grid tile at unit location!!"));
 		return;
 	}
+	
+	if (!GridUnit->Implements<UGridUnit_Interface>())
+	{
+		UE_LOG(LogTemp, Error, TEXT("GridUnit does not implement IGridUnit_Inteface!!"));
+		return;
+	}
 
+	int32 AvailableMovement = IGridUnit_Interface::Execute_GetAvailableMovement(GridUnit);
 	// for now just make sure it is clear, might want to add boolean to check to do this...
 	OutMovement.Empty();
  
@@ -265,57 +272,57 @@ void UGridWorldSubsystem::CalculateGridMovement(TArray<FGridMovement>& OutMoveme
 	OutMovement = Processed.Array();
 }
 
-void UGridWorldSubsystem::CalculateGridAttacks(
-	TArray<FGridPair>& OutGridPairs, AGridUnit* GridUnit, const TArray<FGridMovement>& InGridMovements)
-{
-	if (!IsValid(GridUnit)) { return; }
-
-	// get enemy info
-	TArray<AGridUnit*> EnemyGridUnits;
-	if (UTurnWorldSubsystem* TurnSubsystem = GetWorld()->GetSubsystem<UTurnWorldSubsystem>())
-	{
-		TurnSubsystem->GetFactionEnemies(GridUnit, EnemyGridUnits);
-	}
-	TArray<FGridPosition> EnemyPositions;
-	for (auto Unit : EnemyGridUnits)
-	{
-		EnemyPositions.Add(UGridHelper::CalculateGridPosition(Unit));
-	}
-
-	// unit info
-	TMap<int32, TSet<AGridTile*>> RangeTileMap;
-	
-	TMap<FGridPosition, bool> MovementMap;
-	for (const auto GridMovement : InGridMovements)
-	{
-		MovementMap.Add(GridTileLocationMap[GridMovement.GridTile], false);
-	}
-
-	// TODO: for now... need to figure out better way to gain access to weapon information
-	AGameMode_TurnBased_Combat* GameMode = Cast<AGameMode_TurnBased_Combat>(GetWorld()->GetAuthGameMode());
-	if (!GameMode) { return; }
-	
-	TArray<FGridPosition> TempPositions;
-	for (AGridUnit* EnemyUnit : EnemyGridUnits)
-	{
-		for (const int32 WeaponRange : GameMode->GetCombatCalculator()->GetWeaponRangesByName(GridUnit->GetWeaponsInMap()))
-		{
-			TempPositions.Empty();
-			UGridHelper::GetGridPositionsAtRange(
-				UGridHelper::CalculateGridPosition(EnemyUnit), WeaponRange, TempPositions);
-			for (FGridPosition RangePosition : TempPositions)
-			{
-				if (MovementMap.Contains(RangePosition) && MovementMap[RangePosition] == false)
-				{
-					MovementMap[RangePosition] = true;
-					// find the tile that matches with this unit					
-					OutGridPairs.Add(
-						FGridPair(LocationGridTileMap[GridUnitLocationMap[EnemyUnit]], EnemyUnit));
-				}
-			}
-		}		
-	}
-}
+// void UGridWorldSubsystem::CalculateGridAttacks(
+// 	TArray<FGridPair>& OutGridPairs, AGridUnit* GridUnit, const TArray<FGridMovement>& InGridMovements)
+// {
+// 	if (!IsValid(GridUnit)) { return; }
+//
+// 	// get enemy info
+// 	TArray<AGridUnit*> EnemyGridUnits;
+// 	if (UTurnWorldSubsystem* TurnSubsystem = GetWorld()->GetSubsystem<UTurnWorldSubsystem>())
+// 	{
+// 		TurnSubsystem->GetFactionEnemies(GridUnit, EnemyGridUnits);
+// 	}
+// 	TArray<FGridPosition> EnemyPositions;
+// 	for (auto Unit : EnemyGridUnits)
+// 	{
+// 		EnemyPositions.Add(UGridHelper::CalculateGridPosition(Unit));
+// 	}
+//
+// 	// unit info
+// 	TMap<int32, TSet<AGridTile*>> RangeTileMap;
+// 	
+// 	TMap<FGridPosition, bool> MovementMap;
+// 	for (const auto GridMovement : InGridMovements)
+// 	{
+// 		MovementMap.Add(GridTileLocationMap[GridMovement.GridTile], false);
+// 	}
+//
+// 	// TODO: for now... need to figure out better way to gain access to weapon information
+// 	AGameMode_TurnBased_Combat* GameMode = Cast<AGameMode_TurnBased_Combat>(GetWorld()->GetAuthGameMode());
+// 	if (!GameMode) { return; }
+// 	
+// 	TArray<FGridPosition> TempPositions;
+// 	for (AGridUnit* EnemyUnit : EnemyGridUnits)
+// 	{
+// 		for (const int32 WeaponRange : GameMode->GetCombatCalculator()->GetWeaponRangesByName(GridUnit->GetWeaponsInMap()))
+// 		{
+// 			TempPositions.Empty();
+// 			UGridHelper::GetGridPositionsAtRange(
+// 				UGridHelper::CalculateGridPosition(EnemyUnit), WeaponRange, TempPositions);
+// 			for (FGridPosition RangePosition : TempPositions)
+// 			{
+// 				if (MovementMap.Contains(RangePosition) && MovementMap[RangePosition] == false)
+// 				{
+// 					MovementMap[RangePosition] = true;
+// 					// find the tile that matches with this unit					
+// 					OutGridPairs.Add(
+// 						FGridPair(LocationGridTileMap[GridUnitLocationMap[EnemyUnit]], EnemyUnit));
+// 				}
+// 			}
+// 		}
+// 	}
+// }
 
 // calculate attack tiles for a single enemy unit
 // TODO: we could make this more robust and have specific rules around weapon types and ranges, etc.
@@ -328,7 +335,8 @@ void UGridWorldSubsystem::CalculateGridAttackTiles(TMap<AGridTile*, int32>& OutW
 	AGameMode_TurnBased_Combat* GameMode = Cast<AGameMode_TurnBased_Combat>(GetWorld()->GetAuthGameMode());
 	if (!GameMode) { return; }
 	
-	for (auto WeaponRange : GameMode->GetCombatCalculator()->GetWeaponRangesByName(InstigatorUnit->GetWeaponsInMap()))
+	// for (auto WeaponRange : GameMode->GetCombatCalculator()->GetWeaponRangesByName(InstigatorUnit->GetWeaponsInMap()))
+	for (auto WeaponRange : TArray<int32>())
 	{
 		if (WeaponRange == 0) { continue; }
 		TArray<FGridPosition> OutWeaponRangePositions;
@@ -343,8 +351,7 @@ void UGridWorldSubsystem::CalculateGridAttackTiles(TMap<AGridTile*, int32>& OutW
 				}
 			}
 		}
-	}
-	
+	}	
 }
 
 
@@ -407,103 +414,54 @@ void UGridWorldSubsystem::OnGridUnitAbilityEnded(UGameplayAbility* InGameplayAbi
 	// }
 }
 
-void UGridWorldSubsystem::DisplayAttackHeatMap(FGameplayTag InFactionTag, UGameEventTaskManager* TaskManager)
-{
-	TMap<AGridTile*, FGridUnitArray> AttackHeatMap;
-	CalculateMovementScores(AttackHeatMap);
-	for (auto Pair : AttackHeatMap)
-	{		
-		Pair.Key->SetAttackHeatMapValues(Pair.Value.GridUnits.Num(), 0, 0);
-	}
-}
+// void UGridWorldSubsystem::DisplayAttackHeatMap(FGameplayTag InFactionTag, UGameEventTaskManager* TaskManager)
+// {
+// 	TMap<AGridTile*, FGridUnitArray> AttackHeatMap;
+// 	CalculateMovementScores(AttackHeatMap);
+// 	for (auto Pair : AttackHeatMap)
+// 	{		
+// 		Pair.Key->SetAttackHeatMapValues(Pair.Value.GridUnits.Num(), 0, 0);
+// 	}
+// }
 
-void UGridWorldSubsystem::CalculateMovementScores(TMap<AGridTile*, FGridUnitArray>& AttackHeatMap)
-{
-	AGameMode_TurnBased_Combat* GameMode = Cast<AGameMode_TurnBased_Combat>(GetWorld()->GetAuthGameMode());
-	
-	// get every attackable tile of every unit, and create a master map...
-	for (auto GridUnit : GridUnitsAll)
-	{
-		TArray<FGridMovement> GridMovements;
-		CalculateGridMovement(GridMovements, GridUnit, GridUnit->GetAvailableMovement());
-
-		// get all weapon ranges
-		TArray<int32> WeaponRanges;
-		for (auto Weapon : GridUnit->GetWeaponsInMap())
-		{
-			FWeaponTraits WeaponTrait;
-			GameMode->GetCombatCalculator()->GetWeaponTraitsByName(WeaponTrait, Weapon);
-			WeaponRanges.AddUnique(WeaponTrait.Range);
-		}
-
-		// loop over all movement tiles and get tiles at range
-		TSet<AGridTile*> AttackableTiles;
-		for (auto GridMovement : GridMovements)
-		{
-			AttackableTiles.Append(
-				GetGridTilesAtRanges(GridTileLocationMap[GridMovement.GridTile], WeaponRanges));
-		}
-
-		for (auto AttackableTile : AttackableTiles)
-		{
-			if (!AttackHeatMap.Contains(AttackableTile))
-			{
-				AttackHeatMap.Add(AttackableTile, FGridUnitArray());
-			}
-
-			AttackHeatMap[AttackableTile].GridUnits.AddUnique(GridUnit);
-		}
-	}
-}
-
-// find all possible combats a unit can do (enemies in range)
-void UGridWorldSubsystem::CalculateCombatScores(TArray<FCombatScore>& CombatScores, AGridUnit* InstigatorUnit)
-{
-	AGameMode_TurnBased_Combat* GameMode = Cast<AGameMode_TurnBased_Combat>(GetWorld()->GetAuthGameMode());
-		
-	// get instigator movement
-	TArray<FGridMovement> GridMovements;
-	CalculateGridMovement(GridMovements, InstigatorUnit, InstigatorUnit->GetAvailableMovement());
-	
-	// get enemies of instigator
-	UTurnWorldSubsystem* TurnSubsystem = GetWorld()->GetSubsystem<UTurnWorldSubsystem>();
-	TArray<AGridUnit*> TargetUnits;
-	TurnSubsystem->GetFactionEnemies(InstigatorUnit, TargetUnits);
-	
-	// for every enemy, get tiles from which instigator can attack the target from
-	for (const auto Target : TargetUnits)
-	{
-		TMap<AGridTile*, int32> AttackTiles;
-		CalculateGridAttackTiles(AttackTiles, GridMovements, InstigatorUnit, Target);
-
-		// check if not able to attack this enemy
-		if (AttackTiles.IsEmpty()) { continue; }
-		
-		for (auto Tile : AttackTiles)
-		{
-			for (auto Weapon : InstigatorUnit->WeaponInventoryMap)
-			{
-				FWeaponTraits WeaponTraits;
-				GameMode->GetCombatCalculator()->GetWeaponTraitsByName(WeaponTraits, Weapon.Key);
-				if (WeaponTraits.Range == Tile.Value)
-				{
-					FCombatScore CombatScore;
-					CombatScore.InstigatorUnit = InstigatorUnit;
-					CombatScore.InstigatorTile = Tile.Key;
-					CombatScore.InstigatorWeapon = Weapon.Key;
-					CombatScore.TargetUnit = Target;
-					CombatScore.TargetTile = nullptr;
-					CombatScore.TargetWeapon = Target->GetEquippedWeaponName();
-					GameMode->GetCombatCalculator()->CalculateCombatScore(CombatScore);
-					CombatScores.Add(CombatScore);
-				}				
-			}
-		}
-	}
-
-	// sort scores
-	CombatScores.Sort();
-}
+// void UGridWorldSubsystem::CalculateMovementScores(TMap<AGridTile*, FGridUnitArray>& AttackHeatMap)
+// {
+// 	AGameMode_TurnBased_Combat* GameMode = Cast<AGameMode_TurnBased_Combat>(GetWorld()->GetAuthGameMode());
+// 	
+// 	// get every attackable tile of every unit, and create a master map...
+// 	for (auto GridUnit : GridUnitsAll)
+// 	{
+// 		TArray<FGridMovement> GridMovements;
+// 		CalculateGridMovement(GridMovements, GridUnit);
+//
+// 		// get all weapon ranges
+// 		TArray<int32> WeaponRanges;
+// 		for (auto Weapon : GridUnit->GetWeaponsInMap())
+// 		{
+// 			FWeaponTraits WeaponTrait;
+// 			GameMode->GetCombatCalculator()->GetWeaponTraitsByName(WeaponTrait, Weapon);
+// 			WeaponRanges.AddUnique(WeaponTrait.Range);
+// 		}
+//
+// 		// loop over all movement tiles and get tiles at range
+// 		TSet<AGridTile*> AttackableTiles;
+// 		for (auto GridMovement : GridMovements)
+// 		{
+// 			AttackableTiles.Append(
+// 				GetGridTilesAtRanges(GridTileLocationMap[GridMovement.GridTile], WeaponRanges));
+// 		}
+//
+// 		for (auto AttackableTile : AttackableTiles)
+// 		{
+// 			if (!AttackHeatMap.Contains(AttackableTile))
+// 			{
+// 				AttackHeatMap.Add(AttackableTile, FGridUnitArray());
+// 			}
+//
+// 			AttackHeatMap[AttackableTile].GridUnits.AddUnique(GridUnit);
+// 		}
+// 	}
+// }
 
 TMap<AGridUnit*, FGridTileArray> UGridWorldSubsystem::GetEnemiesInRangeWithAttackTiles(AGridUnit* InstigatorUnit)
 {
@@ -513,7 +471,7 @@ TMap<AGridUnit*, FGridTileArray> UGridWorldSubsystem::GetEnemiesInRangeWithAttac
 		
 	// get instigator movement
 	TArray<FGridMovement> GridMovements;
-	CalculateGridMovement(GridMovements, InstigatorUnit, InstigatorUnit->GetAvailableMovement());
+	CalculateGridMovement(GridMovements, InstigatorUnit);
 	
 	// get enemies of instigator, FOW NOW only target alive units
 	UTurnWorldSubsystem* TurnSubsystem = GetWorld()->GetSubsystem<UTurnWorldSubsystem>();

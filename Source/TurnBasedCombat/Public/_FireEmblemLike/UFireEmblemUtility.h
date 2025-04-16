@@ -6,11 +6,14 @@
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "UFireEmblemUtility.generated.h"
 
+class AFireEmblemUnit;
+
 /**
  * 
  */
-UCLASS()
+UCLASS(Blueprintable)
 class TURNBASEDCOMBAT_API UFireEmblemUtility : public UBlueprintFunctionLibrary
 {
 	GENERATED_BODY()
+
 };

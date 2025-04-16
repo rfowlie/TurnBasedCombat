@@ -4,11 +4,14 @@
 
 #include "CoreMinimal.h"
 #include "UObject/Interface.h"
-#include "FireEmblemUnitInterface.generated.h"
+#include "GridUnitMovementPolicy.generated.h"
+
+class AGridTile;
+class AGridUnit;
 
 // This class does not need to be modified.
 UINTERFACE()
-class UFireEmblemUnitInterface : public UInterface
+class UGridUnitMovementPolicy : public UInterface
 {
 	GENERATED_BODY()
 };
@@ -16,15 +19,12 @@ class UFireEmblemUnitInterface : public UInterface
 /**
  * 
  */
-class TURNBASEDCOMBAT_API IFireEmblemUnitInterface
+class TURNBASED_CORE_API IGridUnitMovementPolicy
 {
 	GENERATED_BODY()
 
 	// Add interface functions to this class. This is the class that will be inherited to implement this interface.
 public:
-	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
-	TArray<FName> GetAllWeaponNames() const;
-	
-	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
-	FName GetEquippedWeaponName() const;
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	bool CanMoveToTile(const AGridUnit* Unit, const AGridTile* From, const AGridTile* To) const;
 };

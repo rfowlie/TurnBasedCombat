@@ -24,14 +24,7 @@ struct TURNBASED_CORE_API FGridPosition
 	int32 X;
 	
 	UPROPERTY(BlueprintReadOnly)
-	int32 Y;
-
-	// FOR NOW
-	int32 GetDistance(const FGridPosition& Other) const
-	{
-		// Chebyshev distance
-		return FMath::Max(FMath::Abs(Other.X - X), FMath::Abs(Other.Y - Y));
-	}
+	int32 Y;	
 	
 	bool operator==(const FGridPosition& Other) const
 	{
@@ -40,7 +33,10 @@ struct TURNBASED_CORE_API FGridPosition
 	
 	bool operator<(const FGridPosition& Other) const
 	{
-		return (X < Other.X) ? true : (Y < Other.Y) ? true : false;
+		if (X < Other.X) return true;
+		else if (Y < Other.Y) return true;
+		return false;
+		// return (X < Other.X) ? true : (Y < Other.Y) ? true : false;
 	}
 
 	FGridPosition operator+(const FGridPosition& Other) const
@@ -53,14 +49,12 @@ struct TURNBASED_CORE_API FGridPosition
 		return FGridPosition(X - Other.X, Y - Other.Y);
 	}
 
-	/*
-	 * LEARNING
-	 * you can have C++ functions on structs
-	 */
-	// int32 InRange(const FGridPosition& Other) const
-	// {
-	// 	return FMath::Abs((X - Other.X) + (Y - Other.Y));
-	// }
+	// utility
+	int32 GetDistance(const FGridPosition& Other) const
+	{
+		// Chebyshev distance
+		return FMath::Max(FMath::Abs(Other.X - X), FMath::Abs(Other.Y - Y));
+	}
 };
 
 // Define a custom GetTypeHash function for hashing

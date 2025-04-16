@@ -81,8 +81,8 @@ void UCombatWorldSubsystem::CheckGameplayAbility(UGameplayAbility* InGameplayAbi
 		CombatOrderIndex++;
 
 		if (CombatPrediction.CombatOrder.IsValidIndex(CombatOrderIndex) &&
-			CombatPrediction.CombatInformation.InstigatorUnit->GetHealth() > 0 &&
-			CombatPrediction.CombatInformation.TargetUnit->GetHealth() > 0)
+			CombatPrediction.CombatInformation.InstigatorUnit->IsAlive() &&
+			CombatPrediction.CombatInformation.TargetUnit->IsAlive())
 		{
 			SendCombatEventToNextUnit();
 		}

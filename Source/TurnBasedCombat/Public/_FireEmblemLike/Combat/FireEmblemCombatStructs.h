@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "Tile/GridTile.h"
 #include "_FireEmblemLike/Unit/FireEmblemUnit.h"
-
+#include "FireEmblemCombatStructs.generated.h"
 
 # pragma region Weapon
 

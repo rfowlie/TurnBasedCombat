@@ -55,7 +55,7 @@ void UCombatCalculator_Basic::GetCombatOutcome(
 	FCombatSnapshot_Basic InstigatorSnapshot;
 	GetUnitSnapshotBasic(InstigatorSnapshot, InstigatorUnit, WeaponName);
 	FCombatSnapshot_Basic TargetSnapshot;
-	GetUnitSnapshotBasic(TargetSnapshot, TargetUnit, TargetUnit->GetEquippedWeaponName());
+	// GetUnitSnapshotBasic(TargetSnapshot, TargetUnit, TargetUnit->GetEquippedWeaponName());
 
 	// THE HARD WAY
 	// check if target can attack first (special attributes or skills, etc.)

@@ -173,7 +173,7 @@ bool UTurnWorldSubsystem::RegisterGridUnit(AGridUnit* InGridUnit)
 	// check faction defeated when unit defeated
 	InGridUnit->OnDefeat.AddDynamic(this, &ThisClass::CheckFactionDefeated);
 	
-	FGameplayTag FactionTag = InGridUnit->Execute_GetFactionOther(InGridUnit);
+	FGameplayTag FactionTag = InGridUnit->Execute_GetFaction(InGridUnit);
 	if (FactionMap.Contains(FactionTag))
 	{
 		FactionMap[FactionTag].GridUnits.Add(InGridUnit);

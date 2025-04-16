@@ -14,9 +14,7 @@ AGridUnit::AGridUnit()
 {
 	PrimaryActorTick.bCanEverTick = true;
 
-	// AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
-	// AttributeSet_GridUnit = CreateDefaultSubobject<UGridUnitAttributeSet>(TEXT("AttributeSet_GridUnit"));
-	// CombatBehaviourComponent = CreateDefaultSubobject<UGridUnitBehaviourComponent>(TEXT("CombatBehaviourComponent"));
+	AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
 }
 
 void AGridUnit::Tick(float DeltaTime)

@@ -133,16 +133,16 @@ bool UGridProxy::SetCanTargetFromTiles(UGridProxy* Other, bool Activate)
 	CurrentCanAttackFromTiles.Empty();
 	for (auto GridMovement: GridMovements)
 	{
-		for (const int32 WeaponRange : GridUnit->GetWeaponRanges())
-		{
-			if (UGridHelper::GetDistanceBetweenGridPositions(
-			UGridHelper::CalculateGridPosition(GridMovement.GridTile),
-			Other->GetGridPosition()) == WeaponRange)
-			{
-				CurrentCanAttackFromTiles.AddUnique(GridMovement);
-				break;
-			}
-		}
+		// for (const int32 WeaponRange : GridUnit->GetWeaponRanges())
+		// {
+		// 	if (UGridHelper::GetDistanceBetweenGridPositions(
+		// 	UGridHelper::CalculateGridPosition(GridMovement.GridTile),
+		// 	Other->GetGridPosition()) == WeaponRange)
+		// 	{
+		// 		CurrentCanAttackFromTiles.AddUnique(GridMovement);
+		// 		break;
+		// 	}
+		// }
 	}
 
 	// set state for tiles

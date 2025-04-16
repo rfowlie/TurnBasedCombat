@@ -9,6 +9,7 @@
 #include "Unit/GridUnit.h"
 #include "Unit/GridUnitAttributeSet.h"
 #include "Unit/GridUnit_Interface.h"
+#include "_FireEmblemLike/Grid/Maps/GridUnit_FlatNoHeight.h"
 #include "FireEmblemUnit.generated.h"
 
 class UAbilityAsync_WaitAttributeChanged;
@@ -19,7 +20,7 @@ class UGridUnitAttributeSet;
 // DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FGridUnitEventDelegate, AFireEmblemUnit*, GridUnit);
 
 UCLASS(Blueprintable, BlueprintType)
-class TURNBASEDCOMBAT_API AFireEmblemUnit : public AGridUnit, public IAbilitySystemInterface, public IGridUnit_Interface
+class TURNBASEDCOMBAT_API AFireEmblemUnit : public AGridUnit, public IGridUnit_FlatNoHeight
 {
 	GENERATED_BODY()
 
@@ -29,13 +30,10 @@ protected:
 public:
 	AFireEmblemUnit();
 	virtual void Tick(float DeltaTime) override;
-
+	
 	// Ability System ~ start
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	UGridUnitAttributeSet* AttributeSet_GridUnit;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	UAbilitySystemComponent* AbilitySystemComponent;
-	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override { return AbilitySystemComponent; }
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TSubclassOf<UGameplayAbility> GameplayAbilityClass_Move;	
@@ -49,9 +47,6 @@ public:
 	
 	UFUNCTION(BlueprintCallable)
 	int32 GetHealth() const { return AttributeSet_GridUnit->GetHealth(); }
-	
-	UPROPERTY(BlueprintAssignable)
-	FGridUnitEventDelegate OnDefeat;
 	
 protected:
 	UFUNCTION(BlueprintImplementableEvent)

@@ -187,10 +187,10 @@ void UControllerState_Attack_TileSelected::SetPredictionWidget()
 	FCombatInformation CombatInformation;
 	CombatInformation.InstigatorUnit = InstigatorUnit;
 	CombatInformation.InstigatorTile = TileSelected;
-	CombatInformation.InstigatorWeapon = InstigatorUnit->GetEquippedWeaponName();
+	// CombatInformation.InstigatorWeapon = InstigatorUnit->GetEquippedWeaponName();
 	CombatInformation.TargetUnit = TargetUnit;
 	CombatInformation.TargetTile = GridWorldSubsystem->GetGridTileOfUnit(TargetUnit);
-	CombatInformation.TargetWeapon = TargetUnit->GetEquippedWeaponName();
+	// CombatInformation.TargetWeapon = TargetUnit->GetEquippedWeaponName();
 
 	// reset the struct every time???
 	CombatPrediction = FCombatPrediction();

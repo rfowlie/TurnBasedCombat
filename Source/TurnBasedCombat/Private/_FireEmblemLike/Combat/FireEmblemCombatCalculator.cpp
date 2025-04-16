@@ -15,7 +15,8 @@ void UFireEmblemCombatCalculator::CalculateAllCombatPredictions(
 	UGridWorldSubsystem* GridWorldSubsystem = GetWorld()->GetSubsystem<UGridWorldSubsystem>();
 	
 	TArray<FFireEmblemCombatPrediction> CombatPredictions;
-	TMap<AFireEmblemUnit*, FGridTileArray> PossibleAttacksMap = GridWorldSubsystem->GetEnemiesInRangeWithAttackTiles(ActiveUnit);
+	// TMap<AFireEmblemUnit*, FGridTileArray> PossibleAttacksMap = GridWorldSubsystem->GetEnemiesInRangeWithAttackTiles(ActiveUnit);
+	TMap<AGridUnit*, FGridTileArray> PossibleAttacksMap = GridWorldSubsystem->GetEnemiesInRangeWithAttackTiles(ActiveUnit);
 
 	// get all possible combats (predictions)
 	for (auto GridUnitTilePair : PossibleAttacksMap)
@@ -23,7 +24,7 @@ void UFireEmblemCombatCalculator::CalculateAllCombatPredictions(
 		AFireEmblemUnit* FireEmblemUnit = Cast<AFireEmblemUnit>(GridUnitTilePair.Key);
 		if (!FireEmblemUnit) { continue; }
 		
-		AFireEmblemUnit* TargetsGridTile = GridWorldSubsystem->GetGridTileOfUnit(GridUnitTilePair.Key);
+		AGridTile* TargetsGridTile = GridWorldSubsystem->GetGridTileOfUnit(GridUnitTilePair.Key);
 		const FName TargetWeapon = IFireEmblemUnitInterface::Execute_GetEquippedWeaponName(GridUnitTilePair.Key);
 		for (const auto GridTile : GridUnitTilePair.Value.GridTiles)
 		{

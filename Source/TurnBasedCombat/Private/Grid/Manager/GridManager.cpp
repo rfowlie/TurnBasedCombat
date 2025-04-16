@@ -678,7 +678,8 @@ void UGridManager::CalculateGridMovement(TArray<FGridMovement>& OutMovement, AGr
 void UGridManager::CalculateGridAttacks(TArray<const AGridUnit*> OutGridUnitsInRange, AGridUnit* GridUnit)
 {	
 	TMap<int32, TSet<AGridTile*>> RangeTileMap;
-	TSet<int32> WeaponRanges = GridUnit->GetWeaponRanges();
+	// TSet<int32> WeaponRanges = GridUnit->GetWeaponRanges();
+	TSet<int32> WeaponRanges;
 	TArray<FGridPosition> EnemyPositions = GetEnemyPositions(GridUnit);
 	TArray<AGridUnit*> EnemyGridUnits;
 	GetEnemyUnits(EnemyGridUnits, GridUnit);
@@ -715,7 +716,8 @@ TArray<FGridPair> UGridManager::CalculateGridAttacks(AGridUnit* GridUnit)
 	TArray<FGridPair> OutGridPairs;
 
 	TMap<int32, TSet<AGridTile*>> RangeTileMap;
-	TSet<int32> WeaponRanges = GridUnit->GetWeaponRanges();
+	// TSet<int32> WeaponRanges = GridUnit->GetWeaponRanges();
+	TSet<int32> WeaponRanges;
 	TArray<FGridPosition> EnemyPositions = GetEnemyPositions(GridUnit);
 	TArray<AGridUnit*> EnemyGridUnits;
 	GetEnemyUnits(EnemyGridUnits, GridUnit);

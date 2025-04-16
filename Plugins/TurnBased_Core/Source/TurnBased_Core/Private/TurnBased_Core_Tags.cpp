@@ -2,6 +2,8 @@
 
 
 #include "TurnBased_Core_Tags.h"
+#include "GameplayTags.h"
+#include "GameplayTagContainer.h"
 
 
 // grid - state

@@ -24,6 +24,7 @@ public class TurnBasedCombat : ModuleRules
 
 		PrivateDependencyModuleNames.AddRange(new string[]
 		{
+			"GameplayTags",
 			"TurnBased_Core"
 		});
 

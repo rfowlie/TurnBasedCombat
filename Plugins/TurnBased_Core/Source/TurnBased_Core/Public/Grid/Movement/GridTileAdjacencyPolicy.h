@@ -4,11 +4,13 @@
 
 #include "CoreMinimal.h"
 #include "UObject/Interface.h"
-#include "FireEmblemUnitInterface.generated.h"
+#include "GridTileAdjacencyPolicy.generated.h"
+
+class AGridTile;
 
 // This class does not need to be modified.
-UINTERFACE()
-class UFireEmblemUnitInterface : public UInterface
+UINTERFACE(Blueprintable)
+class UGridTileAdjacencyPolicy : public UInterface
 {
 	GENERATED_BODY()
 };
@@ -16,15 +18,12 @@ class UFireEmblemUnitInterface : public UInterface
 /**
  * 
  */
-class TURNBASEDCOMBAT_API IFireEmblemUnitInterface
+class TURNBASED_CORE_API IGridTileAdjacencyPolicy
 {
 	GENERATED_BODY()
 
 	// Add interface functions to this class. This is the class that will be inherited to implement this interface.
 public:
-	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
-	TArray<FName> GetAllWeaponNames() const;
-	
-	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
-	FName GetEquippedWeaponName() const;
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	void GetAdjacent(const AGridTile* From, TArray<AGridTile*>& OutTiles);
 };

@@ -46,6 +46,9 @@ public:
 	AGridUnit();
 	virtual void Tick(float DeltaTime) override;
 
+	UPROPERTY(BlueprintAssignable)
+	FGridUnitEventDelegate OnDefeat;
+	
 	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
 	void SetState(const FGameplayTag& State);
 	
@@ -54,5 +57,8 @@ public:
 
 	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
 	bool IsAlive() const;
-	
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+    UAbilitySystemComponent* AbilitySystemComponent;
+    virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override { return AbilitySystemComponent; }
 };

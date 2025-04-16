@@ -21,7 +21,7 @@ FGridPosition UGridHelper::CalculateGridPosition(const AActor* Actor)
 	return GridPosition;
 }
 
-void UGridHelper::GetGridPositionsAtRange(const FGridPosition StartGridPosition, int32 Range, TArray<FGridPosition>& GridLocations)
+void UGridHelper::GetGridPositionsAtRange(const FGridPosition StartGridPosition, int32 Range, TArray<FGridPosition>& OutGridPositions)
 {
 	Range = FMath::Abs(Range);
 	TSet<FGridPosition> Tiles;
@@ -36,7 +36,7 @@ void UGridHelper::GetGridPositionsAtRange(const FGridPosition StartGridPosition,
 		Tiles.Add(FGridPosition(StartGridPosition.X + i, StartGridPosition.Y - (FMath::Abs(i) - Range)));
 	}
 
-	GridLocations = Tiles.Array();
+	OutGridPositions = Tiles.Array();
 }
 
 void UGridHelper::GetGridPositionsAtRanges(const FGridPosition StartGridPosition, TArray<int32> Ranges,

@@ -11,7 +11,7 @@ struct FGameplayTag;
 
 
 // This class does not need to be modified.
-UINTERFACE()
+UINTERFACE(BlueprintType)
 class UGridUnit_Interface : public UInterface
 {
 	GENERATED_BODY()
@@ -28,8 +28,7 @@ class TURNBASED_CORE_API IGridUnit_Interface
 public:
 	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable, meta = (Categories = "Faction"))
 	FGameplayTag GetFaction() const;
-	
-	UFUNCTION(BlueprintNativeEvent)
-	FGameplayTag GetFactionOther() const;
 
+	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable, meta = (Categories = "Grid"))
+	int32 GetAvailableMovement() const;
 };

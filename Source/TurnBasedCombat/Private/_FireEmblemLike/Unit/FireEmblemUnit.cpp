@@ -9,7 +9,6 @@ AFireEmblemUnit::AFireEmblemUnit()
 {
 	PrimaryActorTick.bCanEverTick = true;
 
-	AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
 	AttributeSet_GridUnit = CreateDefaultSubobject<UGridUnitAttributeSet>(TEXT("AttributeSet_GridUnit"));
 	CombatBehaviourComponent = CreateDefaultSubobject<UGridUnitBehaviourComponent>(TEXT("CombatBehaviourComponent"));
 }
@@ -81,11 +80,6 @@ void AFireEmblemUnit::NotifyHealthZero()
 	// if (OnDefeat.IsBound()) { OnDefeat.Broadcast(this); }
 }
 
-int32 AFireEmblemUnit::GetAvailableMovement() const
-{
-	return AttributeSet_GridUnit->GetMovement();
-}
-
 void AFireEmblemUnit::SetEquippedWeapon(FGameplayTag WeaponToEquip)
 {
 	if (WeaponsInventory.HasTagExact(WeaponToEquip))
@@ -135,21 +129,4 @@ TArray<FName> AFireEmblemUnit::GetWeaponsInMap() const
 	TArray<FName> Keys;
 	WeaponInventoryMap.GetKeys(Keys);
 	return Keys;
-}
-
-/*
- * NOTE
- * This is the setup because we cannot figure out how to get OnGameplayAbilityEnded to fucking fire...
- * so instead we create an event for each expected ability, and fire the event when the ability finishes
- */
-void AFireEmblemUnit::OnAbilityEnded(const FAbilityEndedData& Data)
-{
-	// if (Data.AbilitySpecHandle == GameplayAbilitySpecHandle_Move)
-	// {
-	// 	if (OnAbilityMoveEnd.IsBound()) { OnAbilityMoveEnd.Broadcast(); }		
-	// }
-	// if (Data.AbilitySpecHandle == GameplayAbilitySpecHandle_Attack)
-	// {
-	// 	if (OnAbilityAttackEnd.IsBound()) { OnAbilityAttackEnd.Broadcast(); }		
-	// }
 }

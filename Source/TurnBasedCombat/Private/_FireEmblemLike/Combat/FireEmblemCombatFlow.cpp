@@ -3,7 +3,6 @@
 
 #include "_FireEmblemLike/Combat/FireEmblemCombatFlow.h"
 #include "AbilitySystemBlueprintLibrary.h"
-#include "TurnBased_Core_Tags.h"
 #include "_FireEmblemLike/Combat/FireEmblemCombatGamplayAbilityPayload.h"
 
 
@@ -47,7 +46,10 @@ void UFireEmblemCombatFlow::SendCombatEventToNextUnit()
 		CombatPrediction.TargetSnapshotAdvanced : CombatPrediction.InstigatorSnapShotAdvanced;
 	EventData.OptionalObject = EventWrapper;
 	
-	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(ActiveUnit, TAG_Event_Grid_Attack, EventData);
+	// UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(ActiveUnit, TAG_Event_Grid_Attack, EventData);
+	const FGameplayTag EventTag = FGameplayTag::RequestGameplayTag(FName("Event.Grid.Attack"));
+	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(ActiveUnit, EventTag, EventData);
+
 }
 
 void UFireEmblemCombatFlow::CacheGameplayAbility(UGameplayAbility* InGameplayAbility)
