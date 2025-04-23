@@ -12,12 +12,6 @@ AGridTile::AGridTile()
 	PrimaryActorTick.bCanEverTick = false;
 }
 
-// Called every frame
-void AGridTile::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-}
-
 bool AGridTile::SetState_Implementation(const FGameplayTag State)
 {
 	return false;
