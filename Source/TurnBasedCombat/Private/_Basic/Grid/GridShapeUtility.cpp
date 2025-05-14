@@ -22,7 +22,7 @@ void UGridShapeUtility::GetConfigurationConnectFour(
 		Configurations.Add(TArray { FGridPosition(0,-3), FGridPosition(0,-2), FGridPosition(0,-1), FGridPosition(0,0)});
 		Configurations.Add(TArray { FGridPosition(0,-2), FGridPosition(0,-1), FGridPosition(0,0), FGridPosition(0,1)});
 		Configurations.Add(TArray { FGridPosition(0,-1), FGridPosition(0,0), FGridPosition(0,1), FGridPosition(0,2)});
-		Configurations.Add(TArray { FGridPosition(0,0), FGridPosition(0,1), FGridPosition(0,0), FGridPosition(0,3)});
+		Configurations.Add(TArray { FGridPosition(0,0), FGridPosition(0,1), FGridPosition(0,2), FGridPosition(0,3)});
 	}
 	if (bDiagonal)
 	{
@@ -40,13 +40,15 @@ void UGridShapeUtility::GetConfigurationConnectFour(
 
 void UGridShapeUtility::CheckConfiguration(
 	const FGridPosition StartingPosition,
-	const TMap<FGridPosition, bool> GridMap,
-	const TArray<FShapeConfiguration>& ShapeConfigurations)
+	const TArray<FGridPosition>& GridPositions,
+	const TArray<FShapeConfiguration>& ConfigurationsToCheck,
+	TArray<FShapeConfiguration>& OutSuccessfulConfigurations)
 {
-	if (!GridMap.Contains(StartingPosition)) return;
-
-	TArray<FShapeConfiguration> SuccessfulConfigurations;
-	for (auto Configuration : ShapeConfigurations)
+	if (!GridPositions.Contains(StartingPosition)) { return; }
+	TMap<FGridPosition, bool> GridMap;
+	for (auto GridPosition : GridPositions) { GridMap.Add(GridPosition, true); }
+	
+	for (auto Configuration : ConfigurationsToCheck)
 	{
 		bool bFind = true;
 		for (auto Position : Configuration.ShapeConfiguration)
@@ -60,7 +62,7 @@ void UGridShapeUtility::CheckConfiguration(
 
 		if (bFind)
 		{
-			SuccessfulConfigurations.Add(Configuration);
+			OutSuccessfulConfigurations.Add(Configuration);
 		}
 	}
 }

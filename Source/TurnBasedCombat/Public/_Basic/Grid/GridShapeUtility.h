@@ -8,7 +8,7 @@
 #include "GridShapeUtility.generated.h"
 
 
-USTRUCT()
+USTRUCT(BlueprintType)
 struct FShapeConfiguration
 {
 	GENERATED_BODY()
@@ -22,7 +22,7 @@ struct FShapeConfiguration
 
 
 /**
- * 
+ * map out different shapes on an XY grid
  */
 UCLASS()
 class TURNBASEDCOMBAT_API UGridShapeUtility : public UBlueprintFunctionLibrary
@@ -32,7 +32,9 @@ class TURNBASEDCOMBAT_API UGridShapeUtility : public UBlueprintFunctionLibrary
 public:
 	UFUNCTION(BlueprintCallable)
 	static void GetConfigurationConnectFour(TArray<FShapeConfiguration>& Configurations, bool bRow = true, bool bCol = true, bool bDiagonal = true);
-
+	
 	UFUNCTION(BlueprintCallable)
-	static void CheckConfiguration(const FGridPosition StartingPosition, TMap<FGridPosition, bool> GridMap, const TArray<FShapeConfiguration>& ShapeConfigurations);
+	static void CheckConfiguration(
+		const FGridPosition StartingPosition, const TArray<FGridPosition>& GridPositions,
+		const TArray<FShapeConfiguration>& ConfigurationsToCheck, TArray<FShapeConfiguration>& OutSuccessfulConfigurations);
 };

@@ -9,6 +9,11 @@ int32 UGridHelper::GetDistanceBetweenGridPositions(const FGridPosition& position
 	return FMath::Abs(positionA.X - positionB.X) + FMath::Abs(positionA.Y - positionB.Y);
 }
 
+void UGridHelper::AddGridPositions(const FGridPosition& A, const FGridPosition& B, FGridPosition& Result)
+{
+	Result = A + B;
+}
+
 FGridPosition UGridHelper::CalculateGridPosition(const AActor* Actor)
 {
 	FGridPosition GridPosition;
@@ -17,6 +22,21 @@ FGridPosition UGridHelper::CalculateGridPosition(const AActor* Actor)
 		GridPosition.X = FMath::TruncToInt(Actor->GetActorLocation().X / GetGridSize());
 		GridPosition.Y = FMath::TruncToInt(Actor->GetActorLocation().Y / GetGridSize());
 	}	
+	
+	return GridPosition;
+}
+
+FGridPosition UGridHelper::CalculateGridPositionFromSize(const AActor* Actor, int32 Size)
+{
+	Size = FMath::Max(10, Size);
+	FGridPosition GridPosition;
+	if (IsValid(Actor))
+	{
+		GridPosition.X = FMath::TruncToInt(Actor->GetActorLocation().X / Size);
+		GridPosition.Y = FMath::TruncToInt(Actor->GetActorLocation().Y / Size);
+	}
+
+	UE_LOG(LogTemp, Display, TEXT("Grid Position: %d %d"), GridPosition.X, GridPosition.Y);
 	
 	return GridPosition;
 }

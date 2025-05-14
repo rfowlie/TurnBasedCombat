@@ -20,10 +20,10 @@ struct TURNBASED_CORE_API FGridPosition
 	FGridPosition() : X(0), Y(0) {}
 	FGridPosition(const int32 ValX, const int32 ValY) : X(ValX), Y(ValY) {}
 	
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadWrite)
 	int32 X;
 	
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadWrite)
 	int32 Y;
 
 	// FOR NOW

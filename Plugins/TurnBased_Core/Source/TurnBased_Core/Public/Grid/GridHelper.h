@@ -39,7 +39,13 @@ public:
 	static int32 GetGridSize() { return 200; }
 
 	UFUNCTION(BlueprintCallable)
+	static void AddGridPositions(const FGridPosition& A, const FGridPosition& B, FGridPosition& Result);
+	
+	UFUNCTION(BlueprintCallable)
 	static FGridPosition CalculateGridPosition(const AActor* Actor);
+
+	UFUNCTION(BlueprintCallable)
+	static FGridPosition CalculateGridPositionFromSize(const AActor* Actor, int32 Size);
 	
 	// returns all grid coordinates that are at the given range
 	UFUNCTION(BlueprintCallable)
