@@ -18,6 +18,12 @@ struct FShapeConfiguration
 	
 	UPROPERTY(BlueprintReadWrite)
 	TArray<FGridPosition> ShapeConfiguration;
+
+	UPROPERTY(BlueprintReadWrite)
+	FName Name;
+	
+	UPROPERTY(BlueprintReadWrite)
+	int32 Score = 0;
 };
 
 UENUM(BlueprintType)
