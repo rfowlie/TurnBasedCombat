@@ -189,7 +189,7 @@ void UGridShapeUtility::GetLongestLine(
 	TArray<FGridPosition>& OutGridPositions, const TArray<FGridPosition>& InGridPositions,
 	const FGridPosition& StartingPosition, const EGridDirection GridDirection)
 {
-	if (!InGridPositions.Contains(StartingPosition)) { return; }
+	// if (!InGridPositions.Contains(StartingPosition)) { return; }
 	TMap<FGridPosition, bool> GridMap;
 	for (auto GridPosition : InGridPositions) { GridMap.Add(GridPosition, false); }
 
