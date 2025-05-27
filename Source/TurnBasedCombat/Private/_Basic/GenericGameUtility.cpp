@@ -4,7 +4,12 @@
 #include "_Basic/GenericGameUtility.h"
 
 
-void UGenericGameUtility::MakeObjectScoreArray(TArray<FObjectScore>& OutObjectScores, const TMap<UObject*, int32>& ScoreMap)
+TArray<UObject*> UGenericGameUtility::GetSortedArrayOfMapKeys_Float(const TMap<UObject*, float>& Map)
+{
+	return GetSortedKeysByValue(Map);
+}
+
+void UGenericGameUtility::MakeObjectScoreArray(TArray<FObjectScore>& OutObjectScores, const TMap<UObject*, float>& ScoreMap)
 {
 	for (const auto& Elem : ScoreMap)
 	{
@@ -13,3 +18,6 @@ void UGenericGameUtility::MakeObjectScoreArray(TArray<FObjectScore>& OutObjectSc
 
 	OutObjectScores.Sort();
 }
+
+
+

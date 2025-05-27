@@ -4,8 +4,38 @@
 
 #include "CoreMinimal.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
+#include "Templates/UnrealTypeTraits.h"
 #include "GenericGameUtility.generated.h"
 
+
+template<typename KeyType, typename ValueType>
+TArray<KeyType> GetSortedKeysByValue(const TMap<KeyType, ValueType>& InMap, bool bDescending = true)
+{
+	static_assert(TIsArithmetic<ValueType>::Value, "ValueType must be an arithmetic (numeric) type.");
+
+	// Convert to key-value pairs
+	TArray<TPair<KeyType, ValueType>> Pairs;
+	for (auto Pair : InMap)
+	{
+		Pairs.Add(Pair);
+	}
+	
+	// Sort by value
+	Pairs.Sort([bDescending](const TPair<KeyType, ValueType>& A, const TPair<KeyType, ValueType>& B)
+	{
+		return bDescending ? (A.Value > B.Value) : (A.Value < B.Value);
+	});
+
+	// Extract sorted keys
+	TArray<KeyType> SortedKeys;
+	SortedKeys.Reserve(Pairs.Num());
+	for (const TPair<KeyType, ValueType>& Pair : Pairs)
+	{
+		SortedKeys.Add(Pair.Key);
+	}
+
+	return SortedKeys;
+}
 
 USTRUCT(BlueprintType)
 struct FObjectScore
@@ -13,14 +43,14 @@ struct FObjectScore
 	GENERATED_BODY()
 
 	FObjectScore() {}
-	FObjectScore(UObject* InObject, const int32 InScore) : Object(InObject), Score(InScore) {}
+	FObjectScore(UObject* InObject, const float InScore) : Object(InObject), Score(InScore) {}
 	FObjectScore(const FObjectScore& Other) : Object(Other.Object), Score(Other.Score) {}
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	UObject* Object = nullptr;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	int32 Score = 0;
+	float Score = 0;
 
 	bool operator==(const FObjectScore& Other) const
 	{
@@ -44,6 +74,9 @@ class TURNBASEDCOMBAT_API UGenericGameUtility : public UBlueprintFunctionLibrary
 
 public:
 	UFUNCTION(BlueprintCallable)
-	static void MakeObjectScoreArray(TArray<FObjectScore>& OutObjectScores, const TMap<UObject*, int32>& ScoreMap);
+	static TArray<UObject*> GetSortedArrayOfMapKeys_Float(const TMap<UObject*, float>& Map);
+	
+	UFUNCTION(BlueprintCallable)
+	static void MakeObjectScoreArray(TArray<FObjectScore>& OutObjectScores, const TMap<UObject*, float>& ScoreMap);
 
 };

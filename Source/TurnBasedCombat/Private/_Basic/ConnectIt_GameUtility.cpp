@@ -1,10 +1,4 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
-GridPosition::GridPosition()
-{
-}
-
-GridPosition::~GridPosition()
-{
-}
+#include "_Basic/ConnectIt_GameUtility.h"
