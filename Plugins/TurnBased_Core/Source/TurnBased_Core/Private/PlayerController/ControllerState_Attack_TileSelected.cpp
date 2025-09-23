@@ -78,9 +78,6 @@ void UControllerState_Attack_TileSelected::OnExit()
 	// revert state of instigator and selected tile?
 	
 	RemovePredictionWidget();
-	
-	InstigatorUnit->SetActorLocation(InstigatorInitialTile->GetPlacementLocation());
-	InstigatorUnit->SetActorRotation(InstigatorInitialRotation);
 }
 
 UInputMappingContext* UControllerState_Attack_TileSelected::CreateInputMappingContext()
@@ -128,6 +125,9 @@ void UControllerState_Attack_TileSelected::OnSelect()
 
 void UControllerState_Attack_TileSelected::OnDeselect()
 {
+	InstigatorUnit->SetActorLocation(InstigatorInitialTile->GetPlacementLocation());
+	InstigatorUnit->SetActorRotation(InstigatorInitialRotation);
+	
 	// this will then trigger OnExit...
 	PlayerController->PopState();
 }

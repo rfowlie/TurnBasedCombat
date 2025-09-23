@@ -16,8 +16,8 @@ void UGridWorldSubsystem::PostInitialize()
 {
 	Super::PostInitialize();
 
-	UTurnWorldSubsystem* TurnWorldSubsystem = GetWorld()->GetSubsystem<UTurnWorldSubsystem>();
-	TurnWorldSubsystem->OnFactionStart.AddUniqueDynamic(this, &ThisClass::DisplayAttackHeatMap);
+	// UTurnWorldSubsystem* TurnWorldSubsystem = GetWorld()->GetSubsystem<UTurnWorldSubsystem>();
+	// TurnWorldSubsystem->OnFactionStart.AddUniqueDynamic(this, &ThisClass::DisplayAttackHeatMap);
 }
 
 void UGridWorldSubsystem::RegisterGridTile(AGridTile* GridTile)
@@ -32,7 +32,7 @@ void UGridWorldSubsystem::RegisterGridTile(AGridTile* GridTile)
 		GridTileLocationMap.Add(GridTile, GridPosition);
 		
 		// bind to events
-		GridTile->OnBeginCursorOver.AddDynamic(this, &ThisClass::OnBeginCursorOverGridTile);
+		GridTile->OnGridTileBeginCursorOver.AddDynamic(this, &ThisClass::OnBeginCursorOverGridTile);
 
 		UE_LOG(LogTemp, Log, TEXT("GridWorldSubsystem - RegisterGridTile: %s"), *GridTile->GetName());
 	}
@@ -202,6 +202,13 @@ void UGridWorldSubsystem::CalculateGridMovement(TArray<FGridMovement>& OutMoveme
 	{
 		// GridUnit does not have a location...
 		UE_LOG(LogTemp, Error, TEXT("Grid unit does not have location!!"));
+		return;
+	}
+
+	if (!LocationGridTileMap.Contains(GridUnitLocationMap[GridUnit]))
+	{
+		// GridTile of GridUnit does not have a location...
+		UE_LOG(LogTemp, Error, TEXT("Grid Tile Map does not contain Units location!!"));
 		return;
 	}
 	

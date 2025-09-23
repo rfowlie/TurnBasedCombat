@@ -8,8 +8,9 @@
 #include "GameFramework/Actor.h"
 #include "GridTile.generated.h"
 
-
 class UTerrainDataAsset;
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FGridTileBeginCursorOver, AActor*, GridTile );
 
 UCLASS(Blueprintable, BlueprintType)
 class TURNBASED_CORE_API AGridTile : public AActor
@@ -18,8 +19,10 @@ class TURNBASED_CORE_API AGridTile : public AActor
 
 public:
 	AGridTile();
-	
-	virtual void Tick(float DeltaTime) override;
+
+	// allow for grid actors to customize what triggers the cursor over
+	UPROPERTY(BlueprintAssignable, BlueprintCallable)
+	FGridTileBeginCursorOver OnGridTileBeginCursorOver;
 
 	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
 	bool SetHovered(bool IsHovered);

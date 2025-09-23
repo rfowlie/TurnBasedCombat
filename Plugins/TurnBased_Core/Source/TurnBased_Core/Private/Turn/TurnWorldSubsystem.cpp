@@ -276,9 +276,9 @@ void UTurnWorldSubsystem::DoOnFactionStart()
 	if (OnFactionStart.IsBound())
 	{
 		OnFactionStartTaskManager = UGameEventTaskManager::Create();
-		OnFactionStart.Broadcast(FactionOrder[FactionIndex], OnFactionStartTaskManager);
 		OnFactionStartTaskManager->OnAllTasksCompleted.Unbind();
 		OnFactionStartTaskManager->OnAllTasksCompleted.BindDynamic(this, &ThisClass::FactionStartAllTasksComplete);
+		OnFactionStart.Broadcast(FactionOrder[FactionIndex], OnFactionStartTaskManager);
 		OnFactionStartTaskManager->InitiateAsyncTasks();
 	}
 	else if (OnFactionStartPost.IsBound())
