@@ -1,9 +1,9 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Character/CharacterInventoryManager.h"
+#include "TurnBasedCombat/Public/CharacterSystem/CharacterInventoryManager.h"
 
-#include "Character/CharacterSaveGame.h"
+#include "TurnBasedCombat/Public/CharacterSystem/CharacterSaveGame.h"
 #include "GameFramework/SaveGame.h"
 #include "Kismet/GameplayStatics.h"
 

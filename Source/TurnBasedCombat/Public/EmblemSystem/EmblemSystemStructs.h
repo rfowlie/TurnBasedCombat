@@ -3,8 +3,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameplayTagContainer.h"
 #include "UObject/Object.h"
+#include "GameplayTagContainer.h"
 #include "EmblemSystemStructs.generated.h"
 
 class UEmblemItem;
@@ -86,18 +86,30 @@ struct FEmblemSlotData
 	int32 SlotIndex = -1;
 
 	UPROPERTY(BlueprintReadWrite)
-	FGuid EquippedEmblemId; // Empty if no emblem equipped
+	FGuid EmblemDataUniqueId; // Empty if no emblem equipped
 };
 
 
+/*
+ * instead of storing all the character data just keep track of character emblem data
+ */
 USTRUCT(BlueprintType)
 struct FCharacterEmblemData
 {
 	GENERATED_BODY()
 
 	UPROPERTY(BlueprintReadWrite)
-	FGameplayTag CharacterTag; // Unique per character (could be player guid, or pawn id)
+	FGameplayTag CharacterTag;
 
+	/*
+	 * class tag will determine the number and types of emblem slots for the character
+	 * at some point, probably at load we will need to check that this and the equipped slots
+	 * align, if not then reset the equipped slots
+	 * this will prevent hacks
+	*/
+	UPROPERTY(BlueprintReadWrite)
+	FGameplayTag ClassTag;
+	
 	UPROPERTY(BlueprintReadWrite)
 	TArray<FEmblemSlotData> EquippedSlots;
 };

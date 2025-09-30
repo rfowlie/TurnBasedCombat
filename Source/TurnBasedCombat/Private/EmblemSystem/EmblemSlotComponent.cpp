@@ -33,7 +33,7 @@ void UEmblemSlotComponent::SaveSlots(FCharacterEmblemData& OutSaveData) const
 	{
 		FEmblemSlotData Slot;
 		Slot.SlotIndex = i;
-		Slot.EquippedEmblemId = EquippedEmblems[i] ? EquippedEmblems[i]->UniqueId : FGuid();
+		Slot.EmblemDataUniqueId = EquippedEmblems[i] ? EquippedEmblems[i]->UniqueId : FGuid();
 		OutSaveData.EquippedSlots.Add(Slot);
 	}
 }
@@ -44,7 +44,7 @@ void UEmblemSlotComponent::LoadSlots(const FCharacterEmblemData& InSaveData, con
 
 	for (const FEmblemSlotData& Slot : InSaveData.EquippedSlots)
 	{
-		if (!Slot.EquippedEmblemId.IsValid())
+		if (!Slot.EmblemDataUniqueId.IsValid())
 		{
 			EquippedEmblems[Slot.SlotIndex] = nullptr;
 			continue;
@@ -52,7 +52,7 @@ void UEmblemSlotComponent::LoadSlots(const FCharacterEmblemData& InSaveData, con
 
 		// Find emblem in inventory
 		UEmblemItem* Found = *Inventory.FindByPredicate(
-			[&](const UEmblemItem* Item) { return Item && Item->UniqueId == Slot.EquippedEmblemId; });
+			[&](const UEmblemItem* Item) { return Item && Item->UniqueId == Slot.EmblemDataUniqueId; });
 
 		EquippedEmblems[Slot.SlotIndex] = Found;
 	}
