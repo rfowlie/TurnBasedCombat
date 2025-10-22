@@ -11,7 +11,7 @@
 
 UDialogueEdFragment_Sequence::UDialogueEdFragment_Sequence()
 {
-	bUseFixedNodeSize = false;
+	// bUseFixedNodeSize = false;
 }
 
 TSubclassOf<UJointNodeBase> UDialogueEdFragment_Sequence::SupportedNodeClass()
@@ -31,7 +31,7 @@ void UDialogueEdFragment_Sequence::ModifyGraphNodeSlate()
 		.AutoWidth()
 		.HAlign(HAlign_Right)
 		.VAlign(VAlign_Center)
-		.Padding(FJointEditorStyle::Margin_Border)
+		.Padding(FJointEditorStyle::Margin_Normal)
 		[
 			SNew(SBox)
 			.Visibility(EVisibility::SelfHitTestInvisible)

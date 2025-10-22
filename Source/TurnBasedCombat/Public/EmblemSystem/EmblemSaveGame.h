@@ -19,11 +19,6 @@ public:
 	UPROPERTY(BlueprintReadWrite)
 	TArray<FEmblemData> SavedInventory;
 
-	// Optional: also save which emblems are equipped
-	UPROPERTY(BlueprintReadWrite)
-	TMap<FGuid, int32> EquippedSlotMapping; 
-	// Maps Emblem UniqueId -> SlotIndex
-
 	UPROPERTY(BlueprintReadWrite)
 	TArray<FCharacterEmblemData> SavedCharacters; 
 };

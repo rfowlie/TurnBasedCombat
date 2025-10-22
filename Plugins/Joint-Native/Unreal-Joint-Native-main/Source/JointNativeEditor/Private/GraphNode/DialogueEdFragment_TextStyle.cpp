@@ -42,7 +42,7 @@ void UDialogueEdFragment_TextStyle::ModifyGraphNodeSlate()
 
 		NodeSlate->CenterContentBox->AddSlot()
 			.HAlign(HAlign_Fill)
-			.Padding(FJointEditorStyle::Margin_Frame)
+			.Padding(FJointEditorStyle::Margin_Shadow)
 			[
 				StyleBox.ToSharedRef()
 			];
@@ -77,7 +77,7 @@ void UDialogueEdFragment_TextStyle::UpdateSlate()
 			.Visibility(EVisibility::HitTestInvisible)
 			.BorderImage(FJointEditorStyle::Get().GetBrush("JointUI.Border.Round"))
 			.BorderBackgroundColor(GetNodeBodyTintColor())
-			.Padding(FJointEditorStyle::Margin_Border)
+			.Padding(FJointEditorStyle::Margin_Normal)
 			.HAlign(HAlign_Fill)
 			.VAlign(VAlign_Center)
 			[
@@ -91,7 +91,7 @@ void UDialogueEdFragment_TextStyle::UpdateSlate()
 					.AutoWidth()
 					//.HAlign(HAlign_Right)
 					.VAlign(VAlign_Center)
-					.Padding(FJointEditorStyle::Margin_Frame)
+					.Padding(FJointEditorStyle::Margin_Normal)
 					[
 						SNew(SBox)
 						.HeightOverride(16)

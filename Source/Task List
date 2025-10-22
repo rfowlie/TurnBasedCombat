@@ -1,0 +1,5 @@
+﻿- Create way to get access UnitTemplateDataAsset by gameplay tag
+- Create Widget blueprint that extracts UnitTemplateDataAsset values and displays them
+- Have emblems store values
+- have units stats update when slot is changed
+- save slot changes and reapply on load

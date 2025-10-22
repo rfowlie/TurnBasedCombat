@@ -71,6 +71,9 @@ struct FEmblemData
 	int32 MergeLevel = 0;
 
 	UPROPERTY(BlueprintReadWrite)
+	FGameplayTagContainer EmblemType;
+
+	UPROPERTY(BlueprintReadWrite)
 	TArray<FEmblemStat> Stats;
 
 	UPROPERTY(BlueprintReadWrite)
@@ -84,6 +87,13 @@ struct FEmblemSlotData
 
 	UPROPERTY(BlueprintReadWrite)
 	int32 SlotIndex = -1;
+
+	// types of emblems this slot supports
+	UPROPERTY(BlueprintReadWrite)
+	FGameplayTagContainer EmblemType;
+	
+	UPROPERTY(BlueprintReadWrite)
+	int32 MergeLevel = 0;
 
 	UPROPERTY(BlueprintReadWrite)
 	FGuid EmblemDataUniqueId; // Empty if no emblem equipped

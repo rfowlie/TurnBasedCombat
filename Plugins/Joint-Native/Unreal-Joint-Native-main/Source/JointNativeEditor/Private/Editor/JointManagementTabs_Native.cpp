@@ -72,7 +72,7 @@ TSharedRef<SWidget> SJointNativeTab::CreateProductSection()
 	return SNew(SVerticalBox)
 		+ SVerticalBox::Slot()
 		.AutoHeight()
-		.Padding(FJointEditorStyle::Margin_Border)
+		.Padding(FJointEditorStyle::Margin_Normal)
 		.HAlign(HAlign_Left)
 		.VAlign(VAlign_Center)
 		[
@@ -82,7 +82,7 @@ TSharedRef<SWidget> SJointNativeTab::CreateProductSection()
 		]
 		+ SVerticalBox::Slot()
 		.AutoHeight()
-		.Padding(FJointEditorStyle::Margin_Border)
+		.Padding(FJointEditorStyle::Margin_Normal)
 		.HAlign(HAlign_Left)
 		.VAlign(VAlign_Center)
 		[
@@ -92,7 +92,7 @@ TSharedRef<SWidget> SJointNativeTab::CreateProductSection()
 		]
 		+ SVerticalBox::Slot()
 		.AutoHeight()
-		.Padding(FJointEditorStyle::Margin_Border)
+		.Padding(FJointEditorStyle::Margin_Normal)
 		.HAlign(HAlign_Left)
 		.VAlign(VAlign_Center)
 		[
@@ -110,13 +110,13 @@ void SJointNativeTab::Construct(const FArguments& InArgs)
 	[
 		SNew(SBorder)
 		.BorderImage(FJointEditorStyle::Get().GetBrush("JointUI.Image.GraphBackground"))
-		.Padding(FJointEditorStyle::Margin_Border)
+		.Padding(FJointEditorStyle::Margin_Normal)
 		.HAlign(HAlign_Fill)
 		.VAlign(VAlign_Top)
 		[
 			SNew(SScrollBox)
 			+ SScrollBox::Slot()
-			.Padding(FJointEditorStyle::Margin_Border)
+			.Padding(FJointEditorStyle::Margin_Normal)
 			.HAlign(HAlign_Left)
 			.VAlign(VAlign_Top)
 			[

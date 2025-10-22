@@ -13,7 +13,7 @@ UDialogueEdFragment_Select::UDialogueEdFragment_Select()
 	NodeWidth = 0;
 	NodeHeight = 0;
 
-	bUseFixedNodeSize = false;
+	// bUseFixedNodeSize = false;
 }
 
 void UDialogueEdFragment_Select::AllocateDefaultPins()
