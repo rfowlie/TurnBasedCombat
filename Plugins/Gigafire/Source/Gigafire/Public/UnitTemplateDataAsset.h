@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Engine/DataAsset.h"
 #include "GameplayTagContainer.h"
+#include "GigafireStructs.h"
 #include "UnitTemplateDataAsset.generated.h"
 
 
@@ -40,25 +41,10 @@ struct FItemSlotEquippedData
 
 	// FGuid allows us to be generic and to associate various item setups to the same base system
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FGuid EquippedItemGuid;
+	FGuid ItemGuid;
 };
 
-USTRUCT(BlueprintType)
-struct FGameplayTagValuePair
-{
-	GENERATED_BODY()
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FGameplayTag Tag;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float Value;
-	
-	bool operator==(const FGameplayTagValuePair& Other) const
-	{
-		return Tag == Other.Tag;
-	}
-};
 
 /*
  * Unit load data will convert to this for saving as TMaps do not serialize well
@@ -77,7 +63,7 @@ struct FUnitSaveData
 	TArray<FGameplayTagValuePair> Templates;
 	
 	UPROPERTY(BlueprintReadWrite)
-	TArray<FItemSlotEquippedData> EquippedData;
+	TArray<FItemSlotEquippedData> EquippedItems;
 	
 	// permanent or unique qualities for units based on gameplay or decisions
 	UPROPERTY(BlueprintReadWrite)
@@ -151,6 +137,10 @@ public:
 };
 
 
+/*
+ * used to allow data tables to be created for unit stat definitions as an alternative to data asset
+ * mainly we can easily associate a gameplay tag with a setup, although this can be error-prone if tags change
+ */
 USTRUCT(BlueprintType)
 struct FUnitStatsTemplate : public FTableRowBase
 {

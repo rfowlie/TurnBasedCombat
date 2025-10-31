@@ -5,6 +5,11 @@
 #include "UnitTemplateDataAsset.h"
 
 
+FGuid UUnitTemplateUtility::MakeUniqueGuid()
+{
+	return FGuid::NewGuid();
+}
+
 void UUnitTemplateUtility::MakeUnitSaveData(const FUnitLoadData& InLoadData, FUnitSaveData& OutSaveData)
 {
 	for (const auto Pair : InLoadData.Templates)
@@ -40,7 +45,7 @@ void UUnitTemplateUtility::MakeUnitSaveData(const FUnitLoadData& InLoadData, FUn
 	}
 
 	OutSaveData.UnitTag = InLoadData.UnitTag;
-	OutSaveData.EquippedData = InLoadData.EquippedData;
+	OutSaveData.EquippedItems = InLoadData.EquippedData;
 }
 
 void UUnitTemplateUtility::MakeUnitLoadData(const FUnitSaveData& InSaveData, FUnitLoadData& OutLoadData)
@@ -63,5 +68,5 @@ void UUnitTemplateUtility::MakeUnitLoadData(const FUnitSaveData& InSaveData, FUn
 	}
 
 	OutLoadData.UnitTag = InSaveData.UnitTag;
-	OutLoadData.EquippedData = InSaveData.EquippedData;
+	OutLoadData.EquippedData = InSaveData.EquippedItems;
 }

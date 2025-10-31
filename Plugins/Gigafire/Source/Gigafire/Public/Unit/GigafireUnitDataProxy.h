@@ -7,7 +7,7 @@
 #include "GigafireUnitDataProxy.generated.h"
 
 /**
- * 
+ * TODO: might need this for UI character menu
  */
 UCLASS()
 class GIGAFIRE_API UGigafireUnitDataProxy : public UObject

@@ -18,6 +18,9 @@ class GIGAFIRE_API UUnitTemplateUtility : public UBlueprintFunctionLibrary
 	GENERATED_BODY()
 
 public:
+	UFUNCTION(BlueprintPure, Category = "Utilities|Guid")
+	static FGuid MakeUniqueGuid();
+	
 	UFUNCTION(BlueprintCallable)
 	static void MakeUnitSaveData(const FUnitLoadData& InLoadData, FUnitSaveData& OutSaveData);
 	

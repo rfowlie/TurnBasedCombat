@@ -29,11 +29,6 @@ class GIGAFIRE_API IGigafireInformationHandler
 public:
 
 	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
-	TArray<FGameplayTag> GetPlayerCharacters();
+	TArray<FGameplayTag> GetPlayerUnitTags();
 
-	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
-	FUnitLoadData GetCharacterSaveData();
-
-	// UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
-	// TArray<FEmblemData> GetEmblemInventory();
 };
