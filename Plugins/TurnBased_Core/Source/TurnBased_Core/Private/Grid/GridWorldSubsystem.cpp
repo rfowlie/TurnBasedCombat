@@ -38,6 +38,25 @@ void UGridWorldSubsystem::RegisterGridTile(AGridTile* GridTile)
 	}
 }
 
+void UGridWorldSubsystem::UnregisterGridTile(AGridTile* GridTile)
+{
+	// TODO: figure this out, might want to be able to remove tiles from the map at runtime
+	// if (IsValid(GridTile) && GridTilesAll.Contains(GridTile))
+	// {
+	// 	GridTilesAll.Remove(GridTile);
+	// 	
+	// 	// add to map
+	// 	const FGridPosition GridPosition = UGridHelper::CalculateGridPosition(GridTile);
+	// 	LocationGridTileMap.Remove(GridPosition);
+	// 	GridTileLocationMap.Remove(GridTile);
+	// 	
+	// 	// bind to events
+	// 	GridTile->OnGridTileBeginCursorOver.AddDynamic(this, &ThisClass::OnBeginCursorOverGridTile);
+	//
+	// 	UE_LOG(LogTemp, Log, TEXT("GridWorldSubsystem - RegisterGridTile: %s"), *GridTile->GetName());
+	// }
+}
+
 void UGridWorldSubsystem::RegisterGridUnit(AGridUnit* GridUnit)
 {
 	if (IsValid(GridUnit) && !GridUnitsAll.Contains(GridUnit))
@@ -45,7 +64,7 @@ void UGridWorldSubsystem::RegisterGridUnit(AGridUnit* GridUnit)
 		GridUnitsAll.AddUnique(GridUnit);
 		
 		// add to map
-		FGridPosition GridPosition = UGridHelper::CalculateGridPosition(GridUnit);
+		const FGridPosition GridPosition = UGridHelper::CalculateGridPosition(GridUnit);
 		
 		LocationGridUnitMap.Add(GridPosition, GridUnit);
 		GridUnitLocationMap.Add(GridUnit, GridPosition);
@@ -55,6 +74,20 @@ void UGridWorldSubsystem::RegisterGridUnit(AGridUnit* GridUnit)
 			this, &ThisClass::OnGridUnitAbilityActivated);
 		GridUnit->GetAbilitySystemComponent()->AbilityEndedCallbacks.AddUObject(
 			this, &ThisClass::OnGridUnitAbilityEnded);
+	}
+}
+
+void UGridWorldSubsystem::UnregisterGridUnit(AGridUnit* GridUnit)
+{
+	if (IsValid(GridUnit) && GridUnitsAll.Contains(GridUnit))
+	{
+		GridUnitsAll.Remove(GridUnit);
+		
+		// add to map
+		const FGridPosition GridPosition = UGridHelper::CalculateGridPosition(GridUnit);
+		
+		LocationGridUnitMap.Remove(GridPosition);
+		GridUnitLocationMap.Remove(GridUnit);
 	}
 }
 

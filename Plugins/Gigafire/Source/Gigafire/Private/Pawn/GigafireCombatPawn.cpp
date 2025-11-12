@@ -1,13 +1,12 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Pawn/APawn_FollowCursor.h"
-
+#include "Pawn/GigafireCombatPawn.h"
 #include "Camera/CameraComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 
 
-APawn_FollowCursor::APawn_FollowCursor()
+AGigafireCombatPawn::AGigafireCombatPawn()
 {
 	PrimaryActorTick.bCanEverTick = true;
 
@@ -23,35 +22,35 @@ APawn_FollowCursor::APawn_FollowCursor()
 	CameraComponent->SetRelativeRotation(FRotator(-60.f, 0.f, 0.f));
 
 	// default state
-	SetFollowCursor();
+	Execute_SetFollowCursor(this);
 }
 
-void APawn_FollowCursor::Tick(float DeltaTime)
+void AGigafireCombatPawn::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 	
 	if (bCursorCanTick && FollowDelegate.IsBound()) { FollowDelegate.Execute(DeltaTime); }	
 }
 
-void APawn_FollowCursor::SetMapBounds(FVector2D MinBounds, FVector2D MaxBounds)
+void AGigafireCombatPawn::SetMapBounds(FVector2D MinBounds, FVector2D MaxBounds)
 {
 	MapMinBounds = MinBounds;
 	MapMaxBounds = MaxBounds;
 }
 
-void APawn_FollowCursor::SetCursorCanTick(const bool bActive)
+void AGigafireCombatPawn::SetCursorCanTick_Implementation(const bool bActive)
 {
 	bCursorCanTick = bActive;
 }
 
-void APawn_FollowCursor::SetFollowCursor()
+void AGigafireCombatPawn::SetFollowCursor_Implementation()
 {
 	FollowDelegate.Unbind();
 	FollowDelegate.BindUObject(this, &ThisClass::HandleFollowCursor);
-	SetCursorCanTick(true);
+	Execute_SetCursorCanTick(this, true);
 }
 
-void APawn_FollowCursor::SetFollowTarget(AActor* InTarget)
+void AGigafireCombatPawn::SetFollowTarget_Implementation(AActor* InTarget)
 {
 	if (!IsValid(InTarget))
 	{
@@ -62,18 +61,18 @@ void APawn_FollowCursor::SetFollowTarget(AActor* InTarget)
 	FollowTarget = InTarget;
 	FollowDelegate.Unbind();
 	FollowDelegate.BindUObject(this, &ThisClass::HandleFollowTarget);
-	SetCursorCanTick(true);
+	Execute_SetCursorCanTick(this, true);
 }
 
-void APawn_FollowCursor::SetMoveToLocation(FVector Location)
+void AGigafireCombatPawn::SetMoveToLocation_Implementation(FVector Location)
 {
 	MoveToLocation = Location;
 	FollowDelegate.Unbind();
 	FollowDelegate.BindUObject(this, &ThisClass::HandleMoveToLocation);
-	SetCursorCanTick(true);
+	Execute_SetCursorCanTick(this, true);
 }
 
-void APawn_FollowCursor::HandleFollowCursor(float DeltaTime)
+void AGigafireCombatPawn::HandleFollowCursor(float DeltaTime)
 {
 	// seems janky
 	APlayerController* PC = GetWorld()->GetFirstPlayerController();
@@ -101,7 +100,7 @@ void APawn_FollowCursor::HandleFollowCursor(float DeltaTime)
 	SetActorLocation(NewLocation);
 }
 
-void APawn_FollowCursor::HandleFollowTarget(float DeltaTime)
+void AGigafireCombatPawn::HandleFollowTarget(float DeltaTime)
 {
 	if (IsValid(FollowTarget))
 	{
@@ -123,7 +122,7 @@ void APawn_FollowCursor::HandleFollowTarget(float DeltaTime)
 	}
 }
 
-void APawn_FollowCursor::HandleMoveToLocation(float DeltaTime)
+void AGigafireCombatPawn::HandleMoveToLocation(float DeltaTime)
 {
 	FVector NewLocation = FMath::VInterpTo(GetActorLocation(), MoveToLocation, DeltaTime, TargetFollowSpeed);
 	NewLocation.Z = GetActorLocation().Z;

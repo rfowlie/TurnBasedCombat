@@ -57,7 +57,11 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void RegisterGridTile(AGridTile* GridTile);
 	UFUNCTION(BlueprintCallable)
+	void UnregisterGridTile(AGridTile* GridTile);
+	UFUNCTION(BlueprintCallable)
 	void RegisterGridUnit(AGridUnit* GridUnit);
+	UFUNCTION(BlueprintCallable)
+	void UnregisterGridUnit(AGridUnit* GridUnit);
 	UFUNCTION()
 	void OnBeginCursorOverGridTile(AActor* Actor);
 
@@ -93,11 +97,18 @@ public:
 	AGridUnit* GetGridUnitHovered() const { return GridUnitHovered; }
 	UPROPERTY()
 	AGridUnit* GridUnitSelected = nullptr;
-	// AGridUnit* GetGridUnitSelected() const { return GridUnitSelected; }
 	
+	UFUNCTION(BlueprintCallable)
+	TArray<AGridUnit*> GetAllGridUnits() { return GridUnitsAll; }
+
+	UFUNCTION(BlueprintCallable)
 	void UpdateUnitMapping(AGridUnit* GridUnit);
+	UFUNCTION(BlueprintCallable)
 	void UpdateUnitMappingsAll();
+	
+	UFUNCTION(BlueprintCallable)
 	AGridUnit* GetGridUnitOnTile(const AGridTile* GridTile) const;
+	UFUNCTION(BlueprintCallable)
 	AGridTile* GetGridTileOfUnit(const AGridUnit* GridUnit) const;
 
 	// calculations (could set a class that does all this so that we can swap out calculation types)
@@ -120,12 +131,7 @@ public:
     void OnGridUnitAbilityActivated(UGameplayAbility* InGameplayAbility);
     UFUNCTION()
     void OnGridUnitAbilityEnded(UGameplayAbility* InGameplayAbility);
-
-
-public:
-	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
-	void TestFunction();
-
+	
 
 	// Utility Based AI	
 	UFUNCTION()

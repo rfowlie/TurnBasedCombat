@@ -38,6 +38,12 @@ public:
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	int32 GetMovementCost() const;
+
+	UPROPERTY(EditInstanceOnly, BlueprintReadOnly)
+	bool IsUnitPlacementTile = false;
+
+	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
+	void SetPlacementTilesVisuales();
 	
 	/////////////////////////////////////////////////////////////
 	// TEMP VARIABLES FOR EASE OF LOGIC
@@ -49,13 +55,11 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
-	virtual void NotifyActorBeginCursorOver() override;
-	virtual void NotifyActorEndCursorOver() override;
-	
+
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	FVector PlacementLocation = FVector::ZeroVector;
 
-	// DEBUG
+	// DEBUG ---------------------------------------------------------------------------
 public:
 	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
 	void SetAttackHeatMapValues(int32 Friendly, int32 Enemy, int32 Other);

@@ -189,6 +189,11 @@ bool UTurnWorldSubsystem::RegisterGridUnit(AGridUnit* InGridUnit)
 	return true;
 }
 
+bool UTurnWorldSubsystem::UnregisterGridUnit(AGridUnit* InGridUnit)
+{
+	return false;
+}
+
 bool UTurnWorldSubsystem::CanUnitTakeAction(const AGridUnit* InGridUnit)
 {
 	// if not units factions turn, then should not be able to take action

@@ -85,6 +85,7 @@ public:
 	
 	// unit
 	bool RegisterGridUnit(AGridUnit* InGridUnit);
+	bool UnregisterGridUnit(AGridUnit* InGridUnit);
 	bool CanUnitTakeAction(const AGridUnit* InGridUnit);
 	int32 GetRemainingUnitActions();
 	AGridUnit* GetNextUnit(AGridUnit* InGridUnit);

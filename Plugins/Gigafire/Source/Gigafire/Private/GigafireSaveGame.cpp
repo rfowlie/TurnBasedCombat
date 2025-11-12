@@ -6,6 +6,31 @@
 #include "UnitTemplateUtility.h"
 
 
+void UGigafireBaseViewModel::SetSaveGame(UGigafireSaveGame* InSaveGame)
+{
+	if (!InSaveGame)
+	{
+		UE_LOG(LogTemp, Error, TEXT("UGigafireSaveGameViewModel::SetSaveGame - InSaveGame is Null"))
+	}
+	if (SaveGame)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("UGigafireSaveGameViewModel::SetSaveGame - SaveGame already exists, replacing..."))
+	}
+
+	SaveGame = InSaveGame;
+}
+
+TArray<FGameplayTag> UGigafireBaseViewModel::GetAllUnitTags() const
+{
+	TArray<FGameplayTag> Output;
+	if (IsSaveGameNull()) return Output;
+	for (auto SaveData : SaveGame->UnitSaveData)
+	{
+		Output.Add(SaveData.UnitTag);
+	}
+	return Output;
+}
+
 bool UGigafireSaveGameViewModel::GetUnitData(FUnitLoadData& OutLoadData, const FGameplayTag UnitTag) const
 {
 	if (IsSaveGameNull()) return false;
@@ -36,32 +61,7 @@ TArray<FUnitLoadData> UGigafireSaveGameViewModel::GetAllUnitData() const
 	return Output;
 }
 
-TArray<FGameplayTag> UGigafireSaveGameViewModel::GetAllUnitTags() const
-{
-	TArray<FGameplayTag> Output;
-	if (IsSaveGameNull()) return Output;
-	for (auto SaveData : SaveGame->UnitSaveData)
-	{
-		Output.Add(SaveData.UnitTag);
-	}
-	return Output;
-}
-
-void UGigafireSaveGameViewModel::SetSaveGame(UGigafireSaveGame* InSaveGame)
-{
-	if (!InSaveGame)
-	{
-		UE_LOG(LogTemp, Error, TEXT("UGigafireSaveGameViewModel::SetSaveGame - InSaveGame is Null"))
-	}
-	if (SaveGame)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("UGigafireSaveGameViewModel::SetSaveGame - SaveGame already exists, replacing..."))
-	}
-
-	SaveGame = InSaveGame;
-}
-
-bool UGigafireSaveGameViewModel::AddItemEmblem(const FItemEmblem& InItemEmblem) const
+bool UGigafireSaveGameViewModel::AddItemEmblemToInventory(const FItemEmblem& InItemEmblem) const
 {
 	if (IsSaveGameNull()) return false;
 	// check if Guid already exists, do not want to allow emblems being edited
@@ -78,7 +78,7 @@ bool UGigafireSaveGameViewModel::AddItemEmblem(const FItemEmblem& InItemEmblem) 
 	return true;
 }
 
-bool UGigafireSaveGameViewModel::RemoveItemEmblem(const FGuid& InGuid) const
+bool UGigafireSaveGameViewModel::RemoveItemEmblemFromInventory(const FGuid& InGuid) const
 {
 	if (IsSaveGameNull()) return false;
 	for (signed Index = 0; Index < SaveGame->EmblemSaveData.Num(); Index++)

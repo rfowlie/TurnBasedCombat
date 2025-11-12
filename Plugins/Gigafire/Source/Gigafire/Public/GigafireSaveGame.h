@@ -62,12 +62,8 @@ public:
 
 };
 
-
-/**
- * How we want other objects to be able to interact with the save game data (model)
- */
 UCLASS(Blueprintable, BlueprintType)
-class GIGAFIRE_API UGigafireSaveGameViewModel : public UObject
+class GIGAFIRE_API UGigafireBaseViewModel : public UObject
 {
 	GENERATED_BODY()
 
@@ -85,27 +81,38 @@ protected:
 		
 		return false;
 	}
-	
+
 public:
 	UFUNCTION(BlueprintCallable, Category="ViewModel")
 	void SetSaveGame(UGigafireSaveGame* InSaveGame);
 	
+	UFUNCTION(BlueprintCallable, Category="ViewModel|Unit")
+	TArray<FGameplayTag> GetAllUnitTags() const;
+	
+};
+
+/**
+ * How we want other objects to be able to interact with the save game data (model)
+ */
+UCLASS(Blueprintable, BlueprintType)
+class GIGAFIRE_API UGigafireSaveGameViewModel : public UGigafireBaseViewModel
+{
+	GENERATED_BODY()
+
+public:
 	// stats
 	UFUNCTION(BlueprintCallable)
 	bool GetUnitData(FUnitLoadData& OutLoadData, FGameplayTag UnitTag) const;
 
 	UFUNCTION(BlueprintCallable, Category="ViewModel|Unit")
 	TArray<FUnitLoadData> GetAllUnitData() const;
-
-	UFUNCTION(BlueprintCallable, Category="ViewModel|Unit")
-	TArray<FGameplayTag> GetAllUnitTags() const;
 	
 	// emblem
 	UFUNCTION(BlueprintCallable, Category="ViewModel|Emblem")
-	bool AddItemEmblem(const FItemEmblem& InItemEmblem) const;
+	bool AddItemEmblemToInventory(const FItemEmblem& InItemEmblem) const;
 	
 	UFUNCTION(BlueprintCallable, Category="ViewModel|Emblem")
-	bool RemoveItemEmblem(const FGuid& InGuid) const;
+	bool RemoveItemEmblemFromInventory(const FGuid& InGuid) const;
 
 	UFUNCTION(BlueprintCallable, Category="ViewModel|Emblem")
 	bool MergeItemEmblems(const FGuid& InGuid);
@@ -124,5 +131,85 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category="ViewModel|Emblem")
 	void RemoveEmblemInItemSlot(const FItemEmblem& InItemEmblem);
+	
+};
+
+
+USTRUCT(BlueprintType)
+struct FGigafireUnitAttributes
+{
+	GENERATED_BODY()
+	
+	/*
+	 * regeneration will be a fundamental aspect of gameplay
+	 * we do not want one to one stats for regeneration, each primary stats regeneration should
+	 * be based on a combination of stats or gameplay factors
+	 */ 
+
+	// regeneration
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int32 HealthRegeneration = 0;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int32 ManaRegeneration = 0;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int32 EnergyRegeneration = 0;
+	
+	// primary
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int32 Health = 0;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int32 Mana = 0;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int32 Energy = 0;
+
+	// secondary
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int32 Strength = 0;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int32 Defence = 0;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int32 Speed = 0;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int32 Skill = 0;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int32 Magic = 0;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int32 Resistance = 0;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int32 Luck = 0;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int32 Movement = 0;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int32 MovementRecovery = 0;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int32 Constitution = 0;
+	
+};
+
+UCLASS(Blueprintable, BlueprintType)
+class GIGAFIRE_API UGigafireCombatViewModel : public UGigafireBaseViewModel
+{
+	GENERATED_BODY()
+
+public:
+	/*
+	 * make it blueprint implementable because we want designers to be able to determine
+	 * the conversion of tags to attributes
+	 */
+	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable, Category="ViewModel|Combat")
+	void GetUnitAttributesByTag(FGigafireUnitAttributes& OutAttributes, const FGameplayTag UnitTag) const;
 	
 };
