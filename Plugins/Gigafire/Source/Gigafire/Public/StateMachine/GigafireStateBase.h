@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameplayTagContainer.h"
 #include "UObject/Object.h"
 #include "Input/GigafireInputHandler.h"
 #include "GigafireStateBase.generated.h"
@@ -24,6 +25,9 @@ class GIGAFIRE_API UGigafireStateBase : public UObject, public IGigafireInputHan
 	GENERATED_BODY()
 
 public:
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Gigafire|State")
+	FGameplayTag StateTag;
+	
 	// setup all the actions for this state
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Gigafire|State")
 	void Initialize();

@@ -11,6 +11,7 @@
 class UGameEventTask_Async;
 
 DECLARE_DYNAMIC_DELEGATE(FGameEventTaskDelegate);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FGameEventTaskManagerDelegate);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnTaskCompleted);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnAllTasksCompleted);
 
@@ -39,27 +40,34 @@ class TURNBASED_CORE_API UGameEventTaskManager : public UObject
 	
 public:
 	static UGameEventTaskManager* Create();
-	
-	// Event triggered when all registered objects have completed
-	UPROPERTY()
-	FGameEventTaskDelegate OnAllTasksCompleted;
 
-	UFUNCTION(BlueprintCallable, Category = "GameEventTaskManager")
-	void RegisterAsyncTask(UGameEventTask_Async* InAsyncTask, int32 Phase = 0);
+	// delegates
+	UPROPERTY(BlueprintAssignable)
+	FGameEventTaskManagerDelegate OnManagerBegin;
 
-	UFUNCTION()
-	void InitiateAsyncTasks();
-	
-	// Add an object to the wait list
+	UPROPERTY(BlueprintAssignable)
+	FGameEventTaskManagerDelegate OnManagerComplete;
+
+	// register
 	UFUNCTION(BlueprintCallable, Category = "Turn Completion")
 	void RegisterTask(UObject* Object);
-
+	
+	UFUNCTION(BlueprintCallable, Category = "GameEventTaskManager")
+	void RegisterAsyncTask(UGameEventTask_Async* InAsyncTask, int32 Phase = 0);
+	
 	// Mark an object as completed
 	UFUNCTION(BlueprintCallable, Category = "Turn Completion")
 	void UnregisterTask(UObject* Object);
 
 	UFUNCTION(BlueprintCallable, Category = "Turn Completion")
 	void EnqueueTask(UGameEventTaskContainer* InTaskContainer);
+
+	UFUNCTION(BlueprintCallable)
+	void InitiateAllTasks();
+	
+protected:	
+	UFUNCTION()
+	void InitiateAsyncTasks();
 	
 	UFUNCTION()
 	void StartNextTaskInQueue();
