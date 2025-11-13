@@ -41,7 +41,7 @@ void UDialogueEdFragment_Condition::ModifyGraphNodeSlate()
 		.AutoWidth()
 		.HAlign(HAlign_Right)
 		.VAlign(VAlign_Center)
-		.Padding(FJointEditorStyle::Margin_Border)
+		.Padding(FJointEditorStyle::Margin_Normal)
 		[
 			SNew(SBox)
 			.Visibility(EVisibility::HitTestInvisible)

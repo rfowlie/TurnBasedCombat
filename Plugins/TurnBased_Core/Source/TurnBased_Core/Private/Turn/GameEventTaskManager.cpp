@@ -21,7 +21,7 @@ void UGameEventTaskManager::RegisterAsyncTask(UGameEventTask_Async* InAsyncTask,
 	if (bAsyncTasksInitiated) { return; }
 	
 	// do not add tasks that are empty
-	if (!InAsyncTask->OnExecuteDelegate.ExecuteIfBound()) { return; }
+	if (!InAsyncTask->OnExecuteDelegate.IsBound()) { return; }
 	
 	Phase = FMath::Max(Phase, 0);
 	if (!AsyncTaskMap.Contains(Phase))
@@ -30,23 +30,6 @@ void UGameEventTaskManager::RegisterAsyncTask(UGameEventTask_Async* InAsyncTask,
 	}
 	
 	AsyncTaskMap[Phase].Tasks.AddUnique(InAsyncTask);
-}
-
-void UGameEventTaskManager::InitiateAsyncTasks()
-{
-	if (bAsyncTasksInitiated) { return; }
-	bAsyncTasksInitiated = true;
-	AsyncTaskMap.GetKeys(PhaseOrder);
-	PhaseOrder.Sort();
-
-	if (PhaseOrder.IsEmpty())
-	{
-		if (OnAllTasksCompleted.IsBound()) { OnAllTasksCompleted.Execute(); }
-		return;
-	}
-
-	PhaseIndex = -1;
-	ExecuteNextPhase();
 }
 
 void UGameEventTaskManager::RegisterTask(UObject* Object)
@@ -73,6 +56,28 @@ void UGameEventTaskManager::EnqueueTask(UGameEventTaskContainer* InTaskContainer
 	if (InTaskContainer) { TaskQueue.Enqueue(InTaskContainer); }
 }
 
+void UGameEventTaskManager::InitiateAllTasks()
+{
+	if (OnManagerBegin.IsBound()) { OnManagerBegin.Broadcast(); }
+	InitiateAsyncTasks();
+}
+
+void UGameEventTaskManager::InitiateAsyncTasks()
+{
+	if (bAsyncTasksInitiated) { return; }
+	bAsyncTasksInitiated = true;
+	AsyncTaskMap.GetKeys(PhaseOrder);
+	PhaseOrder.Sort();
+
+	if (PhaseOrder.IsEmpty())
+	{
+		if (OnManagerComplete.IsBound()) { OnManagerComplete.Broadcast(); }
+		return;
+	}
+
+	PhaseIndex = -1;
+	ExecuteNextPhase();
+}
 void UGameEventTaskManager::StartNextTaskInQueue()
 {
 	if (TaskQueue.IsEmpty()) { CheckTasksComplete(); return; }
@@ -85,20 +90,21 @@ void UGameEventTaskManager::CheckTasksComplete() const
 {
 	if (TaskSet.IsEmpty() && TaskQueue.IsEmpty())
 	{
-		OnAllTasksCompleted.Execute();
+		if (OnManagerComplete.IsBound()) { OnManagerComplete.Broadcast(); }
 	}
 }
 
 void UGameEventTaskManager::ExecuteNextPhase()
 {
 	PhaseIndex++;
+	// if at end of array completely finished
 	if (!PhaseOrder.IsValidIndex(PhaseIndex))
 	{
-		// finished all tasks
-		if (OnAllTasksCompleted.IsBound()) { OnAllTasksCompleted.Execute(); }
+		if (OnManagerComplete.IsBound()) { OnManagerComplete.Broadcast(); }
 		return;
 	}
-	
+
+	// bind to all tasks in current phase and initiate them
 	for (const auto AsyncTask : AsyncTaskMap[PhaseOrder[PhaseIndex]].Tasks)
 	{
 		AsyncTask->OnComplete.AddUniqueDynamic(this, &ThisClass::UGameEventTaskManager::CheckPhaseComplete);
@@ -108,20 +114,17 @@ void UGameEventTaskManager::ExecuteNextPhase()
 
 void UGameEventTaskManager::CheckPhaseComplete(UGameEventTask_Async* AsyncTask)
 {
-	// if (!PhaseOrder.IsValidIndex(PhaseIndex))
-	// {
-	// 	// finished all tasks
-	// 	if (OnAllTasksCompleted.IsBound()) { OnAllTasksCompleted.Execute(); }
-	// 	return;
-	// }
-	
+	// flag if task does not belong to current phase
 	if (AsyncTaskMap[PhaseOrder[PhaseIndex]].Tasks.IsEmpty() || !AsyncTaskMap[PhaseOrder[PhaseIndex]].Tasks.Contains(AsyncTask))
 	{
-		UE_LOG(LogTemp, Error, TEXT("Async Task firing out of place!!"))
+		UE_LOG(LogTemp, Error, TEXT("UGameEventTaskManager::CheckPhaseComplete - Async task firing out of place!!"))
 	}
 
+	// remove task from array
 	AsyncTask->OnComplete.RemoveAll(this);
 	AsyncTaskMap[PhaseOrder[PhaseIndex]].Tasks.Remove(AsyncTask);
+
+	// check if array is empty, signal to move onto next phase
 	if (AsyncTaskMap[PhaseOrder[PhaseIndex]].Tasks.IsEmpty())
 	{
 		ExecuteNextPhase();

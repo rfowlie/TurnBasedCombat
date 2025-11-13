@@ -75,6 +75,7 @@ void APawn_FollowCursor::SetMoveToLocation(FVector Location)
 
 void APawn_FollowCursor::HandleFollowCursor(float DeltaTime)
 {
+	// seems janky
 	APlayerController* PC = GetWorld()->GetFirstPlayerController();
 	if (!PC) return;
 

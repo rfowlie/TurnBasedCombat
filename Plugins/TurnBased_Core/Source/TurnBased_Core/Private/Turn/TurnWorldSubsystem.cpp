@@ -189,6 +189,11 @@ bool UTurnWorldSubsystem::RegisterGridUnit(AGridUnit* InGridUnit)
 	return true;
 }
 
+bool UTurnWorldSubsystem::UnregisterGridUnit(AGridUnit* InGridUnit)
+{
+	return false;
+}
+
 bool UTurnWorldSubsystem::CanUnitTakeAction(const AGridUnit* InGridUnit)
 {
 	// if not units factions turn, then should not be able to take action
@@ -276,10 +281,10 @@ void UTurnWorldSubsystem::DoOnFactionStart()
 	if (OnFactionStart.IsBound())
 	{
 		OnFactionStartTaskManager = UGameEventTaskManager::Create();
-		OnFactionStartTaskManager->OnAllTasksCompleted.Unbind();
-		OnFactionStartTaskManager->OnAllTasksCompleted.BindDynamic(this, &ThisClass::FactionStartAllTasksComplete);
+		OnFactionStartTaskManager->OnManagerComplete.Clear();
+		OnFactionStartTaskManager->OnManagerComplete.AddUniqueDynamic(this, &ThisClass::FactionStartAllTasksComplete);
 		OnFactionStart.Broadcast(FactionOrder[FactionIndex], OnFactionStartTaskManager);
-		OnFactionStartTaskManager->InitiateAsyncTasks();
+		OnFactionStartTaskManager->InitiateAllTasks();
 	}
 	else if (OnFactionStartPost.IsBound())
 	{

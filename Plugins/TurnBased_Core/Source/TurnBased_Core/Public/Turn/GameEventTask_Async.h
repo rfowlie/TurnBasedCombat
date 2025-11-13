@@ -12,7 +12,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FGameEventTask_Async, UGameEventTask
 /**
  * 
  */
-UCLASS(BlueprintType, Blueprintable)
+UCLASS(BlueprintType)
 class TURNBASED_CORE_API UGameEventTask_Async : public UObject
 {
 	GENERATED_BODY()

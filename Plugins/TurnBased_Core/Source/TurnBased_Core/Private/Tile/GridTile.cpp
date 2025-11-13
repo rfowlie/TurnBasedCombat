@@ -49,15 +49,3 @@ void AGridTile::BeginPlay()
 	
 }
 
-void AGridTile::NotifyActorBeginCursorOver()
-{
-	Super::NotifyActorBeginCursorOver();
-}
-
-void AGridTile::NotifyActorEndCursorOver()
-{
-	Super::NotifyActorEndCursorOver();
-}
-
-
-

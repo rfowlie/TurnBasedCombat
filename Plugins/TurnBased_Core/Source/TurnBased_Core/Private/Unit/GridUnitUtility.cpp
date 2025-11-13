@@ -25,5 +25,17 @@ bool UGridUnitUtility::RegisterGridUnit(AGridUnit* InGridUnit)
 
 bool UGridUnitUtility::UnregisterGridUnit(AGridUnit* InGridUnit)
 {
-	return false;
+	if (InGridUnit == nullptr) { return false; }
+
+	// pass this grid unit to all subsystems that require unit registration			
+	if (UGridWorldSubsystem* Subsystem = InGridUnit->GetWorld()->GetSubsystem<UGridWorldSubsystem>())
+	{
+		Subsystem->UnregisterGridUnit(InGridUnit);
+	}
+	if (UTurnWorldSubsystem* Subsystem = InGridUnit->GetWorld()->GetSubsystem<UTurnWorldSubsystem>())
+	{
+		Subsystem->UnregisterGridUnit(InGridUnit);
+	}
+	
+	return true;
 }
