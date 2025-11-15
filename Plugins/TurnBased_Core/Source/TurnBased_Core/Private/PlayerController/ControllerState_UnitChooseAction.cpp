@@ -61,7 +61,7 @@ void UControllerState_UnitChooseAction::OnEnter(APlayerController* InPlayerContr
 		// update cursor
 		if (APawn_FollowCursor* Pawn = Cast<APawn_FollowCursor>(PlayerController->GetPawn()))
 		{
-			Pawn->SetCursorCanTick(false);
+			Pawn->SetActive(false);
 		}
 	}
 }
@@ -81,7 +81,7 @@ void UControllerState_UnitChooseAction::OnExit()
 	// update cursor
 	if (APawn_FollowCursor* Pawn = Cast<APawn_FollowCursor>(PlayerController->GetPawn()))
 	{
-		Pawn->SetCursorCanTick(true);
+		Pawn->SetActive(true);
 	}
 }
 

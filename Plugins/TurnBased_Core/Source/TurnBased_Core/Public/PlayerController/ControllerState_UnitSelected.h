@@ -65,7 +65,7 @@ protected:
 	UFUNCTION()
 	bool SetMovementTiles();
 	
-	UFUNCTION()
-	void MoveSelectedTarget(AGridTile* InGridTile);
+	// UFUNCTION()
+	// void MoveSelectedTarget(AGridTile* InGridTile);
 	
 };

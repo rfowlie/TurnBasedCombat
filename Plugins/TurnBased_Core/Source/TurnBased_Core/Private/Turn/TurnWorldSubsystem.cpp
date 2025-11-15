@@ -17,6 +17,7 @@ void UTurnWorldSubsystem::EnableTurns()
 	if (!FactionMap.Contains(GetPlayerFactionTag()))
 	{
 		UE_LOG(LogTemp, Error, TEXT("ALERT: no player units in level, cannot begin"));
+		return;
 	}
 	
 	if (TurnNumber == 0)
@@ -29,7 +30,8 @@ void UTurnWorldSubsystem::EnableTurns()
 		DoOnFactionStart();
 	}
 	else
-	{		
+	{
+		// TODO: this is broken, and never happens currently but will surely fail if ever needed...
 		// need to check after turns gets enabled to see if current faction units are done
 		CheckFactionTurnComplete(FactionOrder[FactionIndex]);
 	}

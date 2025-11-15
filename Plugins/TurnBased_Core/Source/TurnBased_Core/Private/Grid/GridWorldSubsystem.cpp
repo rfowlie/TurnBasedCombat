@@ -195,7 +195,22 @@ AGridTile* UGridWorldSubsystem::GetGridTileOfUnit(const AGridUnit* GridUnit) con
 	return nullptr;
 }
 
-TArray<AGridTile*> UGridWorldSubsystem::GetGridTilesAtRange(FGridPosition StartGridPosition, int32 Range)
+bool UGridWorldSubsystem::TryMoveUnitToTile(AGridUnit* InGridUnit, AGridTile* InGridTile)
+{
+	if (!IsValid(InGridUnit) || !IsValid(InGridTile)) { return false; }
+	if (AGridUnit* GridUnitOnTile = GetGridUnitOnTile(InGridTile))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Grid Unit already exists on tile, attempting to double units on tiles will disrupt grid logic"));
+		return false;
+	}
+	
+	InGridUnit-> SetActorLocation(InGridTile->GetPlacementLocation());
+	UpdateUnitMapping(InGridUnit);
+	return true;
+}
+
+TArray<AGridTile*> UGridWorldSubsystem::GetGridTilesAtRange(
+	const FGridPosition StartGridPosition, const int32 Range)
 {
 	TArray<AGridTile*> Output;
 	TArray<FGridPosition> Temp;

@@ -1,7 +1,7 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Unit/UGigafireUnitAttributeSet.h"
+#include "Grid/Unit/UGigafireUnitAttributeSet.h"
 #include "GameplayEffectExtension.h"
 #include "GigafireSaveGame.h"
 #include "Net/UnrealNetwork.h"

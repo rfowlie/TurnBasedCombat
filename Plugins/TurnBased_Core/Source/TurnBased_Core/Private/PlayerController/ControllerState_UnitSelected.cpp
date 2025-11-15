@@ -249,17 +249,17 @@ bool UControllerState_UnitSelected::SetMovementTiles()
 	return true;
 }
 
-void UControllerState_UnitSelected::MoveSelectedTarget(AGridTile* InGridTile)
-{
-	if (IsValid(InGridTile))
-	{
-		for (FGridMovement GridMovement : GridMovements)
-		{
-			if (GridMovement.GridTile == InGridTile)
-			{
-				ActiveUnit->SetActorLocation(InGridTile->GetPlacementLocation());
-				break;
-			}
-		}		
-	}
-}
+// void UControllerState_UnitSelected::MoveSelectedTarget(AGridTile* InGridTile)
+// {
+// 	if (IsValid(InGridTile))
+// 	{
+// 		for (FGridMovement GridMovement : GridMovements)
+// 		{
+// 			if (GridMovement.GridTile == InGridTile)
+// 			{
+// 				ActiveUnit->SetActorLocation(InGridTile->GetPlacementLocation());
+// 				break;
+// 			}
+// 		}		
+// 	}
+// }
