@@ -4,7 +4,9 @@
 
 #include "CoreMinimal.h"
 #include "Subsystems/WorldSubsystem.h"
+#include "GridMechanics_Structs.h"
 #include "GridStructs.h"
+#include "GameEvent/GameEventTaskManager.h"
 #include "GridWorldSubsystem.generated.h"
 
 class UGridRules;

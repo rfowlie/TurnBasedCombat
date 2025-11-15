@@ -32,7 +32,9 @@ public class TurnBased_Core : ModuleRules
 				"GameplayAbilities",
 				"GameplayTasks",
 				"UMG", 
-				"Gigafire"
+				"Gigafire",
+				"UnrealGameMechanics",
+				"UnrealGridMechanics"
 			}
 			);
 			
@@ -45,6 +47,8 @@ public class TurnBased_Core : ModuleRules
 				"Slate",
 				"SlateCore",
 				// ... add private dependencies that you statically link with here ...	
+				"UnrealGameMechanics",
+				"UnrealGridMechanics"
 			}
 			);
 		

@@ -10,7 +10,7 @@
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FGridTileBaseBeginCursorOver, AGridTileBase*, GridTileBase);
 
-UCLASS()
+UCLASS(Blueprintable, BlueprintType)
 class UNREALGRIDMECHANICS_API AGridTileBase : public AActor
 {
 	GENERATED_BODY()

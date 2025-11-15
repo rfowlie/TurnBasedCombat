@@ -2,9 +2,8 @@
 
 
 #include "Grid/GigafireGridCursorBase.h"
-
 #include "Subsystem/GridTrackerSubsystem.h"
-#include "Tile/GridTile.h"
+#include "Tile/GridTileBase.h"
 
 
 // Sets default values
@@ -49,7 +48,7 @@ void AGigafireGridCursorBase::PauseCursor(bool bValue)
 	IsEnabled = bValue;
 }
 
-void AGigafireGridCursorBase::UpdateCursor(AGridTile* GridTile)
+void AGigafireGridCursorBase::UpdateCursor(AGridTileBase* GridTile)
 {
 	if (IsEnabled)
 	{

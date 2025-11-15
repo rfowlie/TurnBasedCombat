@@ -3,9 +3,9 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameplayTagContainer.h"
 #include "UObject/Object.h"
-#include "Input/GigafireInputHandler.h"
+#include "GameplayTagContainer.h"
+#include "Interfaces/GigafireInputHandler.h"
 #include "GigafireStateBase.generated.h"
 
 class IGigafirePawnHandler;

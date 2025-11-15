@@ -1,9 +1,9 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "GridMechanics_GridPositionLibrary.h"
-
+#include "Library/GridMechanics_GridPositionLibrary.h"
 #include "GridMechanics_Structs.h"
+
 
 FGridPosition UGridMechanics_GridPositionLibrary::CalculateGridPositionFromSize(const AActor* Actor, int32 Size)
 {

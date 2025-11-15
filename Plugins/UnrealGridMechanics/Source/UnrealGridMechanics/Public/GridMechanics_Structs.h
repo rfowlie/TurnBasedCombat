@@ -58,7 +58,7 @@ inline uint32 GetTypeHash(const FGridPosition& Struct)
 }
 
 USTRUCT(BlueprintType)
-struct TURNBASED_CORE_API FGridMovement
+struct UNREALGRIDMECHANICS_API FGridMovement
 {
 	GENERATED_BODY()
 
@@ -86,7 +86,7 @@ inline uint32 GetTypeHash(const FGridMovement& Struct)
 }
 
 USTRUCT(BlueprintType)
-struct TURNBASED_CORE_API FGridPair
+struct UNREALGRIDMECHANICS_API FGridPair
 {
 	GENERATED_BODY()
 	

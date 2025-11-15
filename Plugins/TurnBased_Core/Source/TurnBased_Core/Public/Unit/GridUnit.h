@@ -9,6 +9,7 @@
 #include "GridUnit_Interface.h"
 #include "Abilities/GameplayAbility.h"
 #include "GameFramework/Actor.h"
+#include "Tile/GridTileBase.h"
 #include "GridUnit.generated.h"
 
 
@@ -35,7 +36,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FGridUnitEventDelegate, AGridUnit*, 
 
 
 UCLASS(Blueprintable, BlueprintType)
-class TURNBASED_CORE_API AGridUnit : public AActor, public IAbilitySystemInterface, public IGridUnit_Interface
+class TURNBASED_CORE_API AGridUnit : public AGridTileBase, public IAbilitySystemInterface, public IGridUnit_Interface
 {
 	GENERATED_BODY()
 

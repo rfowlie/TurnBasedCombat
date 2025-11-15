@@ -1,7 +1,7 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "GridMechanics_ShapeLibrary.h"
+#include "Library/GridMechanics_ShapeLibrary.h"
 #include "GridMechanics_Structs.h"
 
 

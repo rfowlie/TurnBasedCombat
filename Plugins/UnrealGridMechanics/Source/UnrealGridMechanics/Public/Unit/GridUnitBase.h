@@ -3,10 +3,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameplayTagContainer.h"
 #include "GameFramework/Actor.h"
 #include "GridUnitBase.generated.h"
 
-UCLASS()
+UCLASS(Blueprintable, BlueprintType)
 class UNREALGRIDMECHANICS_API AGridUnitBase : public AActor
 {
 	GENERATED_BODY()
@@ -22,4 +23,7 @@ protected:
 public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
+
+	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
+	FGameplayTag GetFactionTag();
 };

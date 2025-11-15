@@ -23,12 +23,12 @@ class UNREALGRIDMECHANICS_API UGridTrackerSubsystem : public UWorldSubsystem
 	
 # pragma region Tile
 public:
-	// UPROPERTY(BlueprintAssignable, Category="Turn Based | Grid")
-	// FGridTrackerTileDelegate OnGridTileHoveredStart;
-	// UPROPERTY(BlueprintAssignable, Category="Turn Based | Grid")
-	// FGridTrackerTileDelegate OnGridTileHoveredStop;
-	// UFUNCTION(BlueprintCallable)
-	// AGridTileBase* GetGridTileHovered() const { return GridTileHovered; }
+	UPROPERTY(BlueprintAssignable, Category="Turn Based | Grid")
+	FGridTrackerTileDelegate OnGridTileHoveredStart;
+	UPROPERTY(BlueprintAssignable, Category="Turn Based | Grid")
+	FGridTrackerTileDelegate OnGridTileHoveredStop;
+	UFUNCTION(BlueprintCallable)
+	AGridTileBase* GetGridTileHovered() const { return GridTileHovered; }
 	
 	UFUNCTION(BlueprintCallable)
 	void RegisterGridTile(AGridTileBase* GridTile);

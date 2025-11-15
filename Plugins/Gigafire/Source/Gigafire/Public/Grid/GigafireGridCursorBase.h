@@ -7,7 +7,8 @@
 #include "Interfaces/GigafireCursorHandler.h"
 #include "GigafireGridCursorBase.generated.h"
 
-class AGridTile;
+class AGridTileBase;
+
 
 UCLASS()
 class GIGAFIRE_API AGigafireGridCursorBase : public AActor, public IGigafireCursorHandler
@@ -51,5 +52,5 @@ protected:
 	void CreateCursor();
 
 	UFUNCTION(BlueprintCallable, Category = "Gigafire | Cursor")
-	void UpdateCursor(AGridTile* GridTile);
+	void UpdateCursor(AGridTileBase* GridTile);
 };

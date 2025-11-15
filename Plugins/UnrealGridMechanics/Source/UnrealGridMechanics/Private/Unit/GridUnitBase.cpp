@@ -23,4 +23,3 @@ void AGridUnitBase::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 }
-
