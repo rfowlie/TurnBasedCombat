@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "GridMechanics_Structs.h"
+#include "Interfaces/GigafireGridHandler.h"
 #include "GigafireGridInterpreterComponent.generated.h"
 
 
@@ -12,7 +13,7 @@ class AGridTileBase;
 class AGridUnitBase;
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
-class GIGAFIRE_API UGigafireGridInterpreterComponent : public UActorComponent
+class GIGAFIRE_API UGigafireGridInterpreterComponent : public UActorComponent, public IGigafireGridHandler
 {
 	GENERATED_BODY()
 
@@ -63,13 +64,20 @@ public:
 	virtual bool CanUnitBeOnTile(AGridUnitBase* GridUnit, AGridTileBase* GridTile);
 	// TODO: Movement policy system, this is janky...
 	virtual int32 InterpretMovementCost(AGridUnitBase* GridUnit, AGridTileBase* GridTile);
-	
+
+	UFUNCTION(BlueprintCallable)
 	TArray<AGridTileBase*> GetGridTilesAtRange(const FGridPosition StartGridPosition, int32 Range);
+	UFUNCTION(BlueprintCallable)
 	TArray<AGridTileBase*> GetGridTilesAtRanges(const FGridPosition StartGridPosition, TArray<int32> Ranges);
 
 	// TODO: is this where these go???
+	UFUNCTION(BlueprintCallable)
 	virtual void CalculateGridMovement(TArray<FGridMovement>& OutMovement, AGridUnitBase* GridUnit, const int32 AvailableMovement);
+	UFUNCTION(BlueprintCallable)
 	virtual void CalculateGridAttacks(TArray<FGridPair>& OutGridPairs, AGridUnitBase* InGridUnit, const TArray<FGridMovement>& InGridMovements);
 	virtual void CalculateGridAttackTiles(TMap<AGridTileBase*, int32>& OutWeaponPositions, const TArray<FGridMovement>& InGridMovements, const AGridUnitBase* InstigatorUnit, const AGridUnitBase* TargetUnit);
-#pragma endregion 
+#pragma endregion
+
+	// interface
+	virtual TArray<AGridTileBase*> GetUnitMovementTiles_Implementation(AGridUnitBase* GridUnit) override;
 };

@@ -98,7 +98,8 @@ public:
 	ATTRIBUTE_ACCESSORS(UGigafireUnitAttributeSet, Constitution);
 	UFUNCTION()
 	void OnRep_Constitution(const FGameplayAttributeData& PreviousValue) const;
-	
+
+	// helper
 	UFUNCTION(BlueprintCallable)
 	void InitializeAttributeSet(const FGigafireUnitAttributes& InAttributes);
 
@@ -109,4 +110,8 @@ protected:
 public:
 	UPROPERTY(BlueprintAssignable)
 	FGigafireUnitAttributeDelegate OnHealthZero;
+
+	UFUNCTION(BlueprintCallable)
+	bool IsUnitDefeated() const;
+	
 };

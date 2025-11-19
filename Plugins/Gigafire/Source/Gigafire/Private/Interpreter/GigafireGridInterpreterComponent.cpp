@@ -13,8 +13,12 @@ void UGigafireGridInterpreterComponent::UpdateTileMapping(AGridTileBase* GridTil
 	if (!IsValid(GridTile)) { return; }
 	
 	// remove mapping for grid unit
-	LocationGridTileMap.Remove(GridTileLocationMap[GridTile]);
-	GridTileLocationMap.Remove(GridTile);
+	if (GridTileLocationMap.Contains(GridTile))
+	{
+		LocationGridTileMap.Remove(GridTileLocationMap[GridTile]);
+		GridTileLocationMap.Remove(GridTile);
+	}
+	
 
 	// update the unit that has moved	
 	const FGridPosition GridPosition = UGridMechanics_GridPositionLibrary::CalculateGridPositionFromSize(GridTile, GridSize);
@@ -38,8 +42,11 @@ void UGigafireGridInterpreterComponent::UpdateUnitMapping(AGridUnitBase* GridUni
 	if (!IsValid(GridUnit)) { return; }
 	
 	// remove mapping for grid unit
-	LocationGridUnitMap.Remove(GridUnitLocationMap[GridUnit]);
-	GridUnitLocationMap.Remove(GridUnit);
+	if (GridUnitLocationMap.Contains(GridUnit))
+	{
+		LocationGridUnitMap.Remove(GridUnitLocationMap[GridUnit]);
+		GridUnitLocationMap.Remove(GridUnit);
+	}
 
 	// update the unit that has moved	
 	const FGridPosition GridPosition = UGridMechanics_GridPositionLibrary::CalculateGridPositionFromSize(GridUnit, GridSize);
@@ -133,7 +140,7 @@ TArray<AGridTileBase*> UGigafireGridInterpreterComponent::GetGridTilesAtRanges(
 }
 
 void UGigafireGridInterpreterComponent::CalculateGridMovement(TArray<FGridMovement>& OutMovement,
-	AGridUnitBase* GridUnit, const int32 AvailableMovement)
+                                                              AGridUnitBase* GridUnit, const int32 AvailableMovement)
 {
 	if (!GridUnitLocationMap.Contains(GridUnit))
 	{
@@ -286,4 +293,18 @@ void UGigafireGridInterpreterComponent::CalculateGridAttackTiles(TMap<AGridTileB
 			}
 		}
 	}
+}
+
+TArray<AGridTileBase*> UGigafireGridInterpreterComponent::GetUnitMovementTiles_Implementation(AGridUnitBase* GridUnit)
+{
+	TArray<FGridMovement> OutGridMovement;
+	CalculateGridMovement(OutGridMovement, GridUnit, 1);
+
+	TArray<AGridTileBase*> OutGridTiles;
+	for (const auto GridMovement : OutGridMovement)
+	{
+		OutGridTiles.Add(GridMovement.GridTile);
+	}
+
+	return OutGridTiles;
 }

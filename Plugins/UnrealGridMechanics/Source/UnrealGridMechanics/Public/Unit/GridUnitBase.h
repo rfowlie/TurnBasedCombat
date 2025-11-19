@@ -3,9 +3,10 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameplayTagContainer.h"
 #include "GameFramework/Actor.h"
+#include "GameplayTagContainer.h"
 #include "GridUnitBase.generated.h"
+
 
 UCLASS(Blueprintable, BlueprintType)
 class UNREALGRIDMECHANICS_API AGridUnitBase : public AActor

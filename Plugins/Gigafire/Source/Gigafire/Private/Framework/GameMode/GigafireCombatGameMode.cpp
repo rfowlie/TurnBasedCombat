@@ -1,4 +1,4 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Interfaces/GigafireInformationHandler.h"
+#include "Framework/GameMode/GigafireCombatGameMode.h"

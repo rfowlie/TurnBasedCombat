@@ -118,4 +118,9 @@ void UGigafireUnitAttributeSet::InitializeAttributeSet(const FGigafireUnitAttrib
 	InitConstitution(InAttributes.Constitution);
 }
 
+bool UGigafireUnitAttributeSet::IsUnitDefeated() const
+{
+	return IsDefeated;
+}
+
 #pragma endregion 

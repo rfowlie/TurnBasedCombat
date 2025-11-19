@@ -3,6 +3,8 @@
 
 #include "Unit/GridUnitBase.h"
 
+#include "Subsystem/GridTrackerSubsystem.h"
+
 
 // Sets default values
 AGridUnitBase::AGridUnitBase()
@@ -15,6 +17,16 @@ AGridUnitBase::AGridUnitBase()
 void AGridUnitBase::BeginPlay()
 {
 	Super::BeginPlay();
+
+	// world subsystem should always know about this
+	if (UGridTrackerSubsystem* Subsystem = GetWorld()->GetSubsystem<UGridTrackerSubsystem>(); IsValid(Subsystem))
+	{
+		Subsystem->RegisterGridUnit(this);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("GridTrackerSubsystem Is Not Available..."))
+	}
 	
 }
 

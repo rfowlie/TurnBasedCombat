@@ -21,7 +21,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE(FGridUnitAbilityDelegate);
 /**
  * organize, manage and broadcast all things related to the grid
  */
-UCLASS(Blueprintable)
+UCLASS(BlueprintType)
 class TURNBASED_CORE_API UGridWorldSubsystem : public UWorldSubsystem
 {
 	GENERATED_BODY()

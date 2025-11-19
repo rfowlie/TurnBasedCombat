@@ -5,22 +5,21 @@
 #include "CoreMinimal.h"
 #include "UObject/Object.h"
 #include "GameplayTagContainer.h"
-#include "GigafireStructs.generated.h"
 
 
-USTRUCT(BlueprintType)
-struct FGameplayTagValuePair
-{
-	GENERATED_BODY()
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FGameplayTag Tag;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float Value;
-	
-	bool operator==(const FGameplayTagValuePair& Other) const
-	{
-		return Tag == Other.Tag;
-	}
-};
+// USTRUCT(BlueprintType)
+// struct FGameplayTagValuePair
+// {
+// 	GENERATED_BODY()
+//
+// 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+// 	FGameplayTag Tag;
+//
+// 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+// 	float Value;
+// 	
+// 	bool operator==(const FGameplayTagValuePair& Other) const
+// 	{
+// 		return Tag == Other.Tag;
+// 	}
+// };

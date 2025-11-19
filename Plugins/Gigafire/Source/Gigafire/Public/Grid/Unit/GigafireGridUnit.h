@@ -3,29 +3,38 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "AbilitySystemInterface.h"
 #include "GameFramework/Actor.h"
+#include "Unit/GridUnitBase.h"
 #include "GigafireGridUnit.generated.h"
 
+class UGigafireUnitAttributeSet;
+
+
 UCLASS(Blueprintable, BlueprintType)
-class GIGAFIRE_API AGigafireGridUnit : public AActor
+class GIGAFIRE_API AGigafireGridUnit : public AGridUnitBase, public IAbilitySystemInterface
 {
 	GENERATED_BODY()
 
 public:
-	// Sets default values for this actor's properties
 	AGigafireGridUnit();
 
 protected:
-	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
-
+	
 public:
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
-
-	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
-	bool SetHovered(bool IsHovered);
+#pragma region GAS
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	UGigafireUnitAttributeSet* GigafireUnitAttributeSet;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	UAbilitySystemComponent* AbilitySystemComponent;
+	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override { return AbilitySystemComponent; }
+	
+#pragma endregion
+	
 };
+
 
 
 USTRUCT(BlueprintType)

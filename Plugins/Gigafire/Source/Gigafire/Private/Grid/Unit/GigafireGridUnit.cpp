@@ -2,25 +2,20 @@
 
 
 #include "Grid/Unit/GigafireGridUnit.h"
+#include "Grid/Unit/UGigafireUnitAttributeSet.h"
 
 
-// Sets default values
 AGigafireGridUnit::AGigafireGridUnit()
 {
-	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
-}
-
-// Called when the game starts or when spawned
-void AGigafireGridUnit::BeginPlay()
-{
-	Super::BeginPlay();
+	AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
+	GigafireUnitAttributeSet = CreateDefaultSubobject<UGigafireUnitAttributeSet>(TEXT("AttributeSet_GridUnit"));
 	
 }
 
-// Called every frame
-void AGigafireGridUnit::Tick(float DeltaTime)
+void AGigafireGridUnit::BeginPlay()
 {
-	Super::Tick(DeltaTime);
-}
+	Super::BeginPlay();
 
+	AbilitySystemComponent->AddAttributeSetSubobject(GigafireUnitAttributeSet);
+	
+}

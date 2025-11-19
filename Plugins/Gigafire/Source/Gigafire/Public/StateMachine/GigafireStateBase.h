@@ -28,6 +28,9 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Gigafire|State")
 	FGameplayTag StateTag;
 	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Gigafire|State")
+	APlayerController* PlayerController;
+	
 	// setup all the actions for this state
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Gigafire|State")
 	void Initialize();
@@ -44,11 +47,5 @@ public:
 
 	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category="Gigafire|State")
 	FGigafireStateDelegate OnPopState;
-	
-protected:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Gigafire|State")
-	APlayerController* PlayerController;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Gigafire|State")
-	TScriptInterface<UGigafirePawnHandler> PawnHandler;
+		
 };

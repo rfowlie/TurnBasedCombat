@@ -53,6 +53,7 @@ void AGigafireGridCursorBase::UpdateCursor(AGridTileBase* GridTile)
 	if (IsEnabled)
 	{
 		SetActorLocation(GridTile->GetActorLocation() + Cursor_ExtraHeight);
+		UE_LOG(LogTemp, Display, TEXT("Cursor Updated"));
 	}	
 }
 

@@ -16,10 +16,12 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FGridTrackerUnitDelegate, AGridUnitB
 /**
  * 
  */
-UCLASS()
+UCLASS(BlueprintType)
 class UNREALGRIDMECHANICS_API UGridTrackerSubsystem : public UWorldSubsystem
 {
 	GENERATED_BODY()
+	
+	virtual void PostInitialize() override;
 	
 # pragma region Tile
 public:
@@ -29,7 +31,9 @@ public:
 	FGridTrackerTileDelegate OnGridTileHoveredStop;
 	UFUNCTION(BlueprintCallable)
 	AGridTileBase* GetGridTileHovered() const { return GridTileHovered; }
-	
+
+	UFUNCTION()
+	void OnBeginCursorOverGridTile(AGridTileBase* GridTileBase);
 	UFUNCTION(BlueprintCallable)
 	void RegisterGridTile(AGridTileBase* GridTile);
 	UFUNCTION(BlueprintCallable)

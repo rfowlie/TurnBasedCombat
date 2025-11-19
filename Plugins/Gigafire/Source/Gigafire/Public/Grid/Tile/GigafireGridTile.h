@@ -4,11 +4,12 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "Tile/GridTileBase.h"
 #include "GigafireGridTile.generated.h"
 
 
 UCLASS(Blueprintable, BlueprintType)
-class GIGAFIRE_API AGigafireGridTile : public AActor
+class GIGAFIRE_API AGigafireGridTile : public AGridTileBase
 {
 	GENERATED_BODY()
 
@@ -16,30 +17,18 @@ public:
 	// Sets default values for this actor's properties
 	AGigafireGridTile();
 
-protected:
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
-
-public:
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
-
-	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FGridTileBeginCursorOver, AActor*, GridTile );
-
-	// allow for grid actors to customize what triggers the cursor over
-	UPROPERTY(BlueprintAssignable, BlueprintCallable)
-	FGridTileBeginCursorOver OnGridTileBeginCursorOver;
-
+	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable, Category = "GridTile")
+	bool IsDeploymentTile();
+	
 	// TODO: was brainstorming having a controller class be responsible for setting hovered
 	// tiles will always need to be able to set on hovered
 	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
 	bool SetHovered(bool IsHovered);
+	
 };
 
-
-
 USTRUCT(BlueprintType)
-struct FGigaGridTileArray
+struct FGigafireGridTileArray
 {
 	GENERATED_BODY()
 	

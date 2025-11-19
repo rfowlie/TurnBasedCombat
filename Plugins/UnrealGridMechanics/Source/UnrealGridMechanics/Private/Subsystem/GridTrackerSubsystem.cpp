@@ -6,11 +6,40 @@
 #include "Unit/GridUnitBase.h"
 
 
+void UGridTrackerSubsystem::PostInitialize()
+{
+	Super::PostInitialize();
+}
+
+void UGridTrackerSubsystem::OnBeginCursorOverGridTile(AGridTileBase* GridTileBase)
+{
+	if (!IsValid(GridTileBase)) { return; }
+	
+	// update tile
+	if (IsValid(GridTileHovered))
+	{
+		if (OnGridTileHoveredStop.IsBound())
+		{
+			OnGridTileHoveredStop.Broadcast(GridTileHovered);
+		}
+		
+		GridTileHovered = nullptr;
+	}
+		
+	GridTileHovered = GridTileBase;
+	if (OnGridTileHoveredStart.IsBound())
+	{
+		OnGridTileHoveredStart.Broadcast(GridTileHovered);
+	}
+}
+
 void UGridTrackerSubsystem::RegisterGridTile(AGridTileBase* GridTile)
 {
 	if (IsValid(GridTile) && !GridTilesAll.Contains(GridTile))
 	{
 		GridTilesAll.AddUnique(GridTile);
+
+		GridTile->OnGridTileBeginCursorOver.AddDynamic(this, &ThisClass::OnBeginCursorOverGridTile);
 	}
 }
 
