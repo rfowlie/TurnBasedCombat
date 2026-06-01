@@ -63,12 +63,12 @@ void UControllerState_UnitSelected::OnExit()
 	// revert movement tiles
 	for (auto GridMovement : GridMovements)
 	{
-		if (AGridUnit* GridUnit = GridSubsystem->GetGridUnitOnTile(GridMovement.GridTile))
-		{
-			GridUnit->SetState(TAG_TBCore_Grid_State_Idle);
-		}
+		// if (AGridUnit* GridUnit = GridSubsystem->GetGridUnitOnTile(Cast<AGridTile>(GridMovement.GridTile)))
+		// {
+		// 	GridUnit->SetState(TAG_TBCore_Grid_State_Idle);
+		// }
 			
-		GridMovement.GridTile.Get()->SetState(TAG_TBCore_Grid_State_Idle);
+		// Cast<AGridTile>(GridMovement.GridTile.Get())->SetState(TAG_TBCore_Grid_State_Idle);
 	}
 
 	// revert attack tiles
@@ -143,7 +143,7 @@ void UControllerState_UnitSelected::OnSelect()
 		{
 			for (FGridMovement GridMovement : GridMovements)
 			{
-				if (GridMovement.GridTile.Get() == SelectedTile)
+				if (Cast<AGridTile>(GridMovement.GridTile.Get()) == SelectedTile)
 				{
 					// stop cursor follow
 					// GridSubsystem->OnGridTileHoveredStart.RemoveDynamic(this, &ThisClass::MoveSelectedTarget);
@@ -207,14 +207,15 @@ bool UControllerState_UnitSelected::SetMovementTiles()
 	GridSubsystem->CalculateGridMovement(GridMovements, ActiveUnit, AvailableMovement);
 	for (auto GridMovement : GridMovements)
 	{
-		if (AGridUnit* GridUnit = GridSubsystem->GetGridUnitOnTile(GridMovement.GridTile))
+		AGridTile* CastTile = Cast<AGridTile>(GridMovement.GridTile.Get());
+		if (AGridUnit* GridUnit = GridSubsystem->GetGridUnitOnTile(CastTile))
 		{
 			GridUnit->SetState(TAG_TBCore_Grid_Tile_CanAttack);
-			GridMovement.GridTile.Get()->SetState(TAG_TBCore_Grid_Tile_CanAttack);
+			CastTile->SetState(TAG_TBCore_Grid_Tile_CanAttack);
 		}
 		else
 		{
-			GridMovement.GridTile.Get()->SetState(TAG_TBCore_Grid_Tile_CanMove);
+			CastTile->SetState(TAG_TBCore_Grid_Tile_CanMove);
 		}
 	}
 
@@ -249,17 +250,17 @@ bool UControllerState_UnitSelected::SetMovementTiles()
 	return true;
 }
 
-void UControllerState_UnitSelected::MoveSelectedTarget(AGridTile* InGridTile)
-{
-	if (IsValid(InGridTile))
-	{
-		for (FGridMovement GridMovement : GridMovements)
-		{
-			if (GridMovement.GridTile == InGridTile)
-			{
-				ActiveUnit->SetActorLocation(InGridTile->GetPlacementLocation());
-				break;
-			}
-		}		
-	}
-}
+// void UControllerState_UnitSelected::MoveSelectedTarget(AGridTile* InGridTile)
+// {
+// 	if (IsValid(InGridTile))
+// 	{
+// 		for (FGridMovement GridMovement : GridMovements)
+// 		{
+// 			if (GridMovement.GridTile == InGridTile)
+// 			{
+// 				ActiveUnit->SetActorLocation(InGridTile->GetPlacementLocation());
+// 				break;
+// 			}
+// 		}		
+// 	}
+// }

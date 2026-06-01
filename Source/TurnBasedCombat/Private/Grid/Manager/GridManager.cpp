@@ -2,25 +2,22 @@
 
 
 #include "Grid/Manager/GridManager.h"
-#include "AbilitySystemBlueprintLibrary.h"
+
 #include "AbilitySystemComponent.h"
-// #include "Grid/GridMovementNode.h"
-#include "TurnBased_Core_Tags.h"
-#include "Combat/CombatCalculator/CombatCalculator.h"
+
+
 #include "Combat/CombatCalculator/MoveAbility.h"
 #include "GameplayAbilities/MoveAbilityPayload.h"
 #include "Grid/GridHelper.h"
-#include "Grid/GridStructs.h"
+
 #include "Grid/Manager/TurnManager.h"
 #include "Grid/Manager/GridRules.h"
 #include "Tile/GridTile.h"
 #include "Unit/GridUnit.h"
 #include "_Framework/TBC_InfoWorldSubsystem.h"
-#include "NativeGameplayTags.h"
+
 #include "GameplayTagContainer.h"
-
-
-
+#include "Unit/GridUnitBase.h"
 
 
 UGridManager::UGridManager()
@@ -501,7 +498,7 @@ void UGridManager::CalculateGridMovement(TArray<FGridMovement>& OutMovement, AGr
 	
     FGridMovement StartNode;
     StartNode.Cost = 0;
-	StartNode.GridTile = StartTile;    	
+	StartNode.GridTile = Cast<AGridTileBase>(StartTile);    	
     ProcessingQueue.Enqueue(StartNode);
  
     FGridMovement Current;
@@ -509,15 +506,16 @@ void UGridManager::CalculateGridMovement(TArray<FGridMovement>& OutMovement, AGr
 	{		
 		ProcessingQueue.Dequeue(Current);
 		Processed.Add(Current);
-    		
-		for (AGridTile* TargetTile : GetGridTilesAtRange(GridTileLocationMap[Current.GridTile], 1))
+
+		AGridTile* CurrentGridTile = Cast<AGridTile>(Current.GridTile);
+		for (AGridTile* TargetTile : GetGridTilesAtRange(GridTileLocationMap[CurrentGridTile], 1))
 		{
-			if (!GridRules->UnitCanMoveOnTile(this, GridUnit, Current.GridTile, TargetTile))
+			if (!GridRules->UnitCanMoveOnTile(this, GridUnit, CurrentGridTile, TargetTile))
 			{
 				continue;
 			}    				
     			
-			const int32 TerrainCost = GridRules->CalculateTerrainCost(this, GridUnit, Current.GridTile, TargetTile);
+			const int32 TerrainCost = GridRules->CalculateTerrainCost(this, GridUnit, CurrentGridTile, TargetTile);
 			const int32 CalculatedMovement = Current.Cost + TerrainCost; 
 			if (GridUnit->GetAvailableMovement() < CalculatedMovement)
 			{
@@ -525,7 +523,7 @@ void UGridManager::CalculateGridMovement(TArray<FGridMovement>& OutMovement, AGr
 			}
     			
 			FGridMovement Temp;
-			Temp.GridTile = TargetTile;
+			Temp.GridTile = Cast<AGridTileBase>(TargetTile);
 			Temp.Cost = CalculatedMovement;
 			Temp.ParentTile = Current.GridTile;
 
@@ -687,7 +685,7 @@ void UGridManager::CalculateGridAttacks(TArray<const AGridUnit*> OutGridUnitsInR
 	TMap<FGridPosition, bool> MovementMap;
 	for (const auto GridMovement : GridMovements)
 	{
-		MovementMap.Add(GridTileLocationMap[GridMovement.GridTile], false);
+		MovementMap.Add(GridTileLocationMap[Cast<AGridTile>(GridMovement.GridTile)], false);
 	}
 
 	TArray<FGridPosition> TempPositions;
@@ -724,7 +722,7 @@ TArray<FGridPair> UGridManager::CalculateGridAttacks(AGridUnit* GridUnit)
 	TMap<FGridPosition, bool> MovementMap;
 	for (const auto GridMovement : GridMovements)
 	{
-		MovementMap.Add(GridTileLocationMap[GridMovement.GridTile], false);
+		MovementMap.Add(GridTileLocationMap[Cast<AGridTile>(GridMovement.GridTile)], false);
 	}
 
 	TArray<FGridPosition> TempPositions;
@@ -740,9 +738,10 @@ TArray<FGridPair> UGridManager::CalculateGridAttacks(AGridUnit* GridUnit)
 				if (MovementMap.Contains(RangePosition) && MovementMap[RangePosition] == false)
 				{
 					MovementMap[RangePosition] = true;
-					// find the tile that matches with this unit					
-					OutGridPairs.Add(
-						FGridPair(LocationGridTileMap[GridUnitLocationMap[EnemyUnit]], EnemyUnit));
+					// find the tile that matches with this unit
+					AGridTileBase* InGridTile = Cast<AGridTileBase>(LocationGridTileMap[GridUnitLocationMap[EnemyUnit]]);
+					AGridUnitBase* InGridUnit = Cast<AGridUnitBase>(EnemyUnit);
+					OutGridPairs.Add(FGridPair(InGridTile, InGridUnit));
 				}
 			}
 		}		

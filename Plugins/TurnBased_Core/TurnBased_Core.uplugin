@@ -29,6 +29,14 @@
 		{
 			"Name": "GameplayAbilities",
 			"Enabled": true
+		},
+		{
+			"Name": "UnrealGridMechanics",
+			"Enabled": true
+		},
+		{
+			"Name": "UnrealGameMechanics",
+			"Enabled": true
 		}
 	]
 }

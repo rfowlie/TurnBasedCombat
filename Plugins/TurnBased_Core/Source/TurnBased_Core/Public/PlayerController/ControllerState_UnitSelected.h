@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "ControllerState_Abstract.h"
+#include "GridMechanics_Structs.h"
 #include "Grid/GridStructs.h"
 #include "ControllerState_UnitSelected.generated.h"
 
@@ -65,7 +66,7 @@ protected:
 	UFUNCTION()
 	bool SetMovementTiles();
 	
-	UFUNCTION()
-	void MoveSelectedTarget(AGridTile* InGridTile);
+	// UFUNCTION()
+	// void MoveSelectedTarget(AGridTile* InGridTile);
 	
 };

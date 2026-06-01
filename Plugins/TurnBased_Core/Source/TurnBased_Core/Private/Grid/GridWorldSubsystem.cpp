@@ -10,6 +10,7 @@
 #include "Turn/TurnWorldSubsystem.h"
 #include "GameMode/GameMode_TurnBased_Combat.h"
 #include "Combat/CombatCalculator_Basic.h"
+#include "Unit/GridUnitBase.h"
 
 
 void UGridWorldSubsystem::PostInitialize()
@@ -195,7 +196,22 @@ AGridTile* UGridWorldSubsystem::GetGridTileOfUnit(const AGridUnit* GridUnit) con
 	return nullptr;
 }
 
-TArray<AGridTile*> UGridWorldSubsystem::GetGridTilesAtRange(FGridPosition StartGridPosition, int32 Range)
+bool UGridWorldSubsystem::TryMoveUnitToTile(AGridUnit* InGridUnit, AGridTile* InGridTile)
+{
+	if (!IsValid(InGridUnit) || !IsValid(InGridTile)) { return false; }
+	if (AGridUnit* GridUnitOnTile = GetGridUnitOnTile(InGridTile))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Grid Unit already exists on tile, attempting to double units on tiles will disrupt grid logic"));
+		return false;
+	}
+	
+	InGridUnit-> SetActorLocation(InGridTile->GetPlacementLocation());
+	UpdateUnitMapping(InGridUnit);
+	return true;
+}
+
+TArray<AGridTile*> UGridWorldSubsystem::GetGridTilesAtRange(
+	const FGridPosition StartGridPosition, const int32 Range)
 {
 	TArray<AGridTile*> Output;
 	TArray<FGridPosition> Temp;
@@ -262,7 +278,8 @@ void UGridWorldSubsystem::CalculateGridMovement(TArray<FGridMovement>& OutMoveme
 	
 	FGridMovement StartNode;
 	StartNode.Cost = 0;
-	StartNode.GridTile = StartTile;    	
+	// COMPILER ISSUES
+	// StartNode.GridTile = Cast<AGridTileBase>(StartTile);    	
 	ProcessingQueue.Enqueue(StartNode);
  
 	FGridMovement Current;
@@ -270,8 +287,9 @@ void UGridWorldSubsystem::CalculateGridMovement(TArray<FGridMovement>& OutMoveme
 	{		
 		ProcessingQueue.Dequeue(Current);
 		Processed.Add(Current);
-    		
-		for (AGridTile* TargetTile : GetGridTilesAtRange(GridTileLocationMap[Current.GridTile], 1))
+
+		AGridTile* CastTile = Cast<AGridTile>(Current.GridTile);
+		for (AGridTile* TargetTile : GetGridTilesAtRange(GridTileLocationMap[CastTile], 1))
 		{
 			if (GetGridUnitOnTile(TargetTile)) { continue; }    	
 			const int32 CalculatedMovement = Current.Cost + TargetTile->GetMovementCost(); 
@@ -282,7 +300,7 @@ void UGridWorldSubsystem::CalculateGridMovement(TArray<FGridMovement>& OutMoveme
 			}
     			
 			FGridMovement Temp;
-			Temp.GridTile = TargetTile;
+			Temp.GridTile = Cast<AGridTileBase>(TargetTile);
 			Temp.Cost = CalculatedMovement;
 			Temp.ParentTile = Current.GridTile;
 
@@ -328,7 +346,7 @@ void UGridWorldSubsystem::CalculateGridAttacks(
 	TMap<FGridPosition, bool> MovementMap;
 	for (const auto GridMovement : InGridMovements)
 	{
-		MovementMap.Add(GridTileLocationMap[GridMovement.GridTile], false);
+		MovementMap.Add(GridTileLocationMap[Cast<AGridTile>(GridMovement.GridTile)], false);
 	}
 
 	// TODO: for now... need to figure out better way to gain access to weapon information
@@ -348,9 +366,10 @@ void UGridWorldSubsystem::CalculateGridAttacks(
 				if (MovementMap.Contains(RangePosition) && MovementMap[RangePosition] == false)
 				{
 					MovementMap[RangePosition] = true;
+					AGridTileBase* InTile = Cast<AGridTileBase>(LocationGridTileMap[GridUnitLocationMap[EnemyUnit]]);
+					AGridUnitBase* InUnit = Cast<AGridUnitBase>(EnemyUnit);
 					// find the tile that matches with this unit					
-					OutGridPairs.Add(
-						FGridPair(LocationGridTileMap[GridUnitLocationMap[EnemyUnit]], EnemyUnit));
+					OutGridPairs.Add(FGridPair(InTile, InUnit));
 				}
 			}
 		}		
@@ -377,7 +396,7 @@ void UGridWorldSubsystem::CalculateGridAttackTiles(TMap<AGridTile*, int32>& OutW
 		{			
 			for (auto GridMovement : InGridMovements)
 			{
-				if (GridTileLocationMap[GridMovement.GridTile] == GridPosition)
+				if (GridTileLocationMap[Cast<AGridTile>(GridMovement.GridTile)] == GridPosition)
 				{
 					OutWeaponPositions.Add(LocationGridTileMap[GridPosition], WeaponRange);
 				}
@@ -481,7 +500,7 @@ void UGridWorldSubsystem::CalculateMovementScores(TMap<AGridTile*, FGridUnitArra
 		for (auto GridMovement : GridMovements)
 		{
 			AttackableTiles.Append(
-				GetGridTilesAtRanges(GridTileLocationMap[GridMovement.GridTile], WeaponRanges));
+				GetGridTilesAtRanges(GridTileLocationMap[Cast<AGridTile>(GridMovement.GridTile)], WeaponRanges));
 		}
 
 		for (auto AttackableTile : AttackableTiles)

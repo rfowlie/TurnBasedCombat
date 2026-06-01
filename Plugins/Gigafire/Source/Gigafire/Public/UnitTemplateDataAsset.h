@@ -6,6 +6,7 @@
 #include "Engine/DataAsset.h"
 #include "GameplayTagContainer.h"
 #include "GigafireStructs.h"
+#include "UnrealGameStructs.h"
 #include "UnitTemplateDataAsset.generated.h"
 
 

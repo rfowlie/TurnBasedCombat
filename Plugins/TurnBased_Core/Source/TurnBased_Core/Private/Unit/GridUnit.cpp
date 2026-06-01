@@ -26,9 +26,11 @@ void AGridUnit::Tick(float DeltaTime)
 
 void AGridUnit::BeginPlay()
 {
-	Super::BeginPlay();
+	// Super::BeginPlay();
+	//
+	// UGridUnitUtility::RegisterGridUnit(this);
 
-	UGridUnitUtility::RegisterGridUnit(this);
+	
 	// register with grid manager
 	// if (ATurnBasedCombatGameMode* GameMode = Cast<ATurnBasedCombatGameMode>(GetWorld()->GetAuthGameMode()))
 	// {

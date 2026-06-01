@@ -24,7 +24,7 @@ void UControllerState_Wait::OnEnter(APlayerController* InPlayerController, const
 	PlayerController->ShowTileCursor(false);
 	if (APawn_FollowCursor* FollowPawn = Cast<APawn_FollowCursor>(PlayerController->GetPawn()))
 	{
-		FollowPawn->SetCursorCanTick(false);
+		FollowPawn->SetActive(false);
 	}	
 
 	// bind to combats occuring to update camera
@@ -39,6 +39,6 @@ void UControllerState_Wait::OnCombatStart(AGridUnit* Instigator, AGridUnit* Targ
 	if (APawn_FollowCursor* FollowPawn = Cast<APawn_FollowCursor>(PlayerController->GetPawn()))
 	{
 		FVector MoveToLocation = (Instigator->GetActorLocation() + Target->GetActorLocation()) / 2;
-		FollowPawn->SetMoveToLocation(MoveToLocation);
+		FollowPawn->SetLerpToLocation(MoveToLocation);
 	}
 }

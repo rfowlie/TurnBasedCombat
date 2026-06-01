@@ -19,12 +19,17 @@ public class TurnBasedCombat : ModuleRules
 			"GameplayTags",
 			"GameplayAbilities",
 			"GameplayTasks",
-			"TurnBased_Core"
+			"TurnBased_Core",
+			"UnrealGameMechanics",
+			"UnrealGridMechanics"
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[]
 		{
-			"TurnBased_Core"
+			"TurnBased_Core",
+			"Gigafire",
+			"UnrealGameMechanics",
+			"UnrealGridMechanics"
 		});
 
 		// Uncomment if you are using Slate UI

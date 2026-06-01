@@ -7,7 +7,7 @@
 #include "GigafirePawnHandler.generated.h"
 
 // This class does not need to be modified.
-UINTERFACE()
+UINTERFACE(BlueprintType)
 class UGigafirePawnHandler : public UInterface
 {
 	GENERATED_BODY()

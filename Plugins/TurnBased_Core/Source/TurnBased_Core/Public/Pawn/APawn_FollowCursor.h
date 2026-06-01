@@ -14,16 +14,14 @@ class TURNBASED_CORE_API APawn_FollowCursor : public APawn
 {
 	GENERATED_BODY()
 
-public:
-	APawn_FollowCursor();
-
+protected:
 	virtual void Tick(float DeltaTime) override;
-
-	UFUNCTION(BlueprintCallable)
-	void SetMapBounds(FVector2D MinBounds, FVector2D MaxBounds);
+	
+public:
+	APawn_FollowCursor();	
 
 	UFUNCTION()
-	void SetCursorCanTick(const bool bActive);
+	void SetActive(const bool bActive);
 	
 	UFUNCTION(BlueprintCallable)
 	void SetFollowCursor();
@@ -32,16 +30,22 @@ public:
 	void SetFollowTarget(AActor* InTarget);
 
 	UFUNCTION(BlueprintCallable)
-	void SetMoveToLocation(FVector Location);
+	void SetLerpToTarget(AActor* InTarget);
+	
+	UFUNCTION(BlueprintCallable)
+	void SetLerpToLocation(FVector Location);
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float FollowThreshold = 0.25f;
+	UFUNCTION(BlueprintCallable)
+	void SetMapBounds(FVector2D MinBounds, FVector2D MaxBounds);
 	
 	FFollowPawnDelegate OnFollowTargetComplete;
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bCursorCanTick = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float FollowThreshold = 0.25f;
 	
 private:
 	UPROPERTY(VisibleAnywhere, Category = "Camera")
@@ -66,26 +70,27 @@ private:
 	FVector2D MapMinBounds = FVector2D(-5000, -5000);
 	UPROPERTY(EditAnywhere, Category="_Settings")
 	FVector2D MapMaxBounds = FVector2D(5000, 5000);
-
-	// Handle
-	UFUNCTION()
-	void HandleFollowCursor(float DeltaTime);
 	
 	UPROPERTY()
 	AActor* FollowTarget;
 
 	UPROPERTY(EditAnywhere, Category="_Settings")
 	float TargetFollowSpeed = 5.0f;
+
+	UPROPERTY()
+	FVector MoveToLocation;
+	
+	// Handle
+	UFUNCTION()
+	void HandleFollowCursor(float DeltaTime);
 	
 	UFUNCTION()
 	void HandleFollowTarget(float DeltaTime);
 
+	UFUNCTION()
+	void HandleLerpToLocation(float DeltaTime);
+	
 	DECLARE_DELEGATE_OneParam(FFollowDelegate, float);
 	FFollowDelegate FollowDelegate;
-
-	UFUNCTION()
-	void HandleMoveToLocation(float DeltaTime);
-
-	UPROPERTY()
-	FVector MoveToLocation;
+	
 };

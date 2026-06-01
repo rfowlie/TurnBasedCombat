@@ -9,6 +9,7 @@
 #include "Tile/GridTile.h"
 #include "Unit/GridUnit.h"
 #include "Item/WeaponDataAsset_OLD.h"
+#include "Unit/GridUnitBase.h"
 #include "_Framework/PlayerController/State/StateAttack.h"
 
 
@@ -60,12 +61,12 @@ void UGridProxy::UndoAll()
 	GridTile->SetState(TAG_Grid_State_Idle);
 	for (auto GridMovement : GridMovements)
 	{
-		GridMovement.GridTile.Get()->SetState(TAG_Grid_State_Idle);
+		Cast<AGridTile>(GridMovement.GridTile.Get())->SetState(TAG_Grid_State_Idle);
 	}
 	for (auto GridPair : EnemyGridUnitsInRange)
 	{
-		GridPair.GridTile->SetState(TAG_Grid_State_Idle);
-		GridPair.GridUnit->SetState(TAG_Grid_State_Idle);
+		Cast<AGridTile>(GridPair.GridTile)->SetState(TAG_Grid_State_Idle);
+		Cast<AGridUnit>(GridPair.GridUnit)->SetState(TAG_Grid_State_Idle);
 	}
 }
 
@@ -75,11 +76,11 @@ void UGridProxy::SetMoveableTiles(bool Activate)
 	{
 		if (Activate)
 		{
-			GridMovement.GridTile.Get()->SetState(TAG_Grid_State_Moveable);
+			Cast<AGridTile>(GridMovement.GridTile.Get())->SetState(TAG_Grid_State_Moveable);
 		}
 		else
 		{
-			GridMovement.GridTile.Get()->SetState(TAG_Grid_State_Idle);
+			Cast<AGridTile>(GridMovement.GridTile.Get())->SetState(TAG_Grid_State_Idle);
 		}		
 	}
 
@@ -103,8 +104,8 @@ void UGridProxy::SetEnemiesInRange(bool Activate)
 	
 	for (auto GridPair : EnemyGridUnitsInRange)
 	{
-		Activate ? GridPair.GridTile->SetState(TAG_Grid_State_CanAttack) : GridPair.GridTile->SetState(TAG_Grid_State_Idle);
-		Activate ? GridPair.GridUnit->SetState(TAG_Grid_State_CanAttack) : GridPair.GridUnit->SetState(TAG_Grid_State_Idle);
+		Activate ? Cast<AGridTile>(GridPair.GridTile)->SetState(TAG_Grid_State_CanAttack) : Cast<AGridTile>(GridPair.GridTile)->SetState(TAG_Grid_State_Idle);
+		Activate ? Cast<AGridUnit>(GridPair.GridUnit)->SetState(TAG_Grid_State_CanAttack) : Cast<AGridUnit>(GridPair.GridUnit)->SetState(TAG_Grid_State_Idle);
 	}
 }
 
@@ -127,7 +128,7 @@ bool UGridProxy::SetCanTargetFromTiles(UGridProxy* Other, bool Activate)
 	// reset state for potential previous tiles
 	for (FGridMovement AttackTile : CurrentCanAttackFromTiles)
 	{
-		AttackTile.GridTile->SetState(TAG_Grid_State_Idle);
+		Cast<AGridTile>(AttackTile.GridTile)->SetState(TAG_Grid_State_Idle);
 	}
 	
 	CurrentCanAttackFromTiles.Empty();
@@ -150,11 +151,11 @@ bool UGridProxy::SetCanTargetFromTiles(UGridProxy* Other, bool Activate)
 	{
 		if (Activate)
 		{
-			AttackTile.GridTile->SetState(TAG_Tile_State_CanTargetFrom);
+			Cast<AGridTile>(AttackTile.GridTile)->SetState(TAG_Tile_State_CanTargetFrom);
 		}
 		else
 		{
-			AttackTile.GridTile->SetState(TAG_Grid_State_Idle);
+			Cast<AGridTile>(AttackTile.GridTile)->SetState(TAG_Grid_State_Idle);
 		}
 		// Activate ? AttackTile.GridTile->SetState(TAG_Tile_State_CanTargetFrom) : AttackTile.GridTile->SetState(TAG_Grid_State_Idle);
 	}
@@ -267,6 +268,7 @@ FGameplayTag UGridProxy::GetFaction() const
 UGridProxy::UGridProxy()
 {
 }
+
 
 // void UGridProxy::Init(
 // 	UTurnManager* InTurnManager,

@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GridMechanics_Structs.h"
 #include "GridStructs.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "GridHelper.generated.h"

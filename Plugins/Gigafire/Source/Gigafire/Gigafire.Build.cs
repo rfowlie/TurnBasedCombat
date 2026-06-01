@@ -27,8 +27,10 @@ public class Gigafire : ModuleRules
 			{
 				"Core",
 				"GameplayTags",
-				"GameplayAbilities"
+				"GameplayAbilities",
 				// ... add other public dependencies that you statically link with here ...
+				"UnrealGameMechanics",
+				"UnrealGridMechanics",
 			}
 			);
 			
@@ -41,6 +43,8 @@ public class Gigafire : ModuleRules
 				"Slate",
 				"SlateCore",
 				// ... add private dependencies that you statically link with here ...	
+				"TurnBased_Core",
+				"UnrealGridMechanics"
 			}
 			);
 		

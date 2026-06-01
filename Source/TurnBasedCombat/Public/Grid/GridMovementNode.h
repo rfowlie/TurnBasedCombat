@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GridMechanics_Structs.h"
 #include "Grid/GridStructs.h"
 #include "UObject/Object.h"
 #include "GridMovementNode.generated.h"
@@ -36,6 +37,6 @@ public:
 	// for finding in containers
 	bool operator==(const FGridMovement& Other) const
 	{
-		return GridTile == Other.GridTile;
+		return GridTile == Cast<AGridTile>(Other.GridTile);
 	}
 };

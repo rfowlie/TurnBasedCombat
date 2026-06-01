@@ -6,6 +6,7 @@
 #include "GameFramework/SaveGame.h"
 #include "GameplayTagContainer.h"
 #include "GigafireStructs.h"
+#include "UnrealGameStructs.h"
 #include "GigafireSaveGame.generated.h"
 
 
