@@ -120,8 +120,11 @@ void UAIWorldSubsystem::GetCombatPrediction()
 			Prediction.CombatEvaluation = ObjectiveCombatEvaluation * UnitCombatEvaluation;
 		}
 
-		// CombatPredictions.Sort();
-		Algo::Sort(CombatPredictions);
+		// higher evaluation is better, so sort descending and take the first
+		Algo::Sort(CombatPredictions, [](const FCombatPrediction& A, const FCombatPrediction& B)
+		{
+			return B < A;
+		});
 		CombatPrediction = CombatPredictions[0];
 		UCombatWorldSubsystem* CombatWorldSubsystem = GetWorld()->GetSubsystem<UCombatWorldSubsystem>();
 		CombatWorldSubsystem->OnCombatEnd.AddUniqueDynamic(this, &ThisClass::OnCombatEnd);

@@ -6,23 +6,20 @@
 #include "GameplayTagContainer.h"
 #include "TerrainDataAsset.h"
 #include "GameFramework/Actor.h"
+#include "Tile/GridTileBase.h"
 #include "GridTile.generated.h"
 
 class UTerrainDataAsset;
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FGridTileBeginCursorOver, AActor*, GridTile );
-
 UCLASS(Blueprintable, BlueprintType)
-class TURNBASED_CORE_API AGridTile : public AActor
+class TURNBASED_CORE_API AGridTile : public AGridTileBase
 {
 	GENERATED_BODY()
 
 public:
 	AGridTile();
 
-	// allow for grid actors to customize what triggers the cursor over
-	UPROPERTY(BlueprintAssignable, BlueprintCallable)
-	FGridTileBeginCursorOver OnGridTileBeginCursorOver;
+	// OnGridTileBeginCursorOver is inherited from AGridTileBase
 
 	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
 	bool SetHovered(bool IsHovered);

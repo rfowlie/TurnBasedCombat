@@ -92,9 +92,9 @@ void UGridWorldSubsystem::UnregisterGridUnit(AGridUnit* GridUnit)
 	}
 }
 
-void UGridWorldSubsystem::OnBeginCursorOverGridTile(AActor* Actor)
+void UGridWorldSubsystem::OnBeginCursorOverGridTile(AGridTileBase* GridTileBase)
 {
-	if (AGridTile* GridTile = Cast<AGridTile>(Actor); IsValid(GridTile))
+	if (AGridTile* GridTile = Cast<AGridTile>(GridTileBase); IsValid(GridTile))
 	{		
 		// update tile
 		if (IsValid(GridTileHovered))
@@ -272,55 +272,45 @@ void UGridWorldSubsystem::CalculateGridMovement(TArray<FGridMovement>& OutMoveme
 	// for now just make sure it is clear, might want to add boolean to check to do this...
 	OutMovement.Empty();
  
-	// ALGORITHM
-	TSet<FGridMovement> Processed;
-	TQueue<FGridMovement> ProcessingQueue;
-	
-	FGridMovement StartNode;
-	StartNode.Cost = 0;
-	// COMPILER ISSUES
-	// StartNode.GridTile = Cast<AGridTileBase>(StartTile);    	
-	ProcessingQueue.Enqueue(StartNode);
- 
-	FGridMovement Current;
-	while (!ProcessingQueue.IsEmpty())
-	{		
-		ProcessingQueue.Dequeue(Current);
-		Processed.Add(Current);
+	// Flood fill outwards from the unit's tile, keeping the cheapest known cost to every tile.
+	// The start tile is part of the result at cost 0: its own movement cost is never charged because
+	// cost is only added for the tile being entered. Tiles holding any unit cannot be entered.
+	TMap<AGridTile*, FGridMovement> BestMovement;
+	TQueue<AGridTile*> Frontier;
 
-		AGridTile* CastTile = Cast<AGridTile>(Current.GridTile);
-		for (AGridTile* TargetTile : GetGridTilesAtRange(GridTileLocationMap[CastTile], 1))
+	FGridMovement StartNode;
+	StartNode.GridTile = StartTile;
+	StartNode.Cost = 0;
+	BestMovement.Add(StartTile, StartNode);
+	Frontier.Enqueue(StartTile);
+
+	AGridTile* CurrentTile = nullptr;
+	while (Frontier.Dequeue(CurrentTile))
+	{
+		const int32 CurrentCost = BestMovement[CurrentTile].Cost;
+		for (AGridTile* NeighbourTile : GetGridTilesAtRange(GridTileLocationMap[CurrentTile], 1))
 		{
-			if (GetGridUnitOnTile(TargetTile)) { continue; }    	
-			const int32 CalculatedMovement = Current.Cost + TargetTile->GetMovementCost(); 
-			// if (GridUnit->GetAvailableMovement() < CalculatedMovement)
-			if (AvailableMovement < CalculatedMovement)
+			if (GetGridUnitOnTile(NeighbourTile)) { continue; }
+
+			const int32 CalculatedMovement = CurrentCost + NeighbourTile->GetMovementCost();
+			if (CalculatedMovement > AvailableMovement) { continue; }
+
+			// already reached at the same or lower cost
+			if (const FGridMovement* Existing = BestMovement.Find(NeighbourTile); Existing && Existing->Cost <= CalculatedMovement)
 			{
 				continue;
 			}
-    			
-			FGridMovement Temp;
-			Temp.GridTile = Cast<AGridTileBase>(TargetTile);
-			Temp.Cost = CalculatedMovement;
-			Temp.ParentTile = Current.GridTile;
 
-			if (!Processed.Contains(Temp))
-			{
-				ProcessingQueue.Enqueue(Temp);
-			}
-			else
-			{
-				FGridMovement* ProcessedCopy = Processed.Find(Temp);
-				if (Temp.Cost < ProcessedCopy->Cost)
-				{
-					Processed.Remove(*ProcessedCopy);
-					ProcessingQueue.Enqueue(Temp);
-				}
-			}	
-		}		
+			FGridMovement Node;
+			Node.GridTile = NeighbourTile;
+			Node.ParentTile = CurrentTile;
+			Node.Cost = CalculatedMovement;
+			BestMovement.Add(NeighbourTile, Node);
+			Frontier.Enqueue(NeighbourTile);
+		}
 	}
-	
-	OutMovement = Processed.Array();
+
+	BestMovement.GenerateValueArray(OutMovement);
 }
 
 void UGridWorldSubsystem::CalculateGridAttacks(

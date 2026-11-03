@@ -208,7 +208,9 @@ bool UControllerState_UnitSelected::SetMovementTiles()
 	for (auto GridMovement : GridMovements)
 	{
 		AGridTile* CastTile = Cast<AGridTile>(GridMovement.GridTile.Get());
-		if (AGridUnit* GridUnit = GridSubsystem->GetGridUnitOnTile(CastTile))
+		AGridUnit* GridUnit = GridSubsystem->GetGridUnitOnTile(CastTile);
+		// the unit's own tile is part of the movement set (cost 0) but is not something it can attack
+		if (IsValid(GridUnit) && GridUnit != ActiveUnit)
 		{
 			GridUnit->SetState(TAG_TBCore_Grid_Tile_CanAttack);
 			CastTile->SetState(TAG_TBCore_Grid_Tile_CanAttack);

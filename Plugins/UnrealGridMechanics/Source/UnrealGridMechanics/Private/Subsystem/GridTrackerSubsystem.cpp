@@ -45,9 +45,10 @@ void UGridTrackerSubsystem::RegisterGridTile(AGridTileBase* GridTile)
 
 void UGridTrackerSubsystem::UnregisterGridTile(AGridTileBase* GridTile)
 {
-	if (IsValid(GridTile) && !GridTilesAll.Contains(GridTile))
+	if (IsValid(GridTile) && GridTilesAll.Contains(GridTile))
 	{
 		GridTilesAll.Remove(GridTile);
+		GridTile->OnGridTileBeginCursorOver.RemoveDynamic(this, &ThisClass::OnBeginCursorOverGridTile);
 	}
 }
 

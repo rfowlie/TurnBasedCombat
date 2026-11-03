@@ -13,6 +13,7 @@ class UGridRules;
 class UGameplayAbility;
 class AGridUnit;
 class AGridTile;
+class AGridTileBase;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FGridTileDelegate, AGridTile*, GridTile);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FGridUnitDelegate, AGridUnit*, GridUnit);
@@ -65,7 +66,7 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void UnregisterGridUnit(AGridUnit* GridUnit);
 	UFUNCTION()
-	void OnBeginCursorOverGridTile(AActor* Actor);
+	void OnBeginCursorOverGridTile(AGridTileBase* GridTileBase);
 
 	// VARIABLES
 	// tile

@@ -177,7 +177,7 @@ void UCombatCalculator_Basic::GetUnitSnapshotAdvanced(
 	OutSnapshot.HitChance = FMath::Clamp(InstigatorSnapshot.HitRate - TargetSnapshot.Avoid, 0, 100);
 	OutSnapshot.bHit = FMath::RandRange(0, 100) < OutSnapshot.HitChance;
 	OutSnapshot.DamageDealt = FMath::Clamp(InstigatorSnapshot.Strength + InstigatorSnapshot.WeaponTraits.Might - TargetSnapshot.Defence, 0, GetMaxDamage());
-	OutSnapshot.CriticalChance = FMath::Clamp(0, 100, InstigatorSnapshot.CriticalRate - TargetSnapshot.CriticalAvoid);
+	OutSnapshot.CriticalChance = FMath::Clamp(InstigatorSnapshot.CriticalRate - TargetSnapshot.CriticalAvoid, 0, 100);
 
 	// are we using this??? 
 	OutSnapshot.AttackPower = OutSnapshot.DamageDealt;
@@ -199,7 +199,7 @@ TArray<int32> UCombatCalculator_Basic::GetWeaponRangesByName(const TArray<FName>
 int32 UCombatCalculator_Basic::CalculateAttackSpeed(const AGridUnit* Unit, FWeaponTraits& WeaponTraits)
 {
 	int32 Speed = Unit->GetAbilitySystemComponent()->GetNumericAttribute(UGridUnitAttributeSet::GetSpeedAttribute());
-	return Speed - FMath::Max(0,Speed - WeaponTraits.Weight);
+	return FMath::Max(0,Speed - WeaponTraits.Weight);
 }
 
 int32 UCombatCalculator_Basic::CalculateHitRate(const AGridUnit* Unit, FWeaponTraits& WeaponTraits)
